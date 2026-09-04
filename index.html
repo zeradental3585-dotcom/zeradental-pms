@@ -340,7 +340,6 @@
 </div>
 
 <script>
-  var API_URL = 'https://script.google.com/macros/s/AKfycbxhr8PmMAoxFM_zeheygEmEg4avaHa6uaVlkUGweqv265PM5LDFwwYzlIL7svfSxGlq/exec';
   var zeraIdToken = null;
 
   function escapeHtml(s) {
@@ -356,67 +355,27 @@
   }
 
   // --- API bridge -----------------------------------------------------
-  // Apps Script Web Apps don't send CORS headers that allow cross-origin
-  // fetch() from this page, so instead we POST a hidden <form> at a hidden
-  // <iframe> and get the answer back via window.postMessage from the page
-  // the Apps Script backend returns (see postMessageResponse_ in Code.gs).
-  // apiCall() keeps the same external contract as before: it returns a
-  // Promise that resolves with the result object.
-  var _bridgeIframe = null;
-  var _bridgeResolvers = [];
-
-  function _ensureBridge() {
-    if (_bridgeIframe) return _bridgeIframe;
-    var iframe = document.createElement('iframe');
-    iframe.name = 'zera-api-bridge';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-    _bridgeIframe = iframe;
-    window.addEventListener('message', function(event) {
-      if (!_bridgeIframe || event.source !== _bridgeIframe.contentWindow) return;
-      var data = event.data;
-      if (!data || typeof data !== 'object') return;
-      var next = _bridgeResolvers.shift();
-      if (next) next(data);
-    });
-    return iframe;
-  }
-
+  // apiCall() posts JSON to our own /api/pms serverless function — a
+  // same-origin call, so this is a plain fetch() with no CORS involved.
+  // That function forwards the request to the Apps Script backend
+  // server-to-server and relays its JSON response back.
+  //
+  // An earlier version POSTed into a hidden <iframe> targeting the Apps
+  // Script exec URL directly (Apps Script Web Apps don't send CORS headers
+  // that allow cross-origin fetch()). That approach turned out to be
+  // unreliable: Google's own infrastructure blocks POST requests made into
+  // an iframe framed from a different origin, returning HTTP 503
+  // regardless of iframe visibility or the deployment's own permissions —
+  // this is what caused sign-in to hang until timeout. Routing through our
+  // own /api/pms endpoint avoids ever framing script.google.com from the
+  // browser at all.
   function apiCall(action, extra) {
     var payload = Object.assign({ action: action }, extra || {});
-    var iframe = _ensureBridge();
-    return new Promise(function(resolve, reject) {
-      var settled = false;
-      var timeoutId = setTimeout(function() {
-        if (settled) return;
-        settled = true;
-        var idx = _bridgeResolvers.indexOf(onMessage);
-        if (idx > -1) _bridgeResolvers.splice(idx, 1);
-        reject(new Error('timeout'));
-      }, 20000);
-
-      function onMessage(data) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeoutId);
-        resolve(data);
-      }
-      _bridgeResolvers.push(onMessage);
-
-      var form = document.createElement('form');
-      form.method = 'POST';
-      form.action = API_URL;
-      form.target = iframe.name;
-      form.style.display = 'none';
-      var input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'payload';
-      input.value = JSON.stringify(payload);
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
-      setTimeout(function() { form.remove(); }, 100);
-    });
+    return fetch('/api/pms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(r) { return r.json(); });
   }
 
   function handleCredentialResponse(response) {
