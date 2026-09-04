@@ -355,13 +355,68 @@
     el.className = isError ? 'is-error' : '';
   }
 
+  // --- API bridge -----------------------------------------------------
+  // Apps Script Web Apps don't send CORS headers that allow cross-origin
+  // fetch() from this page, so instead we POST a hidden <form> at a hidden
+  // <iframe> and get the answer back via window.postMessage from the page
+  // the Apps Script backend returns (see postMessageResponse_ in Code.gs).
+  // apiCall() keeps the same external contract as before: it returns a
+  // Promise that resolves with the result object.
+  var _bridgeIframe = null;
+  var _bridgeResolvers = [];
+
+  function _ensureBridge() {
+    if (_bridgeIframe) return _bridgeIframe;
+    var iframe = document.createElement('iframe');
+    iframe.name = 'zera-api-bridge';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    _bridgeIframe = iframe;
+    window.addEventListener('message', function(event) {
+      if (!_bridgeIframe || event.source !== _bridgeIframe.contentWindow) return;
+      var data = event.data;
+      if (!data || typeof data !== 'object') return;
+      var next = _bridgeResolvers.shift();
+      if (next) next(data);
+    });
+    return iframe;
+  }
+
   function apiCall(action, extra) {
     var payload = Object.assign({ action: action }, extra || {});
-    return fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    }).then(function(r) { return r.json(); });
+    var iframe = _ensureBridge();
+    return new Promise(function(resolve, reject) {
+      var settled = false;
+      var timeoutId = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        var idx = _bridgeResolvers.indexOf(onMessage);
+        if (idx > -1) _bridgeResolvers.splice(idx, 1);
+        reject(new Error('timeout'));
+      }, 20000);
+
+      function onMessage(data) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        resolve(data);
+      }
+      _bridgeResolvers.push(onMessage);
+
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = API_URL;
+      form.target = iframe.name;
+      form.style.display = 'none';
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'payload';
+      input.value = JSON.stringify(payload);
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+      setTimeout(function() { form.remove(); }, 100);
+    });
   }
 
   function handleCredentialResponse(response) {
