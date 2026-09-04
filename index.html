@@ -179,8 +179,9 @@
   }
   .app-user{display:flex;align-items:center;gap:14px;font-size:14.5px;font-weight:600;color:var(--navy);}
   .app-main{padding:36px 24px 60px;}
+  .app-main-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
   .app-main h1{font-size:26px;margin:0 0 6px;}
-  .app-sub{color:var(--muted);font-size:14.5px;margin:0 0 26px;}
+  .app-sub{color:var(--muted);font-size:14.5px;margin:0;}
   .board-empty{
     background:#fff;border:1px solid var(--line);border-radius:16px;padding:40px;
     text-align:center;color:var(--muted);font-size:15px;
@@ -203,6 +204,30 @@
   .board-row.ontrack .board-badge{background:var(--amber-bg);color:var(--amber);}
   .board-due{font-size:13px;color:var(--muted);}
   .board-row-action{width:100%;font-size:13.5px;color:#3c5a54;padding-top:4px;border-top:1px dashed var(--line);margin-top:6px;}
+
+  /* ===== Add patient modal ===== */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(12,27,30,0.55);z-index:50;
+    align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-card{background:#fff;border-radius:16px;max-width:480px;width:100%;padding:28px;margin-bottom:40px;}
+  .modal-card h2{margin:0 0 4px;font-size:20px;}
+  .modal-sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;line-height:1.5;}
+  .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin:0 0 5px;}
+  .modal-field input,.modal-field select,.modal-field textarea{
+    width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    font-size:14.5px;font-family:inherit;
+  }
+  .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{outline:none;border-color:var(--green);}
+  .modal-field textarea{resize:vertical;min-height:60px;}
+  .modal-checkbox{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--navy);margin:0 0 16px;line-height:1.4;}
+  .modal-checkbox input{margin-top:3px;flex-shrink:0;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
+  .modal-status{font-size:13.5px;margin:2px 0 10px;min-height:18px;color:var(--muted);}
+  .modal-status.is-error{color:var(--red);}
 </style>
 </head>
 <body>
@@ -333,9 +358,115 @@
     </div>
   </div>
   <div class="app-main wrap">
-    <h1>Today's board</h1>
-    <p class="app-sub">Cases due or overdue today, most overdue first.</p>
+    <div class="app-main-head">
+      <div>
+        <h1>Today's board</h1>
+        <p class="app-sub">Every active case, most overdue first.</p>
+      </div>
+      <button id="add-patient-btn" class="btn btn-primary" type="button">+ Add patient</button>
+    </div>
     <div id="app-board"></div>
+  </div>
+</div>
+
+<div id="add-patient-modal" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Add patient</h2>
+    <p class="modal-sub">Creates a new patient and case on your board directly — nothing to enter in a spreadsheet.</p>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-name">Patient name *</label>
+        <input id="ap-name" type="text" />
+      </div>
+      <div class="modal-field">
+        <label for="ap-phone">Phone *</label>
+        <input id="ap-phone" type="text" placeholder="10-digit mobile" />
+      </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-age">Age</label>
+        <input id="ap-age" type="number" min="0" />
+      </div>
+      <div class="modal-field">
+        <label for="ap-sex">Sex</label>
+        <select id="ap-sex">
+          <option value="">—</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-case-type">Case type</label>
+        <select id="ap-case-type">
+          <option value="Single">Single</option>
+          <option value="Bridge">Bridge</option>
+          <option value="Full arch">Full arch</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label for="ap-site">Site (tooth no.)</label>
+        <input id="ap-site" type="text" placeholder="e.g. 36" />
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="ap-stage">Current stage *</label>
+      <select id="ap-stage">
+        <option value="Enquiry">Enquiry</option>
+        <option value="Consultation done">Consultation done</option>
+        <option value="CBCT &amp; plan">CBCT &amp; plan</option>
+        <option value="Implant placed">Implant placed</option>
+        <option value="Healing (osseointegration)">Healing (osseointegration)</option>
+        <option value="Healing + graft">Healing + graft (bone graft cases)</option>
+        <option value="Abutment &amp; impression">Abutment &amp; impression</option>
+        <option value="Crown fitted -> Recall">Crown fitted → Recall</option>
+      </select>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-quoted">Quoted amount (₹)</label>
+        <input id="ap-quoted" type="number" min="0" />
+      </div>
+      <div class="modal-field">
+        <label for="ap-implant-system">Implant system</label>
+        <input id="ap-implant-system" type="text" placeholder="e.g. Osstem" />
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="ap-next-action">Next action</label>
+      <input id="ap-next-action" type="text" placeholder="e.g. Call to book CBCT" />
+    </div>
+
+    <div class="modal-field">
+      <label for="ap-notes">Notes</label>
+      <textarea id="ap-notes" placeholder="Administrative notes only — not clinical records"></textarea>
+    </div>
+
+    <label class="modal-checkbox">
+      <input id="ap-graft" type="checkbox" />
+      Bone graft required
+    </label>
+
+    <label class="modal-checkbox">
+      <input id="ap-consent" type="checkbox" />
+      Patient has given consent to be contacted about their treatment *
+    </label>
+
+    <div id="add-patient-status" class="modal-status"></div>
+
+    <div class="modal-actions">
+      <button id="add-patient-cancel" class="btn btn-ghost" type="button">Cancel</button>
+      <button id="add-patient-submit" class="btn btn-primary" type="button">Add patient</button>
+    </div>
   </div>
 </div>
 
@@ -463,6 +594,93 @@
     document.getElementById('register-form').style.display = 'none';
     setLoginStatus('');
     showMarketing();
+  });
+
+  // --- Add patient modal ------------------------------------------------
+  function openAddPatientModal() {
+    var statusEl = document.getElementById('add-patient-status');
+    statusEl.textContent = '';
+    statusEl.className = 'modal-status';
+    document.getElementById('add-patient-modal').classList.add('open');
+  }
+
+  function closeAddPatientModal() {
+    document.getElementById('add-patient-modal').classList.remove('open');
+  }
+
+  function resetAddPatientForm() {
+    ['ap-name', 'ap-phone', 'ap-age', 'ap-site', 'ap-implant-system', 'ap-quoted', 'ap-next-action', 'ap-notes'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('ap-sex').value = '';
+    document.getElementById('ap-case-type').value = 'Single';
+    document.getElementById('ap-stage').value = 'Enquiry';
+    document.getElementById('ap-graft').checked = false;
+    document.getElementById('ap-consent').checked = false;
+  }
+
+  function addCaseErrorMessage(err) {
+    var messages = {
+      name_required: 'Please enter the patient’s name.',
+      phone_required: 'Please enter a phone number.',
+      invalid_stage: 'Please choose a stage.',
+      consent_required: 'Patient consent is required before saving.',
+      not_registered: 'Please sign in again.',
+      suspended: 'This account is on hold — WhatsApp us to restore access.',
+      auth_failed: 'Please sign in again.'
+    };
+    return messages[err] || 'Something went wrong. Please try again.';
+  }
+
+  document.getElementById('add-patient-btn').addEventListener('click', openAddPatientModal);
+  document.getElementById('add-patient-cancel').addEventListener('click', closeAddPatientModal);
+  document.getElementById('add-patient-modal').addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) closeAddPatientModal();
+  });
+
+  document.getElementById('add-patient-submit').addEventListener('click', function() {
+    var statusEl = document.getElementById('add-patient-status');
+    var name = document.getElementById('ap-name').value.trim();
+    var phone = document.getElementById('ap-phone').value.trim();
+    var stage = document.getElementById('ap-stage').value;
+    var consent = document.getElementById('ap-consent').checked;
+
+    if (!name) { statusEl.textContent = 'Please enter the patient’s name.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!phone) { statusEl.textContent = 'Please enter a phone number.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!consent) { statusEl.textContent = 'Patient consent is required before saving.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!zeraIdToken) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
+
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'modal-status';
+
+    apiCall('addCase', {
+      idToken: zeraIdToken,
+      name: name,
+      phone: phone,
+      age: document.getElementById('ap-age').value,
+      sex: document.getElementById('ap-sex').value,
+      caseType: document.getElementById('ap-case-type').value,
+      site: document.getElementById('ap-site').value,
+      implantSystem: document.getElementById('ap-implant-system').value,
+      graftRequired: document.getElementById('ap-graft').checked,
+      stage: stage,
+      quotedAmount: document.getElementById('ap-quoted').value,
+      nextAction: document.getElementById('ap-next-action').value,
+      notes: document.getElementById('ap-notes').value,
+      consentGiven: consent
+    }).then(function(res) {
+      if (!res || !res.ok) {
+        statusEl.textContent = addCaseErrorMessage(res && res.error);
+        statusEl.className = 'modal-status is-error';
+        return;
+      }
+      renderBoard(res.board);
+      closeAddPatientModal();
+      resetAddPatientForm();
+    }).catch(function() {
+      statusEl.textContent = 'Something went wrong. Please try again.';
+      statusEl.className = 'modal-status is-error';
+    });
   });
 </script>
 
