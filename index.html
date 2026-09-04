@@ -228,6 +228,86 @@
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
   .modal-status{font-size:13.5px;margin:2px 0 10px;min-height:18px;color:var(--muted);}
   .modal-status.is-error{color:var(--red);}
+
+  /* ===== Stats bar ===== */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  @media (max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-tile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .stat-tile .stat-num{font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;}
+  .stat-tile .stat-label{font-size:12.5px;color:var(--muted);margin-top:4px;font-weight:600;}
+  .stat-tile.attn .stat-num{color:var(--red);}
+
+  /* ===== Tabs ===== */
+  .app-tabs{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid var(--line);}
+  .app-tab{
+    background:none;border:none;font-family:inherit;font-size:14.5px;font-weight:700;
+    color:var(--muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;
+    margin-bottom:-1px;display:flex;align-items:center;gap:7px;
+  }
+  .app-tab.active{color:var(--green-dark);border-bottom-color:var(--green);}
+  .tab-count{
+    background:var(--line);color:var(--navy);font-size:11.5px;font-weight:800;
+    border-radius:999px;padding:1px 8px;min-width:18px;text-align:center;
+  }
+  .app-tab.active .tab-count{background:#dcf5ea;color:var(--green-dark);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  /* ===== Board row: clickable ===== */
+  .board-row{cursor:pointer;transition:box-shadow .12s;}
+  .board-row:hover{box-shadow:0 2px 10px rgba(12,27,30,0.08);}
+
+  /* ===== Patients list ===== */
+  .patient-row{
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;
+    margin-bottom:12px;
+  }
+  .patient-row-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;}
+  .patient-name{font-weight:700;font-size:15.5px;}
+  .patient-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  .patient-cases{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .patient-case-chip{
+    background:var(--bg);border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--navy);
+  }
+  .patient-case-chip:hover{border-color:var(--green);}
+  .patient-case-chip.completed{color:var(--muted);}
+  .patient-case-chip.dropped{color:var(--red);}
+
+  /* ===== Enquiries list ===== */
+  .enquiry-row{
+    background:#fff;border:1px solid var(--line);border-left-width:4px;border-left-color:var(--amber);
+    border-radius:12px;padding:16px 20px;margin-bottom:12px;
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;
+  }
+  .enquiry-main{min-width:220px;}
+  .enquiry-name{font-weight:700;font-size:15.5px;}
+  .enquiry-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  .enquiry-message{width:100%;font-size:13.5px;color:#3c5a54;padding-top:8px;border-top:1px dashed var(--line);margin-top:6px;}
+
+  /* ===== Case detail modal ===== */
+  .modal-card.wide{max-width:620px;}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-bottom:18px;}
+  @media (max-width:520px){.detail-grid{grid-template-columns:1fr;}}
+  .detail-item{padding:8px 0;border-bottom:1px solid var(--line);}
+  .detail-item .dl{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em;}
+  .detail-item .dv{font-size:14.5px;margin-top:2px;word-break:break-word;}
+  .detail-section{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);}
+  .detail-section h3{margin:0 0 12px;font-size:14.5px;font-weight:800;}
+  .detail-list-row{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    font-size:13.5px;padding:8px 0;border-bottom:1px dashed var(--line);
+  }
+  .detail-list-row:last-child{border-bottom:none;}
+  .detail-empty{font-size:13px;color:var(--muted);padding:6px 0;}
+  .inline-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:flex-end;}
+  .inline-form .modal-field{margin-bottom:0;flex:1;min-width:110px;}
+  .inline-form .btn{padding:9px 16px;font-size:13.5px;flex-shrink:0;}
+  .balance-note{font-size:13px;font-weight:700;margin-top:8px;}
+  .balance-note.owed{color:var(--red);}
+  .balance-note.clear{color:var(--green-dark);}
+  .whatsapp-btn{background:#25D366;color:#fff;}
+  .whatsapp-btn:hover{background:#1fb356;}
 </style>
 </head>
 <body>
@@ -360,19 +440,133 @@
   <div class="app-main wrap">
     <div class="app-main-head">
       <div>
-        <h1>Today's board</h1>
-        <p class="app-sub">Every active case, most overdue first.</p>
+        <h1 id="app-clinic-title">Dashboard</h1>
+        <p class="app-sub">Every patient, case, enquiry and payment — nothing needs the Sheet.</p>
       </div>
       <button id="add-patient-btn" class="btn btn-primary" type="button">+ Add patient</button>
     </div>
-    <div id="app-board"></div>
+
+    <div id="app-stats" class="stats-row"></div>
+
+    <div class="app-tabs">
+      <button class="app-tab active" data-tab="board" type="button">Board <span class="tab-count" id="tab-count-board">0</span></button>
+      <button class="app-tab" data-tab="patients" type="button">Patients <span class="tab-count" id="tab-count-patients">0</span></button>
+      <button class="app-tab" data-tab="enquiries" type="button">Enquiries <span class="tab-count" id="tab-count-enquiries">0</span></button>
+    </div>
+
+    <div id="tab-board" class="tab-panel active">
+      <div id="app-board"></div>
+    </div>
+    <div id="tab-patients" class="tab-panel">
+      <div id="app-patients"></div>
+    </div>
+    <div id="tab-enquiries" class="tab-panel">
+      <div id="app-enquiries"></div>
+    </div>
+  </div>
+</div>
+
+<div id="case-detail-modal" class="modal-overlay">
+  <div class="modal-card wide">
+    <h2 id="cd-name">Case detail</h2>
+    <p class="modal-sub" id="cd-subtitle"></p>
+
+    <div class="detail-grid">
+      <div class="detail-item"><div class="dl">Phone</div><div class="dv" id="cd-phone">—</div></div>
+      <div class="detail-item"><div class="dl">Alt. phone</div><div class="dv" id="cd-altphone">—</div></div>
+      <div class="detail-item"><div class="dl">Age / Sex</div><div class="dv" id="cd-agesex">—</div></div>
+      <div class="detail-item"><div class="dl">Locality</div><div class="dv" id="cd-locality">—</div></div>
+      <div class="detail-item"><div class="dl">Source</div><div class="dv" id="cd-source">—</div></div>
+      <div class="detail-item"><div class="dl">Case ID</div><div class="dv" id="cd-caseid">—</div></div>
+      <div class="detail-item"><div class="dl">Case type / Site</div><div class="dv" id="cd-typesite">—</div></div>
+      <div class="detail-item"><div class="dl">Implant system</div><div class="dv" id="cd-implant">—</div></div>
+      <div class="detail-item"><div class="dl">Graft required</div><div class="dv" id="cd-graft">—</div></div>
+      <div class="detail-item"><div class="dl">Stage entered on</div><div class="dv" id="cd-enteredon">—</div></div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-stage-select">Stage</label>
+        <select id="cd-stage-select">
+          <option value="Enquiry">Enquiry</option>
+          <option value="Consultation done">Consultation done</option>
+          <option value="CBCT &amp; plan">CBCT &amp; plan</option>
+          <option value="Implant placed">Implant placed</option>
+          <option value="Healing (osseointegration)">Healing (osseointegration)</option>
+          <option value="Healing + graft">Healing + graft (bone graft cases)</option>
+          <option value="Abutment &amp; impression">Abutment &amp; impression</option>
+          <option value="Crown fitted -> Recall">Crown fitted → Recall</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label for="cd-status-select">Status</label>
+        <select id="cd-status-select">
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+          <option value="Dropped">Dropped</option>
+          <option value="On hold">On hold</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-quoted-input">Quoted amount (₹)</label>
+        <input id="cd-quoted-input" type="number" min="0" />
+      </div>
+      <div class="modal-field">
+        <label for="cd-assigned-input">Assigned to</label>
+        <input id="cd-assigned-input" type="text" />
+      </div>
+    </div>
+    <div class="modal-field">
+      <label for="cd-nextaction-input">Next action</label>
+      <input id="cd-nextaction-input" type="text" />
+    </div>
+    <div class="modal-field">
+      <label for="cd-notes-input">Notes</label>
+      <textarea id="cd-notes-input"></textarea>
+    </div>
+    <div id="cd-save-status" class="modal-status"></div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button id="cd-whatsapp-btn" class="btn whatsapp-btn" type="button">WhatsApp patient</button>
+      <button id="cd-save-btn" class="btn btn-primary" type="button">Save changes</button>
+    </div>
+
+    <div class="detail-section">
+      <h3>Appointments</h3>
+      <div id="cd-appointments-list"></div>
+      <div class="inline-form">
+        <div class="modal-field"><label>Date</label><input id="cd-appt-date" type="date" /></div>
+        <div class="modal-field"><label>Time</label><input id="cd-appt-time" type="time" /></div>
+        <div class="modal-field"><label>Type</label><input id="cd-appt-type" type="text" placeholder="e.g. Review" /></div>
+        <button id="cd-appt-add" class="btn btn-ghost" type="button">+ Add</button>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Payments</h3>
+      <div id="cd-payments-list"></div>
+      <div id="cd-balance" class="balance-note"></div>
+      <div class="inline-form">
+        <div class="modal-field"><label>Amount (₹)</label><input id="cd-pay-amount" type="number" min="0" /></div>
+        <div class="modal-field"><label>Date</label><input id="cd-pay-date" type="date" /></div>
+        <div class="modal-field"><label>Mode</label><input id="cd-pay-mode" type="text" placeholder="e.g. UPI" /></div>
+        <button id="cd-pay-add" class="btn btn-ghost" type="button">+ Add</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="cd-close-btn" class="btn btn-ghost" type="button">Close</button>
+    </div>
   </div>
 </div>
 
 <div id="add-patient-modal" class="modal-overlay">
   <div class="modal-card">
-    <h2>Add patient</h2>
-    <p class="modal-sub">Creates a new patient and case on your board directly — nothing to enter in a spreadsheet.</p>
+    <h2 id="ap-title">Add patient</h2>
+    <p class="modal-sub" id="ap-subtitle">Creates a new patient and case on your board directly — nothing to enter in a spreadsheet.</p>
+    <input type="hidden" id="ap-mode" value="add" />
+    <input type="hidden" id="ap-enquiry-row" value="" />
 
     <div class="modal-row">
       <div class="modal-field">
@@ -472,6 +666,10 @@
 
 <script>
   var zeraIdToken = null;
+  var currentBoard = [];
+  var currentPatients = [];
+  var currentEnquiries = [];
+  var currentCaseId = null; // case detail modal currently open on this CaseID
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
@@ -539,8 +737,25 @@
     document.getElementById('marketing-view').style.display = 'none';
     document.getElementById('app-view').style.display = 'block';
     document.getElementById('app-clinic-name').textContent = res.clinicName;
-    renderBoard(res.board);
+    document.getElementById('app-clinic-title').textContent = res.clinicName;
+    applyDashboardData(res);
     window.scrollTo(0, 0);
+  }
+
+  // Every action that returns board/patients/enquiries calls this so all
+  // three tabs and the stats bar always reflect the very latest state,
+  // and so a currently-open case detail modal stays in sync too.
+  function applyDashboardData(res) {
+    currentBoard = res.board || [];
+    currentPatients = res.patients || [];
+    currentEnquiries = res.enquiries || [];
+    renderBoard(currentBoard);
+    renderPatients(currentPatients);
+    renderEnquiries(currentEnquiries);
+    renderStats();
+    document.getElementById('tab-count-board').textContent = currentBoard.length;
+    document.getElementById('tab-count-patients').textContent = currentPatients.length;
+    document.getElementById('tab-count-enquiries').textContent = currentEnquiries.length;
   }
 
   function showMarketing() {
@@ -548,10 +763,36 @@
     document.getElementById('marketing-view').style.display = 'block';
   }
 
+  function renderStats() {
+    var overdue = currentBoard.filter(function(r) { return r.daysOverdue >= 0; }).length;
+    var tiles = [
+      { num: currentPatients.length, label: 'Total patients' },
+      { num: currentBoard.length, label: 'Active cases' },
+      { num: overdue, label: 'Overdue today', attn: overdue > 0 },
+      { num: currentEnquiries.length, label: 'New enquiries' }
+    ];
+    document.getElementById('app-stats').innerHTML = tiles.map(function(t) {
+      return '<div class="stat-tile' + (t.attn ? ' attn' : '') + '">' +
+        '<div class="stat-num">' + t.num + '</div>' +
+        '<div class="stat-label">' + escapeHtml(t.label) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // --- Tabs ---------------------------------------------------------------
+  document.querySelectorAll('.app-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.app-tab').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
   function renderBoard(rows) {
     var el = document.getElementById('app-board');
     if (!rows || rows.length === 0) {
-      el.innerHTML = '<div class="board-empty">No active cases due right now.</div>';
+      el.innerHTML = '<div class="board-empty">No active cases right now.</div>';
       return;
     }
     el.innerHTML = rows.map(function(r) {
@@ -559,7 +800,7 @@
       var overdueLabel = r.daysOverdue > 0
         ? (r.daysOverdue + ' day(s) overdue')
         : (r.daysOverdue === 0 ? 'Due today' : ('Due in ' + Math.abs(r.daysOverdue) + ' day(s)'));
-      return '<div class="board-row ' + overdueClass + '">' +
+      return '<div class="board-row ' + overdueClass + '" data-case-id="' + escapeHtml(r.caseId) + '">' +
         '<div class="board-row-main">' +
           '<div class="board-row-name">' + escapeHtml(r.patientName || '(unnamed)') + '</div>' +
           '<div class="board-row-stage">' + escapeHtml(r.stage || '') + '</div>' +
@@ -572,6 +813,101 @@
       '</div>';
     }).join('');
   }
+
+  document.getElementById('app-board').addEventListener('click', function(e) {
+    var row = e.target.closest('.board-row');
+    if (!row) return;
+    var caseId = row.dataset.caseId;
+    var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+    if (ctx) openCaseDetail(ctx);
+  });
+
+  // --- Patients tab ---------------------------------------------------------
+  function renderPatients(patients) {
+    var el = document.getElementById('app-patients');
+    if (!patients || patients.length === 0) {
+      el.innerHTML = '<div class="board-empty">No patients yet — use "+ Add patient" to create the first one.</div>';
+      return;
+    }
+    el.innerHTML = patients.map(function(p) {
+      var chips = (p.cases || []).map(function(c) {
+        var cls = c.status === 'Completed' ? 'completed' : (c.status === 'Dropped' ? 'dropped' : '');
+        return '<span class="patient-case-chip ' + cls + '" data-case-id="' + escapeHtml(c.caseId) + '" ' +
+          'data-patient-id="' + escapeHtml(p.patientId) + '">' + escapeHtml(c.caseId) + ' · ' + escapeHtml(c.stage) +
+          ' (' + escapeHtml(c.status) + ')</span>';
+      }).join('');
+      return '<div class="patient-row">' +
+        '<div class="patient-row-top">' +
+          '<div><div class="patient-name">' + escapeHtml(p.name || '(unnamed)') + '</div>' +
+          '<div class="patient-meta">' + escapeHtml(p.phone || '') + (p.altPhone ? ' · Alt: ' + escapeHtml(p.altPhone) : '') + '</div></div>' +
+          '<div class="patient-meta">' +
+            (p.age ? escapeHtml(p.age) + ' yrs' : '') + (p.age && p.sex ? ', ' : '') + escapeHtml(p.sex || '') +
+            (p.locality ? ' · ' + escapeHtml(p.locality) : '') +
+            (p.source ? ' · via ' + escapeHtml(p.source) : '') +
+            (p.createdOn ? ' · added ' + escapeHtml(p.createdOn) : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="patient-cases">' + (chips || '<span class="detail-empty">No cases on file</span>') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('app-patients').addEventListener('click', function(e) {
+    var chip = e.target.closest('.patient-case-chip');
+    if (!chip) return;
+    var caseId = chip.dataset.caseId;
+    var patientId = chip.dataset.patientId;
+    // Prefer the richer board-row context (full case fields) when this case
+    // is still active; otherwise build a lighter context from the patient +
+    // case summary so completed/dropped/on-hold cases can still be opened.
+    var fromBoard = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+    if (fromBoard) { openCaseDetail(fromBoard); return; }
+    var patient = currentPatients.filter(function(p) { return String(p.patientId) === String(patientId); })[0];
+    var caseSummary = patient && (patient.cases || []).filter(function(c) { return String(c.caseId) === String(caseId); })[0];
+    if (!patient || !caseSummary) return;
+    openCaseDetail({
+      caseId: caseSummary.caseId, patientId: patient.patientId, patientName: patient.name,
+      phone: patient.phone, altPhone: patient.altPhone, age: patient.age, sex: patient.sex,
+      locality: patient.locality, source: patient.source, caseType: caseSummary.caseType,
+      site: '', implantSystem: '', graftRequired: false, stage: caseSummary.stage,
+      stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
+      quotedAmount: caseSummary.quotedAmount, notes: '', status: caseSummary.status
+    });
+  });
+
+  // --- Enquiries tab ---------------------------------------------------------
+  function renderEnquiries(enquiries) {
+    var el = document.getElementById('app-enquiries');
+    if (!enquiries || enquiries.length === 0) {
+      el.innerHTML = '<div class="board-empty">No new enquiries — leads from your website contact form will show up here.</div>';
+      return;
+    }
+    el.innerHTML = enquiries.map(function(e) {
+      return '<div class="enquiry-row">' +
+        '<div class="enquiry-main">' +
+          '<div class="enquiry-name">' + escapeHtml(e.name || '(no name)') + '</div>' +
+          '<div class="enquiry-meta">' + escapeHtml(e.phone || '') + (e.city ? ' · ' + escapeHtml(e.city) : '') +
+          ' · ' + escapeHtml(e.date || '') + (e.sourcePage ? ' · from ' + escapeHtml(e.sourcePage) : '') + '</div>' +
+        '</div>' +
+        '<button class="btn btn-primary enquiry-convert-btn" type="button" data-row="' + e.rowIndex + '" ' +
+          'data-name="' + escapeHtml(e.name || '') + '" data-phone="' + escapeHtml(e.phone || '') + '" ' +
+          'data-city="' + escapeHtml(e.city || '') + '">Convert to patient</button>' +
+        (e.message ? '<div class="enquiry-message">' + escapeHtml(e.message) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('app-enquiries').addEventListener('click', function(e) {
+    var btn = e.target.closest('.enquiry-convert-btn');
+    if (!btn) return;
+    openAddPatientModal({
+      mode: 'convert',
+      rowIndex: btn.dataset.row,
+      name: btn.dataset.name,
+      phone: btn.dataset.phone,
+      locality: btn.dataset.city
+    });
+  });
 
   document.getElementById('reg-submit').addEventListener('click', function() {
     var clinicName = document.getElementById('reg-clinic-name').value.trim();
@@ -596,8 +932,25 @@
     showMarketing();
   });
 
-  // --- Add patient modal ------------------------------------------------
-  function openAddPatientModal() {
+  // --- Add patient modal (also reused for "Convert enquiry") -------------
+  function openAddPatientModal(opts) {
+    opts = opts || {};
+    var mode = opts.mode || 'add';
+    document.getElementById('ap-mode').value = mode;
+    document.getElementById('ap-enquiry-row').value = opts.rowIndex || '';
+    document.getElementById('ap-title').textContent = mode === 'convert' ? 'Convert enquiry to patient' : 'Add patient';
+    document.getElementById('ap-subtitle').textContent = mode === 'convert'
+      ? 'Creates a patient and case from this enquiry, and marks it converted.'
+      : 'Creates a new patient and case on your board directly — nothing to enter in a spreadsheet.';
+    document.getElementById('add-patient-submit').textContent = mode === 'convert' ? 'Convert to patient' : 'Add patient';
+
+    resetAddPatientForm();
+    if (opts.name) document.getElementById('ap-name').value = opts.name;
+    if (opts.phone) document.getElementById('ap-phone').value = opts.phone;
+    // opts.locality (the enquiry's City) has no field in this form to prefill —
+    // the backend falls back to the enquiry's own City automatically when
+    // converting, so nothing else is needed here.
+
     var statusEl = document.getElementById('add-patient-status');
     statusEl.textContent = '';
     statusEl.className = 'modal-status';
@@ -627,12 +980,18 @@
       consent_required: 'Patient consent is required before saving.',
       not_registered: 'Please sign in again.',
       suspended: 'This account is on hold — WhatsApp us to restore access.',
-      auth_failed: 'Please sign in again.'
+      auth_failed: 'Please sign in again.',
+      invalid_enquiry: 'This enquiry could not be found — try refreshing.',
+      already_converted: 'This enquiry was already converted.',
+      case_not_found: 'This case could not be found — try refreshing.',
+      case_id_required: 'Something went wrong. Please try again.',
+      date_required: 'Please choose a date.',
+      amount_required: 'Please enter an amount.'
     };
     return messages[err] || 'Something went wrong. Please try again.';
   }
 
-  document.getElementById('add-patient-btn').addEventListener('click', openAddPatientModal);
+  document.getElementById('add-patient-btn').addEventListener('click', function() { openAddPatientModal({ mode: 'add' }); });
   document.getElementById('add-patient-cancel').addEventListener('click', closeAddPatientModal);
   document.getElementById('add-patient-modal').addEventListener('click', function(e) {
     if (e.target === e.currentTarget) closeAddPatientModal();
@@ -640,6 +999,7 @@
 
   document.getElementById('add-patient-submit').addEventListener('click', function() {
     var statusEl = document.getElementById('add-patient-status');
+    var mode = document.getElementById('ap-mode').value;
     var name = document.getElementById('ap-name').value.trim();
     var phone = document.getElementById('ap-phone').value.trim();
     var stage = document.getElementById('ap-stage').value;
@@ -653,7 +1013,7 @@
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
 
-    apiCall('addCase', {
+    var payload = {
       idToken: zeraIdToken,
       name: name,
       phone: phone,
@@ -668,19 +1028,186 @@
       nextAction: document.getElementById('ap-next-action').value,
       notes: document.getElementById('ap-notes').value,
       consentGiven: consent
-    }).then(function(res) {
+    };
+
+    var action = 'addCase';
+    if (mode === 'convert') {
+      action = 'convertEnquiry';
+      payload.rowIndex = document.getElementById('ap-enquiry-row').value;
+    }
+
+    apiCall(action, payload).then(function(res) {
       if (!res || !res.ok) {
         statusEl.textContent = addCaseErrorMessage(res && res.error);
         statusEl.className = 'modal-status is-error';
         return;
       }
-      renderBoard(res.board);
+      applyDashboardData(res);
       closeAddPatientModal();
       resetAddPatientForm();
     }).catch(function() {
       statusEl.textContent = 'Something went wrong. Please try again.';
       statusEl.className = 'modal-status is-error';
     });
+  });
+
+  // --- Case detail modal ---------------------------------------------------
+  function openCaseDetail(ctx) {
+    currentCaseId = ctx.caseId;
+    document.getElementById('cd-name').textContent = ctx.patientName || '(unnamed)';
+    document.getElementById('cd-subtitle').textContent = 'Case ' + (ctx.caseId || '');
+    document.getElementById('cd-phone').textContent = ctx.phone || '—';
+    document.getElementById('cd-altphone').textContent = ctx.altPhone || '—';
+    document.getElementById('cd-agesex').textContent = (ctx.age ? ctx.age + ' yrs' : '') + (ctx.age && ctx.sex ? ', ' : '') + (ctx.sex || '') || '—';
+    document.getElementById('cd-locality').textContent = ctx.locality || '—';
+    document.getElementById('cd-source').textContent = ctx.source || '—';
+    document.getElementById('cd-caseid').textContent = ctx.caseId || '—';
+    document.getElementById('cd-typesite').textContent = [ctx.caseType, ctx.site].filter(Boolean).join(' · ') || '—';
+    document.getElementById('cd-implant').textContent = ctx.implantSystem || '—';
+    document.getElementById('cd-graft').textContent = ctx.graftRequired ? 'Yes' : 'No';
+    document.getElementById('cd-enteredon').textContent = ctx.stageEnteredOn || '—';
+
+    document.getElementById('cd-stage-select').value = ctx.stage || 'Enquiry';
+    document.getElementById('cd-status-select').value = ctx.status || 'Active';
+    document.getElementById('cd-quoted-input').value = ctx.quotedAmount || '';
+    document.getElementById('cd-assigned-input').value = ctx.assignedTo || '';
+    document.getElementById('cd-nextaction-input').value = ctx.nextAction || '';
+    document.getElementById('cd-notes-input').value = ctx.notes || '';
+
+    document.getElementById('cd-save-status').textContent = '';
+    document.getElementById('cd-save-status').className = 'modal-status';
+    document.getElementById('cd-appointments-list').innerHTML = '<div class="detail-empty">Loading…</div>';
+    document.getElementById('cd-payments-list').innerHTML = '<div class="detail-empty">Loading…</div>';
+    document.getElementById('cd-balance').textContent = '';
+    document.getElementById('case-detail-modal').classList.add('open');
+
+    apiCall('listAppointments', { idToken: zeraIdToken, caseId: ctx.caseId })
+      .then(function(res) { renderAppointments(res && res.ok ? res.appointments : []); });
+    apiCall('listPayments', { idToken: zeraIdToken, caseId: ctx.caseId })
+      .then(function(res) { renderPayments(res && res.ok ? res.payments : [], ctx.quotedAmount); });
+  }
+
+  function closeCaseDetail() {
+    document.getElementById('case-detail-modal').classList.remove('open');
+    currentCaseId = null;
+  }
+
+  document.getElementById('cd-close-btn').addEventListener('click', closeCaseDetail);
+  document.getElementById('case-detail-modal').addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) closeCaseDetail();
+  });
+
+  function renderAppointments(appts) {
+    var el = document.getElementById('cd-appointments-list');
+    if (!appts || appts.length === 0) { el.innerHTML = '<div class="detail-empty">No appointments logged yet.</div>'; return; }
+    el.innerHTML = appts.map(function(a) {
+      return '<div class="detail-list-row"><span>' + escapeHtml(a.date) + (a.time ? ' ' + escapeHtml(a.time) : '') +
+        ' — ' + escapeHtml(a.type || '') + '</span><span>' + escapeHtml(a.status || '') + '</span></div>';
+    }).join('');
+  }
+
+  function renderPayments(payments, quotedAmount) {
+    var el = document.getElementById('cd-payments-list');
+    if (!payments || payments.length === 0) {
+      el.innerHTML = '<div class="detail-empty">No payments logged yet.</div>';
+    } else {
+      el.innerHTML = payments.map(function(p) {
+        return '<div class="detail-list-row"><span>' + escapeHtml(p.date) + ' — ₹' + escapeHtml(p.amount) +
+          ' (' + escapeHtml(p.mode || '') + ')</span><span>Balance: ₹' + escapeHtml(p.runningBalance) + '</span></div>';
+      }).join('');
+    }
+    var balEl = document.getElementById('cd-balance');
+    if (payments && payments.length > 0) {
+      var lastBalance = Number(payments[payments.length - 1].runningBalance);
+      if (lastBalance > 0) {
+        balEl.textContent = '₹' + lastBalance + ' still owed';
+        balEl.className = 'balance-note owed';
+      } else {
+        balEl.textContent = 'Fully paid';
+        balEl.className = 'balance-note clear';
+      }
+    } else if (quotedAmount) {
+      balEl.textContent = '₹' + quotedAmount + ' quoted, nothing paid yet';
+      balEl.className = 'balance-note owed';
+    } else {
+      balEl.textContent = '';
+    }
+  }
+
+  document.getElementById('cd-save-btn').addEventListener('click', function() {
+    var statusEl = document.getElementById('cd-save-status');
+    if (!currentCaseId || !zeraIdToken) { return; }
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'modal-status';
+    apiCall('updateCase', {
+      idToken: zeraIdToken,
+      caseId: currentCaseId,
+      stage: document.getElementById('cd-stage-select').value,
+      status: document.getElementById('cd-status-select').value,
+      quotedAmount: document.getElementById('cd-quoted-input').value,
+      assignedTo: document.getElementById('cd-assigned-input').value,
+      nextAction: document.getElementById('cd-nextaction-input').value,
+      notes: document.getElementById('cd-notes-input').value
+    }).then(function(res) {
+      if (!res || !res.ok) {
+        statusEl.textContent = addCaseErrorMessage(res && res.error);
+        statusEl.className = 'modal-status is-error';
+        return;
+      }
+      applyDashboardData(res);
+      statusEl.textContent = 'Saved.';
+      statusEl.className = 'modal-status';
+    }).catch(function() {
+      statusEl.textContent = 'Something went wrong. Please try again.';
+      statusEl.className = 'modal-status is-error';
+    });
+  });
+
+  document.getElementById('cd-whatsapp-btn').addEventListener('click', function() {
+    if (!currentCaseId) return;
+    var phone = document.getElementById('cd-phone').textContent.replace(/[^0-9]/g, '');
+    var nextAction = document.getElementById('cd-nextaction-input').value || 'checking in on your treatment';
+    var name = document.getElementById('cd-name').textContent;
+    var text = 'Hi ' + name + ', this is regarding your treatment — ' + nextAction + '. Please let us know a good time to connect.';
+    if (phone) {
+      window.open('https://wa.me/91' + phone.replace(/^91/, '') + '?text=' + encodeURIComponent(text), '_blank');
+    }
+    apiCall('logMessage', { idToken: zeraIdToken, caseId: currentCaseId, phone: phone, templateUsed: nextAction, channel: 'WhatsApp' });
+  });
+
+  document.getElementById('cd-appt-add').addEventListener('click', function() {
+    if (!currentCaseId || !zeraIdToken) return;
+    var date = document.getElementById('cd-appt-date').value;
+    var time = document.getElementById('cd-appt-time').value;
+    var type = document.getElementById('cd-appt-type').value;
+    if (!date) return;
+    apiCall('addAppointment', { idToken: zeraIdToken, caseId: currentCaseId, date: date, time: time, type: type })
+      .then(function(res) {
+        if (res && res.ok) {
+          renderAppointments(res.appointments);
+          document.getElementById('cd-appt-date').value = '';
+          document.getElementById('cd-appt-time').value = '';
+          document.getElementById('cd-appt-type').value = '';
+        }
+      });
+  });
+
+  document.getElementById('cd-pay-add').addEventListener('click', function() {
+    if (!currentCaseId || !zeraIdToken) return;
+    var amount = document.getElementById('cd-pay-amount').value;
+    var date = document.getElementById('cd-pay-date').value;
+    var mode = document.getElementById('cd-pay-mode').value;
+    if (!amount) return;
+    var quotedAmount = document.getElementById('cd-quoted-input').value;
+    apiCall('addPayment', { idToken: zeraIdToken, caseId: currentCaseId, amount: amount, date: date, mode: mode })
+      .then(function(res) {
+        if (res && res.ok) {
+          renderPayments(res.payments, quotedAmount);
+          document.getElementById('cd-pay-amount').value = '';
+          document.getElementById('cd-pay-date').value = '';
+          document.getElementById('cd-pay-mode').value = '';
+        }
+      });
   });
 </script>
 
