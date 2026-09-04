@@ -21,6 +21,8 @@
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2310b981'/%3E%3Ccircle cx='32' cy='32' r='12' fill='white'/%3E%3C/svg%3E" />
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <style>
   :root{
     --navy:#0c1b1e;
@@ -30,6 +32,10 @@
     --muted:#5b7570;
     --line:#e6efec;
     --bg:#f6fbf9;
+    --red:#e11d48;
+    --red-bg:#fef2f4;
+    --amber:#b45309;
+    --amber-bg:#fffaeb;
   }
   *{box-sizing:border-box;}
   body{
@@ -57,12 +63,13 @@
   .btn{
     display:inline-flex;align-items:center;gap:8px;
     padding:12px 22px;border-radius:999px;font-weight:700;font-size:15px;
-    border:1px solid transparent;cursor:pointer;
+    border:1px solid transparent;cursor:pointer;font-family:inherit;
   }
   .btn-primary{background:var(--green);color:#fff;}
   .btn-primary:hover{background:var(--green-dark);}
   .btn-ghost{background:#fff;border-color:var(--line);color:var(--navy);}
   .btn-ghost:hover{border-color:var(--green);}
+  .btn:disabled{opacity:0.6;cursor:default;}
 
   main{padding:56px 0 0;}
   .hero{
@@ -136,6 +143,22 @@
   .cta-final h2{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-0.02em;margin:0 0 14px;}
   .cta-final p{color:#3c5a54;max-width:480px;margin:0 auto 28px;font-size:16px;line-height:1.6;}
 
+  #g_id_signin_container{display:flex;justify-content:center;margin-top:6px;min-height:44px;}
+  #login-status{margin-top:16px;font-size:14.5px;color:var(--muted);min-height:20px;}
+  #login-status.is-error{color:var(--red);}
+
+  .reg-form{
+    display:none;max-width:360px;margin:22px auto 0;text-align:left;
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;
+  }
+  .reg-form label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin:0 0 6px;}
+  .reg-form input{
+    width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);
+    font-size:15px;font-family:inherit;margin-bottom:16px;
+  }
+  .reg-form input:focus{outline:none;border-color:var(--green);}
+  .reg-form .btn{width:100%;justify-content:center;}
+
   footer{
     border-top:1px solid var(--line);padding:36px 24px;background:#fff;
   }
@@ -147,10 +170,44 @@
   .foot-links a:hover{color:var(--green-dark);}
   .foot-copy{font-size:12.5px;color:var(--muted);max-width:1040px;margin:20px auto 0;text-align:center;}
   .foot-copy a{color:var(--green-dark);font-weight:600;}
+
+  /* ===== Dashboard (app) view ===== */
+  #app-view{display:none;min-height:100vh;}
+  .app-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 24px;border-bottom:1px solid var(--line);background:#fff;
+  }
+  .app-user{display:flex;align-items:center;gap:14px;font-size:14.5px;font-weight:600;color:var(--navy);}
+  .app-main{padding:36px 24px 60px;}
+  .app-main h1{font-size:26px;margin:0 0 6px;}
+  .app-sub{color:var(--muted);font-size:14.5px;margin:0 0 26px;}
+  .board-empty{
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:40px;
+    text-align:center;color:var(--muted);font-size:15px;
+  }
+  .board-row{
+    background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:12px;
+    padding:16px 20px;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;
+    justify-content:space-between;gap:10px 20px;
+  }
+  .board-row.overdue{border-left-color:var(--red);}
+  .board-row.ontrack{border-left-color:var(--green);}
+  .board-row-main{min-width:220px;}
+  .board-row-name{font-weight:700;font-size:15.5px;}
+  .board-row-stage{font-size:13px;color:var(--muted);margin-top:2px;}
+  .board-row-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .board-badge{
+    font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;
+    background:var(--red-bg);color:var(--red);
+  }
+  .board-row.ontrack .board-badge{background:var(--amber-bg);color:var(--amber);}
+  .board-due{font-size:13px;color:var(--muted);}
+  .board-row-action{width:100%;font-size:13.5px;color:#3c5a54;padding-top:4px;border-top:1px dashed var(--line);margin-top:6px;}
 </style>
 </head>
 <body>
 
+<div id="marketing-view">
 <header>
   <div class="logo">
     <span class="logo-badge"><span></span></span>
@@ -171,10 +228,10 @@
         recall — on one board, with WhatsApp follow-ups built in.
       </p>
       <div class="cta-row">
-        <a href="#login" class="btn btn-primary">Staff login →</a>
-        <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">Get this for your clinic</a>
+        <a href="#login" class="btn btn-primary">Open my dashboard →</a>
+        <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">Talk to us first</a>
       </div>
-      <div class="cta-note">Already a Zera PMS clinic? Use the staff login above — sign in with the Google account your clinic registered.</div>
+      <div class="cta-note">New clinic? Sign in with Google below to set up your dashboard in seconds. Already with us? Same button, same board.</div>
     </div>
   </div>
 
@@ -195,8 +252,8 @@
         </div>
         <div class="card">
           <div class="icon">3</div>
-          <h3>Runs on Google Sheets</h3>
-          <p>Your data lives in your own Google account. No new login system, no lock-in, nothing to migrate later.</p>
+          <h3>Secure &amp; always-on</h3>
+          <p>Your clinic's data lives in an encrypted, automatically backed-up cloud workspace built and maintained by Zera Technologies — nothing to install, nothing to maintain.</p>
         </div>
       </div>
     </div>
@@ -223,8 +280,23 @@
   <section id="login" class="cta-final">
     <div class="wrap">
       <h2>Ready to see today's board?</h2>
-      <p>Sign in with the Google account your clinic registered with Zera Dental.</p>
-      <a href="https://script.google.com/macros/s/AKfycbxhr8PmMAoxFM_zeheygEmEg4avaHa6uaVlkUGweqv265PM5LDFwwYzlIL7svfSxGlq/exec" class="btn btn-primary">Open Zera PMS →</a>
+      <p>Sign in with your clinic's Google account — new clinics get a dashboard set up automatically.</p>
+      <div id="g_id_onload"
+           data-client_id="917048157757-2uad7uhpmjtkl9ncdvvi3rm7rs3h3bgo.apps.googleusercontent.com"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false">
+      </div>
+      <div id="g_id_signin_container">
+        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
+      </div>
+      <div id="login-status"></div>
+      <div id="register-form" class="reg-form">
+        <label for="reg-clinic-name">Clinic name</label>
+        <input id="reg-clinic-name" type="text" placeholder="e.g. Smile Dental Care" />
+        <label for="reg-whatsapp">WhatsApp number (optional)</label>
+        <input id="reg-whatsapp" type="text" placeholder="10-digit mobile" />
+        <button id="reg-submit" class="btn btn-primary" type="button">Create my dashboard →</button>
+      </div>
     </div>
   </section>
 
@@ -247,6 +319,138 @@
     Designed and developed by <a href="https://zeratech.io/" target="_blank" rel="noopener noreferrer">Zera Technologies</a>.
   </p>
 </footer>
+</div>
+
+<div id="app-view">
+  <div class="app-header">
+    <div class="logo">
+      <span class="logo-badge"><span></span></span>
+      <span>Zera PMS</span>
+    </div>
+    <div class="app-user">
+      <span id="app-clinic-name"></span>
+      <button id="app-signout" class="btn btn-ghost" type="button">Sign out</button>
+    </div>
+  </div>
+  <div class="app-main wrap">
+    <h1>Today's board</h1>
+    <p class="app-sub">Cases due or overdue today, most overdue first.</p>
+    <div id="app-board"></div>
+  </div>
+</div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxhr8PmMAoxFM_zeheygEmEg4avaHa6uaVlkUGweqv265PM5LDFwwYzlIL7svfSxGlq/exec';
+  var zeraIdToken = null;
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function setLoginStatus(msg, isError) {
+    var el = document.getElementById('login-status');
+    el.textContent = msg || '';
+    el.className = isError ? 'is-error' : '';
+  }
+
+  function apiCall(action, extra) {
+    var payload = Object.assign({ action: action }, extra || {});
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function(r) { return r.json(); });
+  }
+
+  function handleCredentialResponse(response) {
+    zeraIdToken = response.credential;
+    setLoginStatus('Signing you in…');
+    document.getElementById('register-form').style.display = 'none';
+    apiCall('login', { idToken: zeraIdToken })
+      .then(handleLoginResult)
+      .catch(function() { setLoginStatus('Something went wrong. Please try again.', true); });
+  }
+
+  function handleLoginResult(res) {
+    if (!res || !res.ok) {
+      setLoginStatus('Sign-in failed. Please try again.', true);
+      return;
+    }
+    if (res.status === 'new') {
+      setLoginStatus('Welcome! Let’s set up your clinic (' + res.email + ').');
+      document.getElementById('register-form').style.display = 'block';
+    } else if (res.status === 'suspended') {
+      setLoginStatus(res.clinicName + '’s subscription is on hold — WhatsApp us to restore access.', true);
+    } else if (res.status === 'active') {
+      showDashboard(res);
+    } else {
+      setLoginStatus('Something went wrong. Please try again.', true);
+    }
+  }
+
+  function showDashboard(res) {
+    document.getElementById('marketing-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'block';
+    document.getElementById('app-clinic-name').textContent = res.clinicName;
+    renderBoard(res.board);
+    window.scrollTo(0, 0);
+  }
+
+  function showMarketing() {
+    document.getElementById('app-view').style.display = 'none';
+    document.getElementById('marketing-view').style.display = 'block';
+  }
+
+  function renderBoard(rows) {
+    var el = document.getElementById('app-board');
+    if (!rows || rows.length === 0) {
+      el.innerHTML = '<div class="board-empty">No active cases due right now.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(function(r) {
+      var overdueClass = r.daysOverdue >= 0 ? 'overdue' : 'ontrack';
+      var overdueLabel = r.daysOverdue > 0
+        ? (r.daysOverdue + ' day(s) overdue')
+        : (r.daysOverdue === 0 ? 'Due today' : ('Due in ' + Math.abs(r.daysOverdue) + ' day(s)'));
+      return '<div class="board-row ' + overdueClass + '">' +
+        '<div class="board-row-main">' +
+          '<div class="board-row-name">' + escapeHtml(r.patientName || '(unnamed)') + '</div>' +
+          '<div class="board-row-stage">' + escapeHtml(r.stage || '') + '</div>' +
+        '</div>' +
+        '<div class="board-row-meta">' +
+          '<span class="board-badge">' + escapeHtml(overdueLabel) + '</span>' +
+          '<span class="board-due">Due ' + escapeHtml(r.dueDate) + '</span>' +
+        '</div>' +
+        (r.nextAction ? '<div class="board-row-action">' + escapeHtml(r.nextAction) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('reg-submit').addEventListener('click', function() {
+    var clinicName = document.getElementById('reg-clinic-name').value.trim();
+    var whatsapp = document.getElementById('reg-whatsapp').value.trim();
+    if (!clinicName) { setLoginStatus('Please enter your clinic name.', true); return; }
+    if (!zeraIdToken) { setLoginStatus('Please sign in again.', true); return; }
+    setLoginStatus('Creating your dashboard…');
+    apiCall('register', { idToken: zeraIdToken, clinicName: clinicName, whatsapp: whatsapp })
+      .then(handleLoginResult)
+      .catch(function() { setLoginStatus('Something went wrong. Please try again.', true); });
+  });
+
+  document.getElementById('app-signout').addEventListener('click', function() {
+    zeraIdToken = null;
+    try {
+      if (window.google && google.accounts && google.accounts.id) {
+        google.accounts.id.disableAutoSelect();
+      }
+    } catch (e) {}
+    document.getElementById('register-form').style.display = 'none';
+    setLoginStatus('');
+    showMarketing();
+  });
+</script>
 
 </body>
 </html>
