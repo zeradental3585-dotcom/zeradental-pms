@@ -230,15 +230,19 @@
   .modal-status.is-error{color:var(--red);}
 
   /* ===== Stats bar ===== */
-  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px;}
+  @media (max-width:900px){.stats-row{grid-template-columns:repeat(3,1fr);}}
   @media (max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr);}}
-  .stat-tile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
-  .stat-tile .stat-num{font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;}
+  .stat-tile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:box-shadow .12s;}
+  .stat-tile .stat-num{font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;}
   .stat-tile .stat-label{font-size:12.5px;color:var(--muted);margin-top:4px;font-weight:600;}
   .stat-tile.attn .stat-num{color:var(--red);}
 
+  /* ===== Header actions ===== */
+  .app-main-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
   /* ===== Tabs ===== */
-  .app-tabs{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid var(--line);}
+  .app-tabs{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
   .app-tab{
     background:none;border:none;font-family:inherit;font-size:14.5px;font-weight:700;
     color:var(--muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;
@@ -308,6 +312,77 @@
   .balance-note.clear{color:var(--green-dark);}
   .whatsapp-btn{background:#25D366;color:#fff;}
   .whatsapp-btn:hover{background:#1fb356;}
+
+  /* ===== Modal open animation ===== */
+  .modal-overlay{opacity:0;transition:opacity .15s ease;}
+  .modal-overlay.open{opacity:1;}
+  .modal-card{transform:translateY(8px) scale(0.98);transition:transform .15s ease;}
+  .modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+
+  /* ===== Row hover polish ===== */
+  .patient-row,.enquiry-row,.today-appt-row{transition:box-shadow .12s;}
+  .patient-row:hover,.enquiry-row:hover{box-shadow:0 2px 10px rgba(12,27,30,0.06);}
+
+  /* ===== Today tab: range picker ===== */
+  .range-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+  .range-pills{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;}
+  .range-pill{
+    background:none;border:none;font-family:inherit;font-size:13.5px;font-weight:700;
+    color:var(--muted);padding:7px 15px;border-radius:999px;cursor:pointer;
+  }
+  .range-pill.active{background:var(--navy);color:#fff;}
+  .range-custom{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);}
+  .range-custom input{padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-family:inherit;font-size:13.5px;}
+
+  /* ===== Today tab: two-column layout ===== */
+  .today-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:start;}
+  @media (max-width:860px){.today-grid{grid-template-columns:1fr;}}
+  .today-col-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);margin:0 0 12px;}
+
+  .today-appt-row{
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;
+  }
+  .ta-main{display:flex;align-items:center;gap:14px;min-width:0;}
+  .ta-time{font-weight:800;font-size:14.5px;color:var(--navy);min-width:52px;flex-shrink:0;}
+  .ta-name{font-weight:700;font-size:14.5px;}
+  .ta-meta{font-size:12.5px;color:var(--muted);margin-top:1px;}
+  .ta-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .ta-status{font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--amber-bg);color:var(--amber);}
+  .ta-status.done{background:#dcf5ea;color:var(--green-dark);}
+  .ta-status.cancelled{background:var(--red-bg);color:var(--red);}
+  .btn-remind{
+    background:#e5f6ee;color:var(--green-dark);border:none;font-family:inherit;font-weight:700;
+    font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer;
+  }
+  .btn-remind:hover{background:#c9ecdc;}
+
+  /* ===== Today tab: income ===== */
+  .income-summary{
+    background:var(--navy);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:14px;
+  }
+  .income-total{font-size:30px;font-weight:800;letter-spacing:-0.02em;}
+  .income-sub{font-size:13px;color:#9fc4bb;margin-top:4px;font-weight:600;}
+
+  /* ===== Log visit: patient search ===== */
+  .search-results{
+    display:none;margin-top:6px;border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:220px;overflow-y:auto;
+  }
+  .search-results.open{display:block;}
+  .search-result{padding:10px 13px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .search-result:last-child{border-bottom:none;}
+  .search-result:hover{background:var(--bg);}
+  .sr-name{display:block;font-weight:700;font-size:14px;}
+  .sr-meta{display:block;font-size:12.5px;color:var(--muted);margin-top:1px;}
+  .search-empty{padding:12px 13px;font-size:13px;color:var(--muted);}
+  .lv-selected{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:#e5f6ee;border-radius:10px;padding:10px 14px;margin:-4px 0 16px;font-size:14px;
+  }
+  .lv-change-btn{
+    background:none;border:none;color:var(--green-dark);font-family:inherit;font-weight:700;
+    font-size:12.5px;cursor:pointer;text-decoration:underline;padding:0;
+  }
 </style>
 </head>
 <body>
@@ -443,18 +518,46 @@
         <h1 id="app-clinic-title">Dashboard</h1>
         <p class="app-sub">Every patient, case, enquiry and payment — nothing needs the Sheet.</p>
       </div>
-      <button id="add-patient-btn" class="btn btn-primary" type="button">+ Add patient</button>
+      <div class="app-main-actions">
+        <button id="log-visit-btn" class="btn btn-ghost" type="button">Log visit</button>
+        <button id="add-patient-btn" class="btn btn-primary" type="button">+ Add patient</button>
+      </div>
     </div>
 
     <div id="app-stats" class="stats-row"></div>
 
     <div class="app-tabs">
-      <button class="app-tab active" data-tab="board" type="button">Board <span class="tab-count" id="tab-count-board">0</span></button>
+      <button class="app-tab active" data-tab="today" type="button">Today <span class="tab-count" id="tab-count-today">0</span></button>
+      <button class="app-tab" data-tab="board" type="button">Board <span class="tab-count" id="tab-count-board">0</span></button>
       <button class="app-tab" data-tab="patients" type="button">Patients <span class="tab-count" id="tab-count-patients">0</span></button>
       <button class="app-tab" data-tab="enquiries" type="button">Enquiries <span class="tab-count" id="tab-count-enquiries">0</span></button>
     </div>
 
-    <div id="tab-board" class="tab-panel active">
+    <div id="tab-today" class="tab-panel active">
+      <div class="range-bar">
+        <div class="range-pills" id="range-pills">
+          <button class="range-pill active" data-range="today" type="button">Today</button>
+          <button class="range-pill" data-range="week" type="button">This week</button>
+          <button class="range-pill" data-range="month" type="button">This month</button>
+          <button class="range-pill" data-range="custom" type="button">Custom</button>
+        </div>
+        <div class="range-custom" id="range-custom" style="display:none;">
+          <input type="date" id="range-from" /> <span>to</span> <input type="date" id="range-to" />
+        </div>
+      </div>
+      <div class="today-grid">
+        <div class="today-col">
+          <div class="today-col-title">Appointments</div>
+          <div id="today-appointments"></div>
+        </div>
+        <div class="today-col">
+          <div class="today-col-title">Income</div>
+          <div id="today-income-summary" class="income-summary"></div>
+          <div id="today-payments"></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-board" class="tab-panel">
       <div id="app-board"></div>
     </div>
     <div id="tab-patients" class="tab-panel">
@@ -664,12 +767,99 @@
   </div>
 </div>
 
+<div id="log-visit-modal" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Log a visit</h2>
+    <p class="modal-sub">Record today's visit for an existing patient — consultation, payment, next visit, notes — in one go.</p>
+
+    <div class="modal-field">
+      <label for="lv-search">Find patient (active cases) *</label>
+      <input id="lv-search" type="text" placeholder="Type a name or phone number…" autocomplete="off" />
+      <div id="lv-search-results" class="search-results"></div>
+    </div>
+    <div id="lv-selected" class="lv-selected" style="display:none;"></div>
+    <input type="hidden" id="lv-case-id" value="" />
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="lv-date">Date of visit *</label>
+        <input id="lv-date" type="date" />
+      </div>
+      <div class="modal-field">
+        <label for="lv-type">Visit type</label>
+        <input id="lv-type" type="text" placeholder="e.g. Consultation, Review" />
+      </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="lv-amount">Amount received (₹)</label>
+        <input id="lv-amount" type="number" min="0" />
+      </div>
+      <div class="modal-field">
+        <label for="lv-mode">Payment mode</label>
+        <input id="lv-mode" type="text" placeholder="e.g. UPI, Cash" />
+      </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="lv-next-date">Next visit date</label>
+        <input id="lv-next-date" type="date" />
+      </div>
+      <div class="modal-field">
+        <label for="lv-next-action">Next action</label>
+        <input id="lv-next-action" type="text" placeholder="e.g. Review CBCT" />
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="lv-notes">Treatment notes</label>
+      <textarea id="lv-notes" placeholder="What happened at this visit…"></textarea>
+    </div>
+
+    <div id="log-visit-status" class="modal-status"></div>
+
+    <div class="modal-actions">
+      <button id="log-visit-cancel" class="btn btn-ghost" type="button">Cancel</button>
+      <button id="log-visit-submit" class="btn btn-primary" type="button">Save visit</button>
+    </div>
+  </div>
+</div>
+
+<div id="wa-compose-modal" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Send WhatsApp reminder</h2>
+    <p class="modal-sub" id="wa-compose-sub"></p>
+    <div class="modal-field">
+      <label for="wa-compose-text">Message (edit before sending)</label>
+      <textarea id="wa-compose-text" rows="4"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button id="wa-compose-cancel" class="btn btn-ghost" type="button">Cancel</button>
+      <button id="wa-compose-send" class="btn whatsapp-btn" type="button">Open WhatsApp →</button>
+    </div>
+  </div>
+</div>
+
 <script>
   var zeraIdToken = null;
   var currentBoard = [];
   var currentPatients = [];
   var currentEnquiries = [];
+  var currentAppointments = [];
+  var currentPayments = [];
   var currentCaseId = null; // case detail modal currently open on this CaseID
+  var todayRangeMode = 'today';
+  var waComposeCtx = null; // { caseId, phone, name, defaultText } for the open WhatsApp compose modal
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function isoOf(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
@@ -749,9 +939,12 @@
     currentBoard = res.board || [];
     currentPatients = res.patients || [];
     currentEnquiries = res.enquiries || [];
+    currentAppointments = res.appointments || [];
+    currentPayments = res.payments || [];
     renderBoard(currentBoard);
     renderPatients(currentPatients);
     renderEnquiries(currentEnquiries);
+    renderToday();
     renderStats();
     document.getElementById('tab-count-board').textContent = currentBoard.length;
     document.getElementById('tab-count-patients').textContent = currentPatients.length;
@@ -763,13 +956,28 @@
     document.getElementById('marketing-view').style.display = 'block';
   }
 
+  function computeOutstanding() {
+    var paidByCase = {};
+    currentPayments.forEach(function(p) {
+      paidByCase[p.caseId] = (paidByCase[p.caseId] || 0) + (Number(p.amount) || 0);
+    });
+    var total = 0;
+    currentBoard.forEach(function(r) {
+      var owed = (Number(r.quotedAmount) || 0) - (paidByCase[r.caseId] || 0);
+      if (owed > 0) total += owed;
+    });
+    return total;
+  }
+
   function renderStats() {
     var overdue = currentBoard.filter(function(r) { return r.daysOverdue >= 0; }).length;
+    var outstanding = computeOutstanding();
     var tiles = [
       { num: currentPatients.length, label: 'Total patients' },
       { num: currentBoard.length, label: 'Active cases' },
       { num: overdue, label: 'Overdue today', attn: overdue > 0 },
-      { num: currentEnquiries.length, label: 'New enquiries' }
+      { num: currentEnquiries.length, label: 'New enquiries' },
+      { num: '₹' + outstanding.toLocaleString('en-IN'), label: 'Outstanding (active)', attn: outstanding > 0 }
     ];
     document.getElementById('app-stats').innerHTML = tiles.map(function(t) {
       return '<div class="stat-tile' + (t.attn ? ' attn' : '') + '">' +
@@ -778,6 +986,220 @@
       '</div>';
     }).join('');
   }
+
+  // --- Today tab: date-range appointments + income -------------------------
+  function computeRangeBounds(mode) {
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    var t = todayISO();
+    if (mode === 'today') return { from: t, to: t };
+    if (mode === 'week') {
+      var day = now.getDay();
+      var mondayOffset = day === 0 ? -6 : 1 - day;
+      return { from: isoOf(new Date(y, m, d + mondayOffset)), to: isoOf(new Date(y, m, d + mondayOffset + 6)) };
+    }
+    if (mode === 'month') {
+      return { from: isoOf(new Date(y, m, 1)), to: isoOf(new Date(y, m + 1, 0)) };
+    }
+    return { from: document.getElementById('range-from').value || t, to: document.getElementById('range-to').value || t };
+  }
+
+  function renderToday() {
+    var bounds = computeRangeBounds(todayRangeMode);
+    var t = todayISO();
+    var apptEl = document.getElementById('today-appointments');
+    var matches = currentAppointments.filter(function(a) { return a.dateISO && a.dateISO >= bounds.from && a.dateISO <= bounds.to; });
+    document.getElementById('tab-count-today').textContent = matches.length;
+
+    if (matches.length === 0) {
+      apptEl.innerHTML = '<div class="board-empty">No appointments in this range.</div>';
+    } else {
+      apptEl.innerHTML = matches.map(function(a) {
+        var statusCls = a.status === 'Completed' ? 'done' : (a.status === 'Cancelled' ? 'cancelled' : '');
+        return '<div class="today-appt-row" data-case-id="' + escapeHtml(a.caseId) + '">' +
+          '<div class="ta-main">' +
+            '<div class="ta-time">' + escapeHtml(a.time || '—') + '</div>' +
+            '<div><div class="ta-name">' + escapeHtml(a.patientName || '(unnamed)') + '</div>' +
+            '<div class="ta-meta">' + escapeHtml(a.type || '') + (a.dateISO !== t ? ' · ' + escapeHtml(a.date) : '') + '</div></div>' +
+          '</div>' +
+          '<div class="ta-actions">' +
+            '<span class="ta-status ' + statusCls + '">' + escapeHtml(a.status || '') + '</span>' +
+            '<button class="btn-remind" type="button" data-case-id="' + escapeHtml(a.caseId) + '" ' +
+              'data-phone="' + escapeHtml(a.phone || '') + '" data-name="' + escapeHtml(a.patientName || '') + '" ' +
+              'data-appt-date="' + escapeHtml(a.date || '') + '">Remind</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    var payMatches = currentPayments.filter(function(p) { return p.dateISO && p.dateISO >= bounds.from && p.dateISO <= bounds.to; });
+    var total = payMatches.reduce(function(sum, p) { return sum + (Number(p.amount) || 0); }, 0);
+    document.getElementById('today-income-summary').innerHTML =
+      '<div class="income-total">₹' + total.toLocaleString('en-IN') + '</div>' +
+      '<div class="income-sub">' + payMatches.length + ' payment(s) in this range</div>';
+
+    var payEl = document.getElementById('today-payments');
+    if (payMatches.length === 0) {
+      payEl.innerHTML = '<div class="board-empty">No payments in this range.</div>';
+    } else {
+      payEl.innerHTML = payMatches.map(function(p) {
+        return '<div class="detail-list-row"><span>' + escapeHtml(p.date) + ' — ' + escapeHtml(p.patientName || '') +
+          '</span><span>₹' + escapeHtml(p.amount) + ' (' + escapeHtml(p.mode || '') + ')</span></div>';
+      }).join('');
+    }
+  }
+
+  document.querySelectorAll('.range-pill').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.range-pill').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      todayRangeMode = btn.dataset.range;
+      document.getElementById('range-custom').style.display = todayRangeMode === 'custom' ? 'flex' : 'none';
+      if (todayRangeMode !== 'custom') renderToday();
+    });
+  });
+  document.getElementById('range-from').addEventListener('change', renderToday);
+  document.getElementById('range-to').addEventListener('change', renderToday);
+
+  document.getElementById('today-appointments').addEventListener('click', function(e) {
+    var remindBtn = e.target.closest('.btn-remind');
+    if (remindBtn) {
+      openWhatsAppCompose({
+        caseId: remindBtn.dataset.caseId, phone: remindBtn.dataset.phone, name: remindBtn.dataset.name,
+        defaultText: 'Hi ' + remindBtn.dataset.name + ', this is a reminder about your appointment on ' +
+          remindBtn.dataset.apptDate + '. Please let us know if this time still works for you.'
+      });
+      return;
+    }
+    var row = e.target.closest('.today-appt-row');
+    if (!row) return;
+    var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(row.dataset.caseId); })[0];
+    if (ctx) openCaseDetail(ctx);
+  });
+
+  // --- WhatsApp compose (editable reminder before sending) -----------------
+  function openWhatsAppCompose(ctx) {
+    waComposeCtx = ctx;
+    document.getElementById('wa-compose-sub').textContent = 'To ' + (ctx.name || 'patient') + ' — ' + (ctx.phone || 'no phone on file');
+    document.getElementById('wa-compose-text').value = ctx.defaultText || '';
+    document.getElementById('wa-compose-modal').classList.add('open');
+  }
+  function closeWhatsAppCompose() {
+    document.getElementById('wa-compose-modal').classList.remove('open');
+    waComposeCtx = null;
+  }
+  document.getElementById('wa-compose-cancel').addEventListener('click', closeWhatsAppCompose);
+  document.getElementById('wa-compose-modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeWhatsAppCompose(); });
+  document.getElementById('wa-compose-send').addEventListener('click', function() {
+    if (!waComposeCtx) return;
+    var text = document.getElementById('wa-compose-text').value;
+    var phone = String(waComposeCtx.phone || '').replace(/[^0-9]/g, '');
+    if (phone) {
+      window.open('https://wa.me/91' + phone.replace(/^91/, '') + '?text=' + encodeURIComponent(text), '_blank');
+    }
+    if (waComposeCtx.caseId) {
+      apiCall('logMessage', { idToken: zeraIdToken, caseId: waComposeCtx.caseId, phone: phone, templateUsed: text, channel: 'WhatsApp' });
+    }
+    closeWhatsAppCompose();
+  });
+
+  // --- Log visit modal (daily entry: consultation + payment + next visit) --
+  function renderLvResults(query) {
+    var el = document.getElementById('lv-search-results');
+    var q = (query || '').trim().toLowerCase();
+    if (!q) { el.innerHTML = ''; el.classList.remove('open'); return; }
+    var matches = currentBoard.filter(function(r) {
+      return (r.patientName || '').toLowerCase().indexOf(q) !== -1 || (r.phone || '').indexOf(q) !== -1;
+    }).slice(0, 6);
+    if (matches.length === 0) {
+      el.innerHTML = '<div class="search-empty">No active case matches — check spelling, or open them from Patients.</div>';
+    } else {
+      el.innerHTML = matches.map(function(r) {
+        return '<div class="search-result" data-case-id="' + escapeHtml(r.caseId) + '">' +
+          '<span class="sr-name">' + escapeHtml(r.patientName) + '</span>' +
+          '<span class="sr-meta">' + escapeHtml(r.phone || '') + ' · ' + escapeHtml(r.stage || '') + '</span>' +
+        '</div>';
+      }).join('');
+    }
+    el.classList.add('open');
+  }
+  document.getElementById('lv-search').addEventListener('input', function(e) { renderLvResults(e.target.value); });
+  document.getElementById('lv-search-results').addEventListener('click', function(e) {
+    var row = e.target.closest('.search-result');
+    if (!row) return;
+    var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(row.dataset.caseId); })[0];
+    if (!ctx) return;
+    document.getElementById('lv-case-id').value = ctx.caseId;
+    document.getElementById('lv-search').value = '';
+    document.getElementById('lv-search-results').innerHTML = '';
+    document.getElementById('lv-search-results').classList.remove('open');
+    var sel = document.getElementById('lv-selected');
+    sel.style.display = 'flex';
+    sel.innerHTML = '<div><strong>' + escapeHtml(ctx.patientName) + '</strong> · ' + escapeHtml(ctx.caseId) +
+      ' · ' + escapeHtml(ctx.stage) + '</div><button type="button" class="lv-change-btn">Change</button>';
+  });
+  document.getElementById('lv-selected').addEventListener('click', function(e) {
+    if (!e.target.closest('.lv-change-btn')) return;
+    document.getElementById('lv-case-id').value = '';
+    document.getElementById('lv-selected').style.display = 'none';
+  });
+
+  function openLogVisitModal() {
+    resetLogVisitForm();
+    document.getElementById('log-visit-modal').classList.add('open');
+  }
+  function closeLogVisitModal() {
+    document.getElementById('log-visit-modal').classList.remove('open');
+  }
+  function resetLogVisitForm() {
+    ['lv-search', 'lv-type', 'lv-amount', 'lv-mode', 'lv-next-date', 'lv-next-action', 'lv-notes'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('lv-case-id').value = '';
+    document.getElementById('lv-date').value = todayISO();
+    document.getElementById('lv-search-results').innerHTML = '';
+    document.getElementById('lv-search-results').classList.remove('open');
+    document.getElementById('lv-selected').style.display = 'none';
+    document.getElementById('log-visit-status').textContent = '';
+    document.getElementById('log-visit-status').className = 'modal-status';
+  }
+  document.getElementById('log-visit-btn').addEventListener('click', openLogVisitModal);
+  document.getElementById('log-visit-cancel').addEventListener('click', closeLogVisitModal);
+  document.getElementById('log-visit-modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeLogVisitModal(); });
+
+  document.getElementById('log-visit-submit').addEventListener('click', function() {
+    var statusEl = document.getElementById('log-visit-status');
+    var caseId = document.getElementById('lv-case-id').value;
+    var visitDate = document.getElementById('lv-date').value;
+    if (!caseId) { statusEl.textContent = 'Please find and select a patient first.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!visitDate) { statusEl.textContent = 'Please choose the visit date.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!zeraIdToken) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
+
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'modal-status';
+    apiCall('logVisit', {
+      idToken: zeraIdToken,
+      caseId: caseId,
+      visitDate: visitDate,
+      visitType: document.getElementById('lv-type').value,
+      amountReceived: document.getElementById('lv-amount').value,
+      paymentMode: document.getElementById('lv-mode').value,
+      nextVisitDate: document.getElementById('lv-next-date').value,
+      nextAction: document.getElementById('lv-next-action').value,
+      notes: document.getElementById('lv-notes').value
+    }).then(function(res) {
+      if (!res || !res.ok) {
+        statusEl.textContent = addCaseErrorMessage(res && res.error);
+        statusEl.className = 'modal-status is-error';
+        return;
+      }
+      applyDashboardData(res);
+      closeLogVisitModal();
+    }).catch(function() {
+      statusEl.textContent = 'Something went wrong. Please try again.';
+      statusEl.className = 'modal-status is-error';
+    });
+  });
 
   // --- Tabs ---------------------------------------------------------------
   document.querySelectorAll('.app-tab').forEach(function(btn) {
@@ -1169,10 +1591,7 @@
     var nextAction = document.getElementById('cd-nextaction-input').value || 'checking in on your treatment';
     var name = document.getElementById('cd-name').textContent;
     var text = 'Hi ' + name + ', this is regarding your treatment — ' + nextAction + '. Please let us know a good time to connect.';
-    if (phone) {
-      window.open('https://wa.me/91' + phone.replace(/^91/, '') + '?text=' + encodeURIComponent(text), '_blank');
-    }
-    apiCall('logMessage', { idToken: zeraIdToken, caseId: currentCaseId, phone: phone, templateUsed: nextAction, channel: 'WhatsApp' });
+    openWhatsAppCompose({ caseId: currentCaseId, phone: phone, name: name, defaultText: text });
   });
 
   document.getElementById('cd-appt-add').addEventListener('click', function() {
