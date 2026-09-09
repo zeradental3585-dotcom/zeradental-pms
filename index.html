@@ -159,6 +159,12 @@
   .reg-form input:focus{outline:none;border-color:var(--green);}
   .reg-form .btn{width:100%;justify-content:center;}
 
+  .login-divider{
+    max-width:360px;margin:20px auto;display:flex;align-items:center;gap:12px;
+    color:var(--muted);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;
+  }
+  .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+
   footer{
     border-top:1px solid var(--line);padding:36px 24px;background:#fff;
   }
@@ -459,8 +465,13 @@
 
   <section id="login" class="cta-final">
     <div class="wrap">
-      <h2>Ready to see today's board?</h2>
-      <p>Sign in with your clinic's Google account — new clinics get a dashboard set up automatically.</p>
+      <h2 id="login-heading">Ready to see today's board?</h2>
+      <p id="login-sub">Sign in with your clinic's Google account — new clinics get a dashboard set up automatically.</p>
+
+      <div id="back-to-clinic-site" style="display:none;margin-bottom:22px;">
+        <a href="#" id="back-to-clinic-link" class="btn btn-ghost">&larr; Back to <span id="back-to-clinic-name"></span></a>
+      </div>
+
       <div id="g_id_onload"
            data-client_id="917048157757-2uad7uhpmjtkl9ncdvvi3rm7rs3h3bgo.apps.googleusercontent.com"
            data-callback="handleCredentialResponse"
@@ -469,6 +480,17 @@
       <div id="g_id_signin_container">
         <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
       </div>
+
+      <div class="login-divider">or</div>
+
+      <div id="password-login-form" class="reg-form" style="display:block;">
+        <label for="pl-username">Username</label>
+        <input id="pl-username" type="text" autocomplete="username" placeholder="Provided by Zera Dental" />
+        <label for="pl-password">Password</label>
+        <input id="pl-password" type="password" autocomplete="current-password" />
+        <button id="pl-submit" class="btn btn-primary" type="button">Sign in →</button>
+      </div>
+
       <div id="login-status"></div>
       <div id="register-form" class="reg-form">
         <label for="reg-clinic-name">Clinic name</label>
@@ -508,6 +530,7 @@
       <span>Zera PMS</span>
     </div>
     <div class="app-user">
+      <a id="app-back-to-site" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" style="display:none;">&larr; Back to my website</a>
       <span id="app-clinic-name"></span>
       <button id="app-signout" class="btn btn-ghost" type="button">Sign out</button>
     </div>
@@ -844,6 +867,8 @@
 
 <script>
   var zeraIdToken = null;
+  var zeraSessionToken = null; // agency-issued session token (username/password login)
+  var clinicHomepageUrl = ''; // this client's own website, for the "back to my website" link
   var currentBoard = [];
   var currentPatients = [];
   var currentEnquiries = [];
@@ -873,6 +898,20 @@
     el.className = isError ? 'is-error' : '';
   }
 
+  // True once signed in by either method — Google idToken or an
+  // agency-issued username/password session token.
+  function isSignedIn() {
+    return !!(zeraIdToken || zeraSessionToken);
+  }
+
+  function getQueryParam(name) {
+    try {
+      return new URLSearchParams(window.location.search).get(name);
+    } catch (e) {
+      return null;
+    }
+  }
+
   // --- API bridge -----------------------------------------------------
   // apiCall() posts JSON to our own /api/pms serverless function — a
   // same-origin call, so this is a plain fetch() with no CORS involved.
@@ -889,7 +928,12 @@
   // own /api/pms endpoint avoids ever framing script.google.com from the
   // browser at all.
   function apiCall(action, extra) {
-    var payload = Object.assign({ action: action }, extra || {});
+    // idToken / sessionToken are included by default on every call so
+    // individual call sites don't need to know or care which login method
+    // is active — the backend's verifyAuth_ checks sessionToken first, so
+    // a signed-in password-login client is always resolved correctly even
+    // though zeraIdToken is null for them (and vice versa for Google).
+    var payload = Object.assign({ action: action, idToken: zeraIdToken, sessionToken: zeraSessionToken }, extra || {});
     return fetch('/api/pms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -928,6 +972,14 @@
     document.getElementById('app-view').style.display = 'block';
     document.getElementById('app-clinic-name').textContent = res.clinicName;
     document.getElementById('app-clinic-title').textContent = res.clinicName;
+    if (res.homepageUrl) clinicHomepageUrl = res.homepageUrl;
+    var backLink = document.getElementById('app-back-to-site');
+    if (clinicHomepageUrl) {
+      backLink.href = clinicHomepageUrl;
+      backLink.style.display = 'inline-flex';
+    } else {
+      backLink.style.display = 'none';
+    }
     applyDashboardData(res);
     window.scrollTo(0, 0);
   }
@@ -950,6 +1002,81 @@
     document.getElementById('tab-count-patients').textContent = currentPatients.length;
     document.getElementById('tab-count-enquiries').textContent = currentEnquiries.length;
   }
+
+  // --- Agency-managed username/password login (alongside Google) --------
+  // Shows this client's own name + a link back to their website, driven by
+  // the ?c=<slug> query param a client's site links to (e.g.
+  // https://pms.zeradental.in/?c=dr-shilpa-yadav#login). Falls back to the
+  // generic marketing copy when no slug is present or it doesn't resolve.
+  function showBackToClinicLink(name, url) {
+    if (!url) return;
+    clinicHomepageUrl = url;
+    document.getElementById('back-to-clinic-name').textContent = name || 'your website';
+    var link = document.getElementById('back-to-clinic-link');
+    link.href = url;
+    document.getElementById('back-to-clinic-site').style.display = 'block';
+  }
+
+  function initClinicBranding() {
+    var slug = getQueryParam('c');
+    if (!slug) return;
+    apiCall('getClinicBranding', { slug: slug }).then(function(res) {
+      if (res && res.ok) {
+        document.getElementById('login-heading').textContent = 'Sign in to ' + res.clinicName + '’s dashboard';
+        document.getElementById('login-sub').textContent = 'Enter the username and password provided by Zera Dental.';
+        showBackToClinicLink(res.clinicName, res.homepageUrl);
+      }
+    }).catch(function() {});
+  }
+
+  document.getElementById('pl-submit').addEventListener('click', function() {
+    var username = document.getElementById('pl-username').value.trim();
+    var password = document.getElementById('pl-password').value;
+    if (!username || !password) { setLoginStatus('Please enter your username and password.', true); return; }
+    setLoginStatus('Signing you in…');
+    apiCall('passwordLogin', { username: username, password: password }).then(function(res) {
+      if (!res || !res.ok) {
+        if (res && res.error === 'suspended') {
+          setLoginStatus((res.clinicName || 'This account') + '’s subscription is on hold — WhatsApp us to restore access.', true);
+        } else {
+          setLoginStatus('Incorrect username or password.', true);
+        }
+        return;
+      }
+      zeraSessionToken = res.sessionToken;
+      try { localStorage.setItem('zeraSessionToken', zeraSessionToken); } catch (e) {}
+      setLoginStatus('');
+      showDashboard(res);
+    }).catch(function() {
+      setLoginStatus('Something went wrong. Please try again.', true);
+    });
+  });
+  document.getElementById('pl-password').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('pl-submit').click();
+  });
+
+  // Silently restores a password-login session from a saved token, so a
+  // client doesn't have to sign in again on every visit — unlike Google's
+  // idToken, which only ever lives in a JS variable for this page load.
+  function restoreSavedSession() {
+    var saved = null;
+    try { saved = localStorage.getItem('zeraSessionToken'); } catch (e) { saved = null; }
+    if (!saved) return;
+    zeraSessionToken = saved;
+    apiCall('login', {}).then(function(res) {
+      if (res && res.ok && res.status === 'active') {
+        showDashboard(res);
+      } else {
+        zeraSessionToken = null;
+        try { localStorage.removeItem('zeraSessionToken'); } catch (e) {}
+      }
+    }).catch(function() {
+      zeraSessionToken = null;
+    });
+  }
+
+  initClinicBranding();
+  restoreSavedSession();
 
   function showMarketing() {
     document.getElementById('app-view').style.display = 'none';
@@ -1173,7 +1300,7 @@
     var visitDate = document.getElementById('lv-date').value;
     if (!caseId) { statusEl.textContent = 'Please find and select a patient first.'; statusEl.className = 'modal-status is-error'; return; }
     if (!visitDate) { statusEl.textContent = 'Please choose the visit date.'; statusEl.className = 'modal-status is-error'; return; }
-    if (!zeraIdToken) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
 
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
@@ -1344,12 +1471,16 @@
 
   document.getElementById('app-signout').addEventListener('click', function() {
     zeraIdToken = null;
+    zeraSessionToken = null;
+    try { localStorage.removeItem('zeraSessionToken'); } catch (e) {}
     try {
       if (window.google && google.accounts && google.accounts.id) {
         google.accounts.id.disableAutoSelect();
       }
     } catch (e) {}
     document.getElementById('register-form').style.display = 'none';
+    document.getElementById('pl-username').value = '';
+    document.getElementById('pl-password').value = '';
     setLoginStatus('');
     showMarketing();
   });
@@ -1430,7 +1561,7 @@
     if (!name) { statusEl.textContent = 'Please enter the patient’s name.'; statusEl.className = 'modal-status is-error'; return; }
     if (!phone) { statusEl.textContent = 'Please enter a phone number.'; statusEl.className = 'modal-status is-error'; return; }
     if (!consent) { statusEl.textContent = 'Patient consent is required before saving.'; statusEl.className = 'modal-status is-error'; return; }
-    if (!zeraIdToken) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
 
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
@@ -1558,7 +1689,7 @@
 
   document.getElementById('cd-save-btn').addEventListener('click', function() {
     var statusEl = document.getElementById('cd-save-status');
-    if (!currentCaseId || !zeraIdToken) { return; }
+    if (!currentCaseId || !isSignedIn()) { return; }
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
     apiCall('updateCase', {
@@ -1595,7 +1726,7 @@
   });
 
   document.getElementById('cd-appt-add').addEventListener('click', function() {
-    if (!currentCaseId || !zeraIdToken) return;
+    if (!currentCaseId || !isSignedIn()) return;
     var date = document.getElementById('cd-appt-date').value;
     var time = document.getElementById('cd-appt-time').value;
     var type = document.getElementById('cd-appt-type').value;
@@ -1612,7 +1743,7 @@
   });
 
   document.getElementById('cd-pay-add').addEventListener('click', function() {
-    if (!currentCaseId || !zeraIdToken) return;
+    if (!currentCaseId || !isSignedIn()) return;
     var amount = document.getElementById('cd-pay-amount').value;
     var date = document.getElementById('cd-pay-date').value;
     var mode = document.getElementById('cd-pay-mode').value;
