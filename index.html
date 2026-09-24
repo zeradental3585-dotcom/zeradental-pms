@@ -4,19 +4,19 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Zera PMS — Patient & Case Management for Dental Clinics</title>
-<meta name="description" content="Zera PMS tracks every patient and every case — implants, root canals, extractions, orthodontics, crowns, cleanings and more — from enquiry to recall, so nothing goes quiet in the gaps. Built by Zera Dental, sold on a monthly subscription." />
+<meta name="description" content="Zera PMS tracks every patient and every case — implants, root canals, extractions, orthodontics, crowns, cleanings and more — from enquiry to recall, so nothing goes quiet in the gaps. Also requests Google reviews from happy patients on WhatsApp, one tap. Built by Zera Dental, sold on a monthly subscription." />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://pms.zeradental.in/" />
 <meta property="og:title" content="Zera PMS — No case goes quiet." />
-<meta property="og:description" content="Patient and case tracking for every treatment a dental clinic offers, built by Zera Dental. Enquiry to recall, one board, WhatsApp reminders." />
+<meta property="og:description" content="Patient and case tracking for every treatment a dental clinic offers, built by Zera Dental. Enquiry to recall, one board, WhatsApp reminders, and one-tap Google review requests." />
 <meta property="og:image" content="https://pms.zeradental.in/assets/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Zera PMS — No case goes quiet." />
-<meta name="twitter:description" content="Patient and case tracking for every treatment a dental clinic offers, built by Zera Dental." />
+<meta name="twitter:description" content="Patient and case tracking for every treatment a dental clinic offers, plus one-tap Google review requests — built by Zera Dental." />
 <meta name="twitter:image" content="https://pms.zeradental.in/assets/og-image.png" />
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23059669'/%3E%3Ccircle cx='32' cy='32' r='12' fill='white'/%3E%3C/svg%3E" />
@@ -278,7 +278,10 @@
     h1{line-height:1.18;}
   }
 
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;}
+  /* Between these two widths auto-fit lands on 3 columns, orphaning the
+     4th card alone on its own row — force a clean 2x2 instead. */
+  @media (min-width:761px) and (max-width:1029px){.grid{grid-template-columns:repeat(2,1fr);}}
   @media (max-width:760px){.grid{grid-template-columns:1fr;}}
   .card{
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:28px;
@@ -761,6 +764,7 @@
         <div class="trust-row">
           <span class="trust-item"><span class="tick">✓</span> One board, every case</span>
           <span class="trust-item"><span class="tick">✓</span> WhatsApp reminders built in</span>
+          <span class="trust-item"><span class="tick">✓</span> Google reviews, one tap</span>
           <span class="trust-item"><span class="tick">✓</span> Secure, always-on cloud</span>
         </div>
         <div class="cta-row" style="margin-top:26px;">
@@ -828,6 +832,11 @@
         </div>
         <div class="card">
           <div class="icon">3</div>
+          <h3>Google reviews, one tap</h3>
+          <p>When a case wraps up well, Zera PMS surfaces that patient with a ready WhatsApp message asking for a Google review — sent from your front desk while the visit is still fresh.</p>
+        </div>
+        <div class="card">
+          <div class="icon">4</div>
           <h3>Secure &amp; always-on</h3>
           <p>Your clinic's data lives in an encrypted, automatically backed-up cloud workspace built and maintained by Zera Technologies — nothing to install, nothing to maintain.</p>
         </div>
