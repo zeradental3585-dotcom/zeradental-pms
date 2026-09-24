@@ -21,6 +21,10 @@
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2310b981'/%3E%3Ccircle cx='32' cy='32' r='12' fill='white'/%3E%3C/svg%3E" />
 
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
@@ -42,12 +46,17 @@
   html,body{max-width:100%;overflow-x:hidden;}
   body{
     margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);
     color:var(--navy);
     -webkit-font-smoothing:antialiased;
+    line-height:1.5;
   }
   img,svg{max-width:100%;}
+  /* Inputs must be >=16px on mobile or iOS Safari zooms the page in on focus */
+  @media (max-width:600px){
+    input,select,textarea{font-size:16px !important;}
+  }
   a{color:inherit;text-decoration:none;}
   .wrap{max-width:1040px;margin:0 auto;padding:0 24px;}
   @media (max-width:420px){.wrap{padding:0 18px;}}
@@ -56,7 +65,7 @@
     display:flex;align-items:center;justify-content:space-between;
     padding:20px 24px;max-width:1040px;margin:0 auto;gap:10px;
   }
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-0.02em;flex-shrink:0;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-0.02em;flex-shrink:0;cursor:pointer;}
   .logo-badge{
     width:34px;height:34px;border-radius:10px;background:var(--green);
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -169,6 +178,11 @@
     text-align:center;color:#3c5a54;max-width:560px;margin:0 auto 40px;font-size:16px;line-height:1.6;
   }
   @media (max-width:600px){.section-lede{margin:0 auto 28px;font-size:15px;}}
+  @media (max-width:600px){
+    .card p{font-size:15px;line-height:1.6;}
+    .trust-item{font-size:14px;}
+    h1{line-height:1.18;}
+  }
 
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
   @media (max-width:760px){.grid{grid-template-columns:1fr;}}
@@ -549,10 +563,10 @@
 
 <div id="marketing-view">
 <header>
-  <div class="logo">
+  <a href="/" class="logo" aria-label="Zera PMS home">
     <span class="logo-badge"><span></span></span>
     <span>Zera PMS<br><small class="logo-sub">by Zera Dental</small></span>
-  </div>
+  </a>
   <div class="header-actions">
     <a href="#login-card" class="btn btn-ghost header-signin">Sign in</a>
     <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">WhatsApp</a>
@@ -705,10 +719,10 @@
 
 <div id="app-view">
   <div class="app-header">
-    <div class="logo">
+    <a href="#" id="app-logo-home" class="logo" aria-label="Back to dashboard home">
       <span class="logo-badge"><span></span></span>
       <span>Zera PMS</span>
-    </div>
+    </a>
     <div class="app-user">
       <a id="app-back-to-site" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" style="display:none;">&larr; Back to my website</a>
       <span id="app-clinic-name"></span>
@@ -1558,6 +1572,18 @@
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     });
   });
+
+  // Logo click inside the dashboard = go home (Today tab, scrolled to top),
+  // not sign out and not a page navigation.
+  var appLogoHome = document.getElementById('app-logo-home');
+  if (appLogoHome) {
+    appLogoHome.addEventListener('click', function(e) {
+      e.preventDefault();
+      var homeTab = document.querySelector('.app-tab[data-tab="today"]');
+      if (homeTab) homeTab.click();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   function renderBoard(rows) {
     var el = document.getElementById('app-board');
