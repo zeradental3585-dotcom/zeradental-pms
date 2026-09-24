@@ -295,6 +295,30 @@
   .enquiry-meta{font-size:13px;color:var(--muted);margin-top:2px;}
   .enquiry-message{width:100%;font-size:13.5px;color:#3c5a54;padding-top:8px;border-top:1px dashed var(--line);margin-top:6px;}
 
+  /* ===== Reviews list ===== */
+  .review-settings{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
+  .review-settings h3{margin:0 0 6px;font-size:14.5px;}
+  .review-settings p{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .review-settings-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .review-settings-row input{
+    flex:1;min-width:220px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    font-size:14px;font-family:inherit;
+  }
+  .review-settings-row input:focus{outline:none;border-color:var(--green);}
+  .review-row{
+    background:#fff;border:1px solid var(--line);border-left-width:4px;border-left-color:#25D366;
+    border-radius:12px;padding:16px 20px;margin-bottom:12px;
+  }
+  .review-row-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin-bottom:10px;}
+  .review-name{font-weight:700;font-size:15.5px;}
+  .review-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  .review-message{
+    width:100%;font-size:13.5px;color:#3c5a54;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--bg);resize:vertical;min-height:100px;font-family:inherit;
+    margin-bottom:10px;box-sizing:border-box;
+  }
+  .review-message:focus{outline:none;border-color:var(--green);}
+
   /* ===== Case detail modal ===== */
   .modal-card.wide{max-width:620px;}
   .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-bottom:18px;}
@@ -554,6 +578,7 @@
       <button class="app-tab" data-tab="board" type="button">Board <span class="tab-count" id="tab-count-board">0</span></button>
       <button class="app-tab" data-tab="patients" type="button">Patients <span class="tab-count" id="tab-count-patients">0</span></button>
       <button class="app-tab" data-tab="enquiries" type="button">Enquiries <span class="tab-count" id="tab-count-enquiries">0</span></button>
+      <button class="app-tab" data-tab="reviews" type="button">Reviews <span class="tab-count" id="tab-count-reviews">0</span></button>
     </div>
 
     <div id="tab-today" class="tab-panel active">
@@ -588,6 +613,9 @@
     </div>
     <div id="tab-enquiries" class="tab-panel">
       <div id="app-enquiries"></div>
+    </div>
+    <div id="tab-reviews" class="tab-panel">
+      <div id="app-reviews"></div>
     </div>
   </div>
 </div>
@@ -874,6 +902,8 @@
   var currentEnquiries = [];
   var currentAppointments = [];
   var currentPayments = [];
+  var currentReviewCandidates = [];
+  var currentReviewLink = '';
   var currentCaseId = null; // case detail modal currently open on this CaseID
   var todayRangeMode = 'today';
   var waComposeCtx = null; // { caseId, phone, name, defaultText } for the open WhatsApp compose modal
@@ -993,14 +1023,18 @@
     currentEnquiries = res.enquiries || [];
     currentAppointments = res.appointments || [];
     currentPayments = res.payments || [];
+    currentReviewCandidates = res.reviewCandidates || [];
+    currentReviewLink = res.reviewLink || '';
     renderBoard(currentBoard);
     renderPatients(currentPatients);
     renderEnquiries(currentEnquiries);
+    renderReviews(currentReviewCandidates, currentReviewLink);
     renderToday();
     renderStats();
     document.getElementById('tab-count-board').textContent = currentBoard.length;
     document.getElementById('tab-count-patients').textContent = currentPatients.length;
     document.getElementById('tab-count-enquiries').textContent = currentEnquiries.length;
+    document.getElementById('tab-count-reviews').textContent = currentReviewCandidates.length;
   }
 
   // --- Agency-managed username/password login (alongside Google) --------
@@ -1456,6 +1490,86 @@
       phone: btn.dataset.phone,
       locality: btn.dataset.city
     });
+  });
+
+  // --- Reviews tab: Google review link + one-click WhatsApp requests -------
+  // Every patient shows up here the day after they're added (never the same
+  // day) until a request has actually been sent to them. The message is
+  // pre-filled and empathetic by default but sits in an editable textarea,
+  // so sending is genuinely one click while still allowing a tweak first.
+  function renderReviews(candidates, reviewLink) {
+    var el = document.getElementById('app-reviews');
+    var settingsHtml =
+      '<div class="review-settings">' +
+        '<h3>Google review link</h3>' +
+        '<p>Paste your clinic’s Google Business review link here. The day after a patient is added, ' +
+        'they’ll show up below with a ready-to-send WhatsApp message asking for a 5-star review.</p>' +
+        '<div class="review-settings-row">' +
+          '<input type="url" id="review-link-input" placeholder="https://g.page/r/.../review" value="' +
+            escapeHtml(reviewLink || '') + '" />' +
+          '<button class="btn btn-primary" id="review-link-save" type="button">Save</button>' +
+        '</div>' +
+        '<div class="modal-status" id="review-link-status"></div>' +
+      '</div>';
+
+    var listHtml;
+    if (!reviewLink) {
+      listHtml = '<div class="board-empty">Add your Google review link above to start sending 5-star review requests.</div>';
+    } else if (!candidates || candidates.length === 0) {
+      listHtml = '<div class="board-empty">No review requests due right now — patients show up here the day after they’re added.</div>';
+    } else {
+      listHtml = candidates.map(function(c) {
+        return '<div class="review-row">' +
+          '<div class="review-row-top">' +
+            '<div><div class="review-name">' + escapeHtml(c.name || '(unnamed)') + '</div>' +
+            '<div class="review-meta">' + escapeHtml(c.phone || '') + ' · added ' + escapeHtml(c.createdOn || '') + '</div></div>' +
+          '</div>' +
+          '<textarea class="review-message" data-patient-id="' + escapeHtml(c.patientId) + '">' + escapeHtml(c.message || '') + '</textarea>' +
+          '<button class="btn whatsapp-btn review-send-btn" type="button" ' +
+            'data-patient-id="' + escapeHtml(c.patientId) + '" data-phone="' + escapeHtml(c.phone || '') + '">Send via WhatsApp →</button>' +
+        '</div>';
+      }).join('');
+    }
+    el.innerHTML = settingsHtml + listHtml;
+  }
+
+  document.getElementById('app-reviews').addEventListener('click', function(e) {
+    if (e.target.closest('#review-link-save')) {
+      var link = document.getElementById('review-link-input').value.trim();
+      var statusEl = document.getElementById('review-link-status');
+      statusEl.textContent = 'Saving…';
+      statusEl.className = 'modal-status';
+      apiCall('saveReviewLink', { reviewLink: link }).then(function(res) {
+        if (!res || !res.ok) {
+          statusEl.textContent = res && res.error === 'invalid_link' ? 'Link should start with https://' : 'Something went wrong.';
+          statusEl.className = 'modal-status is-error';
+          return;
+        }
+        currentReviewLink = res.reviewLink || '';
+        currentReviewCandidates = res.reviewCandidates || [];
+        renderReviews(currentReviewCandidates, currentReviewLink);
+        document.getElementById('tab-count-reviews').textContent = currentReviewCandidates.length;
+      }).catch(function() {
+        statusEl.textContent = 'Something went wrong.';
+        statusEl.className = 'modal-status is-error';
+      });
+      return;
+    }
+    var sendBtn = e.target.closest('.review-send-btn');
+    if (sendBtn) {
+      var patientId = sendBtn.dataset.patientId;
+      var phone = String(sendBtn.dataset.phone || '').replace(/[^0-9]/g, '');
+      var textarea = document.querySelector('.review-message[data-patient-id="' + patientId.replace(/"/g, '\\"') + '"]');
+      var text = textarea ? textarea.value : '';
+      if (phone) {
+        window.open('https://wa.me/91' + phone.replace(/^91/, '') + '?text=' + encodeURIComponent(text), '_blank');
+      }
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending…';
+      apiCall('markReviewRequestSent', { patientId: patientId }).then(function(res) {
+        if (res && res.ok) applyDashboardData(res);
+      });
+    }
   });
 
   document.getElementById('reg-submit').addEventListener('click', function() {
