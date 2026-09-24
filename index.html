@@ -21,6 +21,16 @@
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23059669'/%3E%3Ccircle cx='32' cy='32' r='12' fill='white'/%3E%3C/svg%3E" />
 
+<!-- PWA / "add to home screen" — launches full-screen like a real app,
+     no address bar, with its own icon and splash background. -->
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#059669" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Zera PMS" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -69,7 +79,7 @@
     --focus-ring:0 0 0 3px var(--green-ring);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overscroll-behavior-y:none;}
   html,body{max-width:100%;overflow-x:hidden;}
   body{
     margin:0;
@@ -80,6 +90,7 @@
     -moz-osx-font-smoothing:grayscale;
     line-height:1.5;
     font-feature-settings:"cv11","ss01";
+    overscroll-behavior-y:none;
   }
   img,svg{max-width:100%;}
   /* Inputs must be >=16px on mobile or iOS Safari zooms the page in on focus */
@@ -87,6 +98,7 @@
     input,select,textarea{font-size:16px !important;}
   }
   a{color:inherit;text-decoration:none;}
+  h1,h2,h3,p{overflow-wrap:break-word;word-break:break-word;}
   ::selection{background:var(--green-soft);color:var(--green-dark);}
   :focus-visible{outline:none;box-shadow:var(--focus-ring);border-radius:6px;}
   .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
@@ -94,7 +106,7 @@
 
   header{
     display:flex;align-items:center;justify-content:space-between;
-    padding:16px 24px;max-width:1180px;margin:0 auto;gap:10px;
+    padding:calc(16px + env(safe-area-inset-top)) 24px 16px;max-width:1180px;margin:0 auto;gap:10px;
     position:sticky;top:0;z-index:30;
     background:rgba(247,248,250,0.78);
     -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
@@ -131,6 +143,8 @@
   .btn-ghost{background:var(--surface);border-color:var(--line);color:var(--navy);box-shadow:var(--shadow-xs);}
   .btn-ghost:hover{border-color:#c7cbd1;box-shadow:var(--shadow-sm);}
   .btn:disabled{opacity:0.55;cursor:default;box-shadow:none;transform:none;}
+  .btn:active,.app-tab:active,.range-pill:active,.type-card:active,.patient-case-chip:active{transform:scale(0.97);}
+  .board-row:active,.patient-row:active,.enquiry-row:active,.today-appt-row:active,.review-row:active,.stat-tile:active{transform:scale(0.985);}
 
   main{padding:0;}
   .hero{
@@ -153,6 +167,12 @@
     display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;
   }
   @media (max-width:940px){.hero-split{grid-template-columns:1fr;gap:34px;}}
+  /* Grid items default to min-width:auto, which can force this column wider
+     than the viewport on some real devices/font-scale settings — since the
+     page also hides horizontal overflow, that silently clips text instead
+     of wrapping it. min-width:0 lets the column (and everything in it)
+     shrink to fit, so long lines always wrap instead of clipping. */
+  .hero-split > *{min-width:0;}
   .hero-copy{text-align:left;}
   .hero-copy h1{text-align:left;}
   .hero-copy .lede{text-align:left;margin:0 0 8px;}
@@ -337,7 +357,7 @@
   #app-view{display:none;min-height:100vh;background:var(--bg);}
   .app-header{
     display:flex;align-items:center;justify-content:space-between;
-    padding:16px 24px;border-bottom:1px solid var(--line-soft);background:rgba(255,255,255,0.85);
+    padding:calc(16px + env(safe-area-inset-top)) 24px 16px;border-bottom:1px solid var(--line-soft);background:rgba(255,255,255,0.85);
     position:sticky;top:0;z-index:30;
     -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
   }
@@ -461,6 +481,41 @@
     }
     .app-tabs::-webkit-scrollbar{display:none;}
     .app-tab{white-space:nowrap;padding:10px 13px;font-size:14px;}
+  }
+
+  /* ===== Fixed bottom tab bar (phones only) — the top .app-tabs bar is
+     hidden below this breakpoint since the bottom nav replaces it, the way
+     a native app's tab bar would. ===== */
+  .bottom-nav{display:none;}
+  @media (max-width:700px){
+    .app-tabs{display:none;}
+    .app-main{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
+    .bottom-nav{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;
+      background:rgba(255,255,255,0.92);
+      -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+      border-top:1px solid var(--line-soft);
+      box-shadow:0 -8px 24px -14px rgba(15,23,32,0.18);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    }
+    .bottom-nav-tab{
+      flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+      background:none;border:none;font-family:inherit;cursor:pointer;
+      padding:6px 2px 5px;border-radius:12px;position:relative;
+      color:var(--muted-2);transition:color .15s ease;
+      border-bottom:none;margin-bottom:0;
+    }
+    .bottom-nav-tab.active{color:var(--green-dark);}
+    .bn-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+    .bn-icon svg{width:22px;height:22px;}
+    .bottom-nav-tab.active .bn-icon svg{stroke:var(--green-dark);}
+    .bn-label{font-size:10.5px;font-weight:700;letter-spacing:0.01em;}
+    .bn-badge{
+      position:absolute;top:2px;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;
+      background:var(--red);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;
+      border-radius:999px;box-shadow:0 0 0 2px rgba(255,255,255,0.92);
+    }
+    .bn-badge.is-zero{display:none;}
   }
 
   /* ===== Board row: clickable ===== */
@@ -797,8 +852,8 @@
     </div>
   </div>
   <p class="foot-copy">
-    © 2026 Zera PMS, a property of Zera Technologies. All rights reserved. ·
-    Designed and developed by <a href="https://zeratech.io/" target="_blank" rel="noopener noreferrer">Zera Technologies</a>.
+    © 2026 Zera PMS, a property of Zera Dental. All rights reserved. ·
+    Designed and developed by <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer">Zera Dental</a>.
   </p>
 </footer>
 </div>
@@ -830,11 +885,11 @@
     <div id="app-stats" class="stats-row"></div>
 
     <div class="app-tabs">
-      <button class="app-tab active" data-tab="today" type="button">Today <span class="tab-count" id="tab-count-today">0</span></button>
-      <button class="app-tab" data-tab="board" type="button">Board <span class="tab-count" id="tab-count-board">0</span></button>
-      <button class="app-tab" data-tab="patients" type="button">Patients <span class="tab-count" id="tab-count-patients">0</span></button>
-      <button class="app-tab" data-tab="enquiries" type="button">Enquiries <span class="tab-count" id="tab-count-enquiries">0</span></button>
-      <button class="app-tab" data-tab="reviews" type="button">Reviews <span class="tab-count" id="tab-count-reviews">0</span></button>
+      <button class="app-tab active" data-tab="today" type="button">Today <span class="tab-count" data-tab-count="today">0</span></button>
+      <button class="app-tab" data-tab="board" type="button">Board <span class="tab-count" data-tab-count="board">0</span></button>
+      <button class="app-tab" data-tab="patients" type="button">Patients <span class="tab-count" data-tab-count="patients">0</span></button>
+      <button class="app-tab" data-tab="enquiries" type="button">Enquiries <span class="tab-count" data-tab-count="enquiries">0</span></button>
+      <button class="app-tab" data-tab="reviews" type="button">Reviews <span class="tab-count" data-tab-count="reviews">0</span></button>
     </div>
 
     <div id="tab-today" class="tab-panel active">
@@ -874,6 +929,38 @@
       <div id="app-reviews"></div>
     </div>
   </div>
+
+  <!-- Fixed bottom tab bar — phones only (hidden on tablet/desktop, where the
+       top .app-tabs bar is used instead). Same data-tab values as the top
+       bar, so the shared click handler keeps both in sync. This is the
+       single biggest "this is an app, not a website" signal on mobile. -->
+  <nav class="bottom-nav" aria-label="Dashboard sections">
+    <button class="app-tab bottom-nav-tab active" data-tab="today" type="button">
+      <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.25"/><path d="M10 6.2v4l2.6 2.2"/></svg></span>
+      <span class="bn-label">Today</span>
+      <span class="bn-badge" data-tab-count="today">0</span>
+    </button>
+    <button class="app-tab bottom-nav-tab" data-tab="board" type="button">
+      <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.4" y="3.2" width="4.3" height="13.6" rx="1.1"/><rect x="8" y="3.2" width="4.3" height="8.6" rx="1.1"/><rect x="13.6" y="3.2" width="4" height="11" rx="1.1"/></svg></span>
+      <span class="bn-label">Board</span>
+      <span class="bn-badge" data-tab-count="board">0</span>
+    </button>
+    <button class="app-tab bottom-nav-tab" data-tab="patients" type="button">
+      <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6.6" r="3"/><path d="M3.6 17c0-3.5 2.9-6 6.4-6s6.4 2.5 6.4 6"/></svg></span>
+      <span class="bn-label">Patients</span>
+      <span class="bn-badge" data-tab-count="patients">0</span>
+    </button>
+    <button class="app-tab bottom-nav-tab" data-tab="enquiries" type="button">
+      <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.2l1.4-6.3A1 1 0 0 1 5.4 4h9.2a1 1 0 0 1 1 .9L17 11.2"/><path d="M3 11.2h4a1 1 0 0 1 .9.55l.5 1a1 1 0 0 0 .9.55h1.4a1 1 0 0 0 .9-.55l.5-1a1 1 0 0 1 .9-.55h4v3.8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3.8z"/></svg></span>
+      <span class="bn-label">Enquiries</span>
+      <span class="bn-badge" data-tab-count="enquiries">0</span>
+    </button>
+    <button class="app-tab bottom-nav-tab" data-tab="reviews" type="button">
+      <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M10 2.7l2.28 4.66 5.12.75-3.7 3.62.87 5.1L10 14.4l-4.57 2.43.87-5.1-3.7-3.62 5.12-.75z"/></svg></span>
+      <span class="bn-label">Reviews</span>
+      <span class="bn-badge" data-tab-count="reviews">0</span>
+    </button>
+  </nav>
 </div>
 
 <div id="case-detail-modal" class="modal-overlay">
@@ -1195,6 +1282,16 @@
     return '<span class="avatar" style="background:' + color + '">' + escapeHtml(initialsOf_(n)) + '</span>';
   }
 
+  // Sets a tab's count in every place it's shown — the top tab bar (desktop
+  // and mobile-scroll) and the fixed bottom nav (phone) both carry the same
+  // data-tab-count marker, so one call keeps every copy in sync.
+  function setTabCount(name, n) {
+    document.querySelectorAll('[data-tab-count="' + name + '"]').forEach(function(el) {
+      el.textContent = n;
+      el.classList.toggle('is-zero', !n);
+    });
+  }
+
   // Copies text with the modern Clipboard API when available (most contexts
   // on a real domain over https), falling back to a hidden-textarea +
   // execCommand('copy') for older mobile browsers. Resolves true/false so
@@ -1338,10 +1435,10 @@
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
     renderToday();
     renderStats();
-    document.getElementById('tab-count-board').textContent = currentBoard.length;
-    document.getElementById('tab-count-patients').textContent = currentPatients.length;
-    document.getElementById('tab-count-enquiries').textContent = currentEnquiries.length;
-    document.getElementById('tab-count-reviews').textContent = currentReviewCandidates.length;
+    setTabCount('board', currentBoard.length);
+    setTabCount('patients', currentPatients.length);
+    setTabCount('enquiries', currentEnquiries.length);
+    setTabCount('reviews', currentReviewCandidates.length);
   }
 
   // --- Treatment types: every dropdown that lists them or their stages
@@ -1518,7 +1615,7 @@
     var t = todayISO();
     var apptEl = document.getElementById('today-appointments');
     var matches = currentAppointments.filter(function(a) { return a.dateISO && a.dateISO >= bounds.from && a.dateISO <= bounds.to; });
-    document.getElementById('tab-count-today').textContent = matches.length;
+    setTabCount('today', matches.length);
 
     if (matches.length === 0) {
       apptEl.innerHTML = '<div class="board-empty">No appointments in this range.</div>';
@@ -1710,13 +1807,16 @@
     });
   });
 
-  // --- Tabs ---------------------------------------------------------------
+  // --- Tabs -----------------------------------------------------------------
+  // Two nav bars share this markup: the horizontal top tabs and the fixed
+  // bottom tab bar shown on phones. Both use class="app-tab" with the same
+  // data-tab values, so switching one activates its twin in the other bar.
   document.querySelectorAll('.app-tab').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      document.querySelectorAll('.app-tab').forEach(function(b) { b.classList.remove('active'); });
+      var name = btn.dataset.tab;
+      document.querySelectorAll('.app-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === name); });
       document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-      btn.classList.add('active');
-      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
     });
   });
 
@@ -1935,7 +2035,7 @@
         currentReviewLinkShort = res.reviewLinkShort || '';
         currentReviewCandidates = res.reviewCandidates || [];
         renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
-        document.getElementById('tab-count-reviews').textContent = currentReviewCandidates.length;
+        setTabCount('reviews', currentReviewCandidates.length);
       }).catch(function() {
         statusEl.textContent = 'Something went wrong.';
         statusEl.className = 'modal-status is-error';
