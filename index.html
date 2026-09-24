@@ -38,6 +38,7 @@
     --amber-bg:#fffaeb;
   }
   *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
   body{
     margin:0;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -71,11 +72,24 @@
   .btn-ghost:hover{border-color:var(--green);}
   .btn:disabled{opacity:0.6;cursor:default;}
 
-  main{padding:56px 0 0;}
+  main{padding:0;}
   .hero{
-    text-align:center;padding:40px 24px 60px;
-    background:radial-gradient(ellipse at top, #e5f6ee 0%, var(--bg) 65%);
+    text-align:center;padding:44px 24px 72px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(720px 420px at 10% -8%, rgba(16,185,129,0.16), transparent 60%),
+      radial-gradient(620px 400px at 102% 6%, rgba(16,185,129,0.12), transparent 55%),
+      var(--bg);
   }
+  .hero-split{
+    max-width:1180px;margin:0 auto;position:relative;z-index:1;
+    display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;
+  }
+  @media (max-width:940px){.hero-split{grid-template-columns:1fr;gap:34px;}}
+  .hero-copy{text-align:left;}
+  .hero-copy h1{text-align:left;}
+  .hero-copy .lede{text-align:left;margin:0 0 8px;}
+  .hero-copy .cta-row{justify-content:flex-start;}
+  .hero-copy .cta-note{text-align:left;}
   .pill{
     display:inline-flex;align-items:center;gap:8px;
     background:#fff;border:1px solid var(--line);
@@ -94,6 +108,39 @@
   .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;}
   .cta-note{font-size:13px;color:var(--muted);margin-top:14px;}
 
+  .trust-row{display:flex;gap:20px 26px;flex-wrap:wrap;margin:26px 0 4px;}
+  .trust-item{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#3c5a54;}
+  .trust-item .tick{
+    width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:800;
+  }
+  .mobile-login-hint{display:none;}
+  @media (max-width:940px){
+    .mobile-login-hint{
+      display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;
+      color:var(--green-dark);margin-top:4px;
+    }
+  }
+
+  .login-card{
+    background:#fff;border:1px solid var(--line);border-radius:22px;
+    padding:6px 30px 32px;box-shadow:0 26px 60px -22px rgba(12,27,30,0.30);
+    text-align:left;
+  }
+  .login-card-accent{
+    height:5px;border-radius:22px 22px 0 0;margin:0 -30px 24px;
+    background:linear-gradient(90deg,var(--green),#34d3a0);
+  }
+  .login-card-badge{
+    display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;
+    color:var(--green-dark);background:#e5f6ee;padding:5px 12px;border-radius:999px;
+    margin-bottom:14px;text-transform:uppercase;letter-spacing:0.03em;
+  }
+  .login-card h2{font-size:21px;margin:0 0 6px;letter-spacing:-0.01em;}
+  .login-card > p{color:var(--muted);font-size:14px;margin:0 0 20px;line-height:1.5;}
+  .login-card #g_id_signin_container{justify-content:flex-start;}
+  .login-card .login-divider,.login-card .reg-form{max-width:none;margin-left:0;margin-right:0;}
+
   section{padding:56px 0;}
   .section-title{
     font-size:clamp(24px,3.5vw,32px);font-weight:800;letter-spacing:-0.02em;
@@ -107,7 +154,9 @@
   @media (max-width:760px){.grid{grid-template-columns:1fr;}}
   .card{
     background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;
+    transition:transform .15s ease,box-shadow .15s ease;
   }
+  .card:hover{transform:translateY(-4px);box-shadow:0 16px 34px -18px rgba(12,27,30,0.22);}
   .card .icon{
     width:40px;height:40px;border-radius:10px;background:#e5f6ee;
     display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--green-dark);font-weight:800;
@@ -436,27 +485,76 @@
     <span class="logo-badge"><span></span></span>
     <span>Zera PMS<br><small>by Zera Dental</small></span>
   </div>
-  <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">WhatsApp</a>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <a href="#login-card" class="btn btn-ghost">Sign in</a>
+    <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">WhatsApp</a>
+  </div>
 </header>
 
 <main>
 
-  <div class="hero">
-    <div class="wrap">
-      <span class="pill"><span class="dot"></span> Built for implant clinics across India</span>
-      <h1>No implant case<br><span class="accent">goes quiet.</span></h1>
-      <p class="lede">
-        An implant patient is in your care for four to six months, across six or more
-        appointments. Zera PMS tracks every case through that gap — enquiry to six-month
-        recall — on one board, with WhatsApp follow-ups built in.
-      </p>
-      <div class="cta-row">
-        <a href="#login" class="btn btn-primary">Open my dashboard →</a>
-        <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">Talk to us first</a>
+  <section id="login" class="hero">
+    <div class="hero-split">
+      <div class="hero-copy">
+        <span class="pill"><span class="dot"></span> Built for implant clinics across India</span>
+        <h1>No implant case<br><span class="accent">goes quiet.</span></h1>
+        <p class="lede">
+          An implant patient is in your care for four to six months, across six or more
+          appointments. Zera PMS tracks every case through that gap — enquiry to six-month
+          recall — on one board, with WhatsApp follow-ups built in.
+        </p>
+        <div class="trust-row">
+          <span class="trust-item"><span class="tick">✓</span> One board, every case</span>
+          <span class="trust-item"><span class="tick">✓</span> WhatsApp reminders built in</span>
+          <span class="trust-item"><span class="tick">✓</span> Secure, always-on cloud</span>
+        </div>
+        <div class="cta-row" style="margin-top:26px;">
+          <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">Talk to us first</a>
+          <a href="#login-card" class="mobile-login-hint">↓ Sign in below</a>
+        </div>
       </div>
-      <div class="cta-note">New clinic? Sign in with Google below to set up your dashboard in seconds. Already with us? Same button, same board.</div>
+
+      <div class="login-card" id="login-card">
+        <div class="login-card-accent"></div>
+        <span class="login-card-badge">🔒 Secure sign-in</span>
+        <h2 id="login-heading">Ready to see today's board?</h2>
+        <p id="login-sub">Sign in with your clinic's Google account — new clinics get a dashboard set up automatically.</p>
+
+        <div id="back-to-clinic-site" style="display:none;margin-bottom:18px;">
+          <a href="#" id="back-to-clinic-link" class="btn btn-ghost">&larr; Back to <span id="back-to-clinic-name"></span></a>
+        </div>
+
+        <div id="g_id_onload"
+             data-client_id="917048157757-2uad7uhpmjtkl9ncdvvi3rm7rs3h3bgo.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div id="g_id_signin_container">
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
+        </div>
+
+        <div class="login-divider">or</div>
+
+        <div id="password-login-form" class="reg-form" style="display:block;">
+          <label for="pl-username">Username</label>
+          <input id="pl-username" type="text" autocomplete="username" placeholder="Provided by Zera Dental" />
+          <label for="pl-password">Password</label>
+          <input id="pl-password" type="password" autocomplete="current-password" />
+          <button id="pl-submit" class="btn btn-primary" type="button">Sign in →</button>
+        </div>
+
+        <div id="login-status"></div>
+        <div id="register-form" class="reg-form">
+          <label for="reg-clinic-name">Clinic name</label>
+          <input id="reg-clinic-name" type="text" placeholder="e.g. Smile Dental Care" />
+          <label for="reg-whatsapp">WhatsApp number (optional)</label>
+          <input id="reg-whatsapp" type="text" placeholder="10-digit mobile" />
+          <button id="reg-submit" class="btn btn-primary" type="button">Create my dashboard →</button>
+        </div>
+        <div class="cta-note" style="margin-top:16px;text-align:center;">New clinic? Sign in with Google to set up your dashboard in seconds.</div>
+      </div>
     </div>
-  </div>
+  </section>
 
   <section>
     <div class="wrap">
@@ -500,41 +598,13 @@
     </div>
   </section>
 
-  <section id="login" class="cta-final">
+  <section class="cta-final">
     <div class="wrap">
-      <h2 id="login-heading">Ready to see today's board?</h2>
-      <p id="login-sub">Sign in with your clinic's Google account — new clinics get a dashboard set up automatically.</p>
-
-      <div id="back-to-clinic-site" style="display:none;margin-bottom:22px;">
-        <a href="#" id="back-to-clinic-link" class="btn btn-ghost">&larr; Back to <span id="back-to-clinic-name"></span></a>
-      </div>
-
-      <div id="g_id_onload"
-           data-client_id="917048157757-2uad7uhpmjtkl9ncdvvi3rm7rs3h3bgo.apps.googleusercontent.com"
-           data-callback="handleCredentialResponse"
-           data-auto_prompt="false">
-      </div>
-      <div id="g_id_signin_container">
-        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
-      </div>
-
-      <div class="login-divider">or</div>
-
-      <div id="password-login-form" class="reg-form" style="display:block;">
-        <label for="pl-username">Username</label>
-        <input id="pl-username" type="text" autocomplete="username" placeholder="Provided by Zera Dental" />
-        <label for="pl-password">Password</label>
-        <input id="pl-password" type="password" autocomplete="current-password" />
-        <button id="pl-submit" class="btn btn-primary" type="button">Sign in →</button>
-      </div>
-
-      <div id="login-status"></div>
-      <div id="register-form" class="reg-form">
-        <label for="reg-clinic-name">Clinic name</label>
-        <input id="reg-clinic-name" type="text" placeholder="e.g. Smile Dental Care" />
-        <label for="reg-whatsapp">WhatsApp number (optional)</label>
-        <input id="reg-whatsapp" type="text" placeholder="10-digit mobile" />
-        <button id="reg-submit" class="btn btn-primary" type="button">Create my dashboard →</button>
+      <h2>Your dashboard is one sign-in away.</h2>
+      <p>Jump back up to sign in with Google or your clinic's username — or message us on WhatsApp if you'd rather talk it through first.</p>
+      <div class="cta-row" style="justify-content:center;">
+        <a href="#login-card" class="btn btn-primary">↑ Sign in now</a>
+        <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20to%20get%20Zera%20PMS%20for%20my%20clinic" class="btn btn-ghost">Talk to us first</a>
       </div>
     </div>
   </section>
