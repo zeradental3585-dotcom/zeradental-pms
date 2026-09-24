@@ -79,7 +79,7 @@
     --focus-ring:0 0 0 3px var(--green-ring);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overscroll-behavior-y:none;}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
   html,body{max-width:100%;overflow-x:hidden;}
   body{
     margin:0;
@@ -90,7 +90,8 @@
     -moz-osx-font-smoothing:grayscale;
     line-height:1.5;
     font-feature-settings:"cv11","ss01";
-    overscroll-behavior-y:none;
+    /* overscroll-behavior deliberately omitted: it can disable page scroll
+       entirely on some Android Chrome versions when set on the root/body. */
   }
   img,svg{max-width:100%;}
   /* Inputs must be >=16px on mobile or iOS Safari zooms the page in on focus */
