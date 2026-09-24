@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Zera PMS — Implant Case Tracking for Dental Clinics</title>
-<meta name="description" content="Zera PMS tracks every implant case from enquiry to six-month recall, so nothing goes quiet in the gaps. Built by Zera Dental, sold on a monthly subscription." />
+<title>Zera PMS — Patient & Case Management for Dental Clinics</title>
+<meta name="description" content="Zera PMS tracks every patient and every case — implants, root canals, extractions, orthodontics, crowns, cleanings and more — from enquiry to recall, so nothing goes quiet in the gaps. Built by Zera Dental, sold on a monthly subscription." />
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://pms.zeradental.in/" />
-<meta property="og:title" content="Zera PMS — No implant case goes quiet." />
-<meta property="og:description" content="Case tracking built for dental clinics by Zera Dental. Enquiry to six-month recall, one board, WhatsApp reminders." />
+<meta property="og:title" content="Zera PMS — No case goes quiet." />
+<meta property="og:description" content="Patient and case tracking for every treatment a dental clinic offers, built by Zera Dental. Enquiry to recall, one board, WhatsApp reminders." />
 <meta property="og:image" content="https://pms.zeradental.in/assets/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Zera PMS — No implant case goes quiet." />
-<meta name="twitter:description" content="Case tracking built for dental clinics by Zera Dental." />
+<meta name="twitter:title" content="Zera PMS — No case goes quiet." />
+<meta name="twitter:description" content="Patient and case tracking for every treatment a dental clinic offers, built by Zera Dental." />
 <meta name="twitter:image" content="https://pms.zeradental.in/assets/og-image.png" />
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2310b981'/%3E%3Ccircle cx='32' cy='32' r='12' fill='white'/%3E%3C/svg%3E" />
@@ -206,26 +206,17 @@
   .stages h2{
     text-align:center;font-size:clamp(22px,3vw,28px);font-weight:800;margin:0 0 8px;letter-spacing:-0.02em;
   }
-  .stages p.lede-dark{text-align:center;color:#9fc4bb;max-width:520px;margin:0 auto 32px;font-size:15px;}
-  .stage-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;}
-  .stage-list li{
-    display:flex;align-items:center;gap:16px;padding:14px 0;
-    border-bottom:1px solid rgba(255,255,255,0.08);font-size:14.5px;
+  .stages p.lede-dark{text-align:center;color:#9fc4bb;max-width:560px;margin:0 auto 32px;font-size:15px;}
+  .type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media (max-width:640px){.type-grid{grid-template-columns:1fr;}}
+  .type-card{
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px;padding:16px 18px;
   }
-  .stage-list li:last-child{border-bottom:none;}
-  .stage-list .num{
-    width:26px;height:26px;border-radius:50%;background:var(--green);
-    color:#04231a;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  }
-  .stage-list .name{font-weight:700;min-width:210px;color:#fff;}
-  .stage-list .wait{color:#9fc4bb;}
+  .type-card h3{margin:0 0 6px;font-size:15px;font-weight:800;color:#fff;letter-spacing:-0.01em;}
+  .type-card p{margin:0;font-size:13px;color:#9fc4bb;line-height:1.5;}
   @media (max-width:600px){
     .stages{margin:0 12px;padding:30px 18px;border-radius:20px;}
-    .stage-list li{
-      flex-wrap:wrap;align-items:flex-start;gap:4px 12px;padding:12px 0;
-    }
-    .stage-list .name{min-width:0;flex-basis:calc(100% - 38px);}
-    .stage-list .wait{flex-basis:calc(100% - 38px);margin-left:38px;font-size:13px;}
   }
 
   .cta-final{
@@ -583,12 +574,13 @@
   <section id="login" class="hero">
     <div class="hero-split">
       <div class="hero-copy">
-        <span class="pill"><span class="dot"></span> Built for implant clinics across India</span>
-        <h1>No implant case<br><span class="accent">goes quiet.</span></h1>
+        <span class="pill"><span class="dot"></span> Built for dental clinics across India</span>
+        <h1>No case<br><span class="accent">goes quiet.</span></h1>
         <p class="lede">
-          An implant patient is in your care for four to six months, across six or more
-          appointments. Zera PMS tracks every case through that gap — enquiry to six-month
-          recall — on one board, with WhatsApp follow-ups built in.
+          Implants, root canals, extractions, orthodontics, crowns, cleanings, recalls —
+          every patient is in your care across more visits than one person can hold in
+          their head. Zera PMS tracks every case, whatever the treatment, from enquiry
+          to recall — on one board, with WhatsApp follow-ups built in.
         </p>
         <div class="trust-row">
           <span class="trust-item"><span class="tick">✓</span> One board, every case</span>
@@ -651,7 +643,7 @@
         <div class="card">
           <div class="icon">1</div>
           <h3>One board, every case</h3>
-          <p>Every active case shown by how overdue it is — the healing review nobody scheduled rises straight to the top.</p>
+          <p>Every active case — whatever the treatment — shown by how overdue it is. The recall nobody scheduled rises straight to the top.</p>
         </div>
         <div class="card">
           <div class="icon">2</div>
@@ -670,17 +662,18 @@
   <section>
     <div class="stages">
       <div class="wrap">
-        <h2>The seven stages Zera PMS watches</h2>
-        <p class="lede-dark">Every case moves through these, and every stage has a default wait before it's flagged.</p>
-        <ul class="stage-list">
-          <li><span class="num">1</span><span class="name">Enquiry</span><span class="wait">Next-day follow-up if not contacted</span></li>
-          <li><span class="num">2</span><span class="name">Consultation done</span><span class="wait">Quote follow-up within days</span></li>
-          <li><span class="num">3</span><span class="name">CBCT &amp; plan</span><span class="wait">Consent / booking chase</span></li>
-          <li><span class="num">4</span><span class="name">Implant placed</span><span class="wait">Suture removal review</span></li>
-          <li><span class="num">5</span><span class="name">Healing (osseointegration)</span><span class="wait">Check-ins through the silent months</span></li>
-          <li><span class="num">6</span><span class="name">Abutment &amp; impression</span><span class="wait">Crown fitting reminder</span></li>
-          <li><span class="num">7</span><span class="name">Crown fitted → Recall</span><span class="wait">Six-month check-up, every time</span></li>
-        </ul>
+        <h2>One system, every treatment</h2>
+        <p class="lede-dark">Each treatment type has its own journey and its own default follow-up timing — Zera PMS knows the difference and flags the right case at the right moment, not just implants.</p>
+        <div class="type-grid">
+          <div class="type-card"><h3>Dental Implant</h3><p>Enquiry → Placement → Healing → Crown → Recall</p></div>
+          <div class="type-card"><h3>Root Canal Treatment</h3><p>Enquiry → RCT → Obturation → Crown → Recall</p></div>
+          <div class="type-card"><h3>Extraction</h3><p>Enquiry → Extraction → Healing check → Recall</p></div>
+          <div class="type-card"><h3>Orthodontics</h3><p>Enquiry → Appliance fitted → Adjustments → Debond → Retainer</p></div>
+          <div class="type-card"><h3>Crown &amp; Bridge</h3><p>Enquiry → Prep → Impression → Fitted → Recall</p></div>
+          <div class="type-card"><h3>General Checkup / Cleaning</h3><p>Enquiry → Scheduled → Done → 6-month recall</p></div>
+          <div class="type-card"><h3>Denture</h3><p>Enquiry → Impression → Trial → Delivered → Recall</p></div>
+          <div class="type-card"><h3>Whitening / Cosmetic</h3><p>Enquiry → Procedure → Follow-up</p></div>
+        </div>
       </div>
     </div>
   </section>
@@ -802,25 +795,17 @@
       <div class="detail-item"><div class="dl">Locality</div><div class="dv" id="cd-locality">—</div></div>
       <div class="detail-item"><div class="dl">Source</div><div class="dv" id="cd-source">—</div></div>
       <div class="detail-item"><div class="dl">Case ID</div><div class="dv" id="cd-caseid">—</div></div>
+      <div class="detail-item"><div class="dl">Treatment type</div><div class="dv" id="cd-treatment-type">—</div></div>
       <div class="detail-item"><div class="dl">Case type / Site</div><div class="dv" id="cd-typesite">—</div></div>
-      <div class="detail-item"><div class="dl">Implant system</div><div class="dv" id="cd-implant">—</div></div>
-      <div class="detail-item"><div class="dl">Graft required</div><div class="dv" id="cd-graft">—</div></div>
+      <div class="detail-item" id="cd-implant-row"><div class="dl">Implant system</div><div class="dv" id="cd-implant">—</div></div>
+      <div class="detail-item" id="cd-graft-row"><div class="dl">Graft required</div><div class="dv" id="cd-graft">—</div></div>
       <div class="detail-item"><div class="dl">Stage entered on</div><div class="dv" id="cd-enteredon">—</div></div>
     </div>
 
     <div class="modal-row">
       <div class="modal-field">
         <label for="cd-stage-select">Stage</label>
-        <select id="cd-stage-select">
-          <option value="Enquiry">Enquiry</option>
-          <option value="Consultation done">Consultation done</option>
-          <option value="CBCT &amp; plan">CBCT &amp; plan</option>
-          <option value="Implant placed">Implant placed</option>
-          <option value="Healing (osseointegration)">Healing (osseointegration)</option>
-          <option value="Healing + graft">Healing + graft (bone graft cases)</option>
-          <option value="Abutment &amp; impression">Abutment &amp; impression</option>
-          <option value="Crown fitted -> Recall">Crown fitted → Recall</option>
-        </select>
+        <select id="cd-stage-select"></select>
       </div>
       <div class="modal-field">
         <label for="cd-status-select">Status</label>
@@ -892,6 +877,11 @@
     <input type="hidden" id="ap-mode" value="add" />
     <input type="hidden" id="ap-enquiry-row" value="" />
 
+    <div class="modal-field">
+      <label for="ap-treatment-type">Treatment type *</label>
+      <select id="ap-treatment-type"></select>
+    </div>
+
     <div class="modal-row">
       <div class="modal-field">
         <label for="ap-name">Patient name *</label>
@@ -919,33 +909,35 @@
       </div>
     </div>
 
-    <div class="modal-row">
-      <div class="modal-field">
-        <label for="ap-case-type">Case type</label>
-        <select id="ap-case-type">
-          <option value="Single">Single</option>
-          <option value="Bridge">Bridge</option>
-          <option value="Full arch">Full arch</option>
-        </select>
+    <div class="modal-field">
+      <label for="ap-site">Site (tooth no., if relevant)</label>
+      <input id="ap-site" type="text" placeholder="e.g. 36" />
+    </div>
+
+    <div id="ap-implant-fields">
+      <div class="modal-row">
+        <div class="modal-field">
+          <label for="ap-case-type">Case type</label>
+          <select id="ap-case-type">
+            <option value="Single">Single</option>
+            <option value="Bridge">Bridge</option>
+            <option value="Full arch">Full arch</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label for="ap-implant-system">Implant system</label>
+          <input id="ap-implant-system" type="text" placeholder="e.g. Osstem" />
+        </div>
       </div>
-      <div class="modal-field">
-        <label for="ap-site">Site (tooth no.)</label>
-        <input id="ap-site" type="text" placeholder="e.g. 36" />
-      </div>
+      <label class="modal-checkbox">
+        <input id="ap-graft" type="checkbox" />
+        Bone graft required
+      </label>
     </div>
 
     <div class="modal-field">
       <label for="ap-stage">Current stage *</label>
-      <select id="ap-stage">
-        <option value="Enquiry">Enquiry</option>
-        <option value="Consultation done">Consultation done</option>
-        <option value="CBCT &amp; plan">CBCT &amp; plan</option>
-        <option value="Implant placed">Implant placed</option>
-        <option value="Healing (osseointegration)">Healing (osseointegration)</option>
-        <option value="Healing + graft">Healing + graft (bone graft cases)</option>
-        <option value="Abutment &amp; impression">Abutment &amp; impression</option>
-        <option value="Crown fitted -> Recall">Crown fitted → Recall</option>
-      </select>
+      <select id="ap-stage"></select>
     </div>
 
     <div class="modal-row">
@@ -954,25 +946,15 @@
         <input id="ap-quoted" type="number" min="0" />
       </div>
       <div class="modal-field">
-        <label for="ap-implant-system">Implant system</label>
-        <input id="ap-implant-system" type="text" placeholder="e.g. Osstem" />
+        <label for="ap-next-action">Next action</label>
+        <input id="ap-next-action" type="text" placeholder="e.g. Call to book next visit" />
       </div>
-    </div>
-
-    <div class="modal-field">
-      <label for="ap-next-action">Next action</label>
-      <input id="ap-next-action" type="text" placeholder="e.g. Call to book CBCT" />
     </div>
 
     <div class="modal-field">
       <label for="ap-notes">Notes</label>
       <textarea id="ap-notes" placeholder="Administrative notes only — not clinical records"></textarea>
     </div>
-
-    <label class="modal-checkbox">
-      <input id="ap-graft" type="checkbox" />
-      Bone graft required
-    </label>
 
     <label class="modal-checkbox">
       <input id="ap-consent" type="checkbox" />
@@ -1076,6 +1058,11 @@
   var currentReviewLink = '';
   var currentReviewLinkShort = '';
   var currentCaseId = null; // case detail modal currently open on this CaseID
+  // Treatment types + their stage journeys, straight from the server (see
+  // Code.gs CASE_TYPES) so the dropdowns below never drift from what the
+  // backend actually validates. Falls back to a bare Implant entry before
+  // the first successful login response arrives.
+  var currentCaseTypes = [{ key: 'Implant', label: 'Dental Implant', prefix: 'IMP', stages: [{ name: 'Enquiry' }] }];
   var todayRangeMode = 'today';
   var waComposeCtx = null; // { caseId, phone, name, defaultText } for the open WhatsApp compose modal
 
@@ -1226,6 +1213,10 @@
     currentReviewCandidates = res.reviewCandidates || [];
     currentReviewLink = res.reviewLink || '';
     currentReviewLinkShort = res.reviewLinkShort || '';
+    if (res.caseTypes && res.caseTypes.length) {
+      currentCaseTypes = res.caseTypes;
+      populateTreatmentTypeSelect();
+    }
     renderBoard(currentBoard);
     renderPatients(currentPatients);
     renderEnquiries(currentEnquiries);
@@ -1237,6 +1228,47 @@
     document.getElementById('tab-count-enquiries').textContent = currentEnquiries.length;
     document.getElementById('tab-count-reviews').textContent = currentReviewCandidates.length;
   }
+
+  // --- Treatment types: every dropdown that lists them or their stages
+  // reads from currentCaseTypes (server-supplied), never a hardcoded list,
+  // so a case type and its journey only ever needs to change in one place
+  // (Code.gs CASE_TYPES). ---------------------------------------------------
+  function getCaseType(key) {
+    return currentCaseTypes.filter(function(t) { return t.key === key; })[0] || currentCaseTypes[0];
+  }
+
+  function populateTreatmentTypeSelect() {
+    var sel = document.getElementById('ap-treatment-type');
+    var prevValue = sel.value;
+    sel.innerHTML = currentCaseTypes.map(function(t) {
+      return '<option value="' + escapeHtml(t.key) + '">' + escapeHtml(t.label) + '</option>';
+    }).join('');
+    sel.value = currentCaseTypes.some(function(t) { return t.key === prevValue; }) ? prevValue : currentCaseTypes[0].key;
+    onTreatmentTypeChange();
+  }
+
+  function populateStageSelect(selectEl, treatmentType, selectedValue) {
+    var stages = getCaseType(treatmentType).stages || [];
+    selectEl.innerHTML = stages.map(function(s) {
+      return '<option value="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</option>';
+    }).join('');
+    if (selectedValue && stages.some(function(s) { return s.name === selectedValue; })) {
+      selectEl.value = selectedValue;
+    } else if (stages.length) {
+      selectEl.value = stages[0].name;
+    }
+  }
+
+  // The implant-only fields (case type Single/Bridge/Full-arch, implant
+  // system, bone graft) only make sense for Implant cases — every other
+  // treatment type hides them rather than showing fields that don't apply.
+  function onTreatmentTypeChange() {
+    var type = document.getElementById('ap-treatment-type').value;
+    document.getElementById('ap-implant-fields').style.display = (type === 'Implant') ? 'block' : 'none';
+    populateStageSelect(document.getElementById('ap-stage'), type, null);
+  }
+  document.getElementById('ap-treatment-type').addEventListener('change', onTreatmentTypeChange);
+  populateTreatmentTypeSelect();
 
   // --- Agency-managed username/password login (alongside Google) --------
   // Shows this client's own name + a link back to their website, driven by
@@ -1664,7 +1696,7 @@
     openCaseDetail({
       caseId: caseSummary.caseId, patientId: patient.patientId, patientName: patient.name,
       phone: patient.phone, altPhone: patient.altPhone, age: patient.age, sex: patient.sex,
-      locality: patient.locality, source: patient.source, caseType: caseSummary.caseType,
+      locality: patient.locality, source: patient.source, treatmentType: caseSummary.treatmentType, caseType: caseSummary.caseType,
       site: '', implantSystem: '', graftRequired: false, stage: caseSummary.stage,
       stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
       quotedAmount: caseSummary.quotedAmount, notes: '', status: caseSummary.status
@@ -1890,7 +1922,8 @@
     });
     document.getElementById('ap-sex').value = '';
     document.getElementById('ap-case-type').value = 'Single';
-    document.getElementById('ap-stage').value = 'Enquiry';
+    document.getElementById('ap-treatment-type').value = currentCaseTypes[0].key;
+    onTreatmentTypeChange();
     document.getElementById('ap-graft').checked = false;
     document.getElementById('ap-consent').checked = false;
   }
@@ -1942,6 +1975,7 @@
       phone: phone,
       age: document.getElementById('ap-age').value,
       sex: document.getElementById('ap-sex').value,
+      treatmentType: document.getElementById('ap-treatment-type').value,
       caseType: document.getElementById('ap-case-type').value,
       site: document.getElementById('ap-site').value,
       implantSystem: document.getElementById('ap-implant-system').value,
@@ -1985,12 +2019,17 @@
     document.getElementById('cd-locality').textContent = ctx.locality || '—';
     document.getElementById('cd-source').textContent = ctx.source || '—';
     document.getElementById('cd-caseid').textContent = ctx.caseId || '—';
+    var ctxTreatmentType = ctx.treatmentType || 'Implant';
+    document.getElementById('cd-treatment-type').textContent = getCaseType(ctxTreatmentType).label || ctxTreatmentType;
     document.getElementById('cd-typesite').textContent = [ctx.caseType, ctx.site].filter(Boolean).join(' · ') || '—';
     document.getElementById('cd-implant').textContent = ctx.implantSystem || '—';
     document.getElementById('cd-graft').textContent = ctx.graftRequired ? 'Yes' : 'No';
+    var isImplantCase = ctxTreatmentType === 'Implant';
+    document.getElementById('cd-implant-row').style.display = isImplantCase ? '' : 'none';
+    document.getElementById('cd-graft-row').style.display = isImplantCase ? '' : 'none';
     document.getElementById('cd-enteredon').textContent = ctx.stageEnteredOn || '—';
 
-    document.getElementById('cd-stage-select').value = ctx.stage || 'Enquiry';
+    populateStageSelect(document.getElementById('cd-stage-select'), ctxTreatmentType, ctx.stage);
     document.getElementById('cd-status-select').value = ctx.status || 'Active';
     document.getElementById('cd-quoted-input').value = ctx.quotedAmount || '';
     document.getElementById('cd-assigned-input').value = ctx.assignedTo || '';
