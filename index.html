@@ -631,6 +631,13 @@
   }
   .doctor-chip button:hover{background:rgba(0,0,0,0.07);}
   .doctor-chip-empty{font-size:13px;color:var(--muted);}
+  .patients-search-bar{margin-bottom:16px;}
+  .patients-search-bar input{
+    width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);
+    font-size:14.5px;font-family:inherit;background:var(--surface);color:var(--navy);
+    box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .patients-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
   .review-short-link .btn{padding:6px 14px;font-size:13px;min-height:32px;}
   .review-row{
     background:var(--surface);border:1px solid var(--line-soft);border-left-width:3px;border-left-color:#25D366;
@@ -1033,6 +1040,9 @@
     </div>
     <div id="tab-patients" class="tab-panel">
       <div id="app-doctors-settings"></div>
+      <div class="patients-search-bar">
+        <input type="text" id="patients-search-input" placeholder="Search by patient name, doctor, mobile number or UHID…" autocomplete="off" />
+      </div>
       <div id="app-patients"></div>
     </div>
     <div id="tab-enquiries" class="tab-panel">
@@ -1371,6 +1381,7 @@
   var currentPatients = [];
   var caseIdToPatientId = {}; // caseId -> UHID (patient's unique ID, e.g. "P-0001"), rebuilt whenever currentPatients refreshes
   var currentDoctors = []; // [{name, active}], this clinic's doctor roster
+  var patientsSearchQuery = ''; // Patients tab search box: matches name, doctor, phone, UHID
   var currentEnquiries = [];
   var currentAppointments = [];
   var currentPayments = [];
@@ -2182,13 +2193,31 @@
   });
 
   // --- Patients tab ---------------------------------------------------------
+  // Matches the search box against patient name, phone/alt phone, UHID, and
+  // the doctor on any of their cases (not just the latest) — so searching a
+  // doctor's name surfaces everyone they've ever treated, not just current.
+  function patientMatchesSearch_(p, q) {
+    if (!q) return true;
+    if ((p.name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((p.phone || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((p.altPhone || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((p.patientId || '').toLowerCase().indexOf(q) !== -1) return true;
+    return (p.cases || []).some(function(c) { return (c.assignedTo || '').toLowerCase().indexOf(q) !== -1; });
+  }
+
   function renderPatients(patients) {
     var el = document.getElementById('app-patients');
     if (!patients || patients.length === 0) {
       el.innerHTML = '<div class="board-empty">No patients yet — use "+ Add patient" to create the first one.</div>';
       return;
     }
-    el.innerHTML = patients.map(function(p) {
+    var q = patientsSearchQuery.trim().toLowerCase();
+    var filtered = patients.filter(function(p) { return patientMatchesSearch_(p, q); });
+    if (filtered.length === 0) {
+      el.innerHTML = '<div class="board-empty">No patients match “' + escapeHtml(patientsSearchQuery) + '”.</div>';
+      return;
+    }
+    el.innerHTML = filtered.map(function(p) {
       var chips = (p.cases || []).map(function(c) {
         var cls = c.status === 'Completed' ? 'completed' : (c.status === 'Dropped' ? 'dropped' : '');
         return '<span class="patient-case-chip ' + cls + '" data-case-id="' + escapeHtml(c.caseId) + '" ' +
@@ -2213,6 +2242,11 @@
       '</div>';
     }).join('');
   }
+
+  document.getElementById('patients-search-input').addEventListener('input', function(e) {
+    patientsSearchQuery = e.target.value;
+    renderPatients(currentPatients);
+  });
 
   // --- Doctors (multi-doctor clinics): roster management + dropdowns ------
   function renderDoctorsSettings() {
