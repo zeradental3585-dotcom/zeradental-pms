@@ -436,6 +436,13 @@
   }
   .board-row.ontrack .board-badge{background:var(--amber-bg);color:var(--amber);}
   .board-due{font-size:13px;color:var(--muted);}
+  .uhid-tag{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.2px;
+    color:var(--green-dark);background:var(--green-soft);border:1px solid var(--green-ring);
+    padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;white-space:nowrap;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (max-width:480px){.uhid-tag{display:block;margin-left:0;margin-top:3px;width:fit-content;}}
   .board-row-action{width:100%;font-size:13.5px;color:var(--ink-soft);padding-top:8px;border-top:1px dashed var(--line);margin-top:8px;}
 
   /* ===== Add patient modal ===== */
@@ -1275,6 +1282,7 @@
   var clinicHomepageUrl = ''; // this client's own website, for the "back to my website" link
   var currentBoard = [];
   var currentPatients = [];
+  var caseIdToPatientId = {}; // caseId -> UHID (patient's unique ID, e.g. "P-0001"), rebuilt whenever currentPatients refreshes
   var currentEnquiries = [];
   var currentAppointments = [];
   var currentPayments = [];
@@ -1463,6 +1471,10 @@
   function applyDashboardData(res) {
     currentBoard = res.board || [];
     currentPatients = res.patients || [];
+    caseIdToPatientId = {};
+    currentPatients.forEach(function(p) {
+      (p.cases || []).forEach(function(c) { caseIdToPatientId[c.caseId] = p.patientId; });
+    });
     currentEnquiries = res.enquiries || [];
     currentAppointments = res.appointments || [];
     currentPayments = res.payments || [];
@@ -1759,14 +1771,18 @@
     var q = (query || '').trim().toLowerCase();
     if (!q) { el.innerHTML = ''; el.classList.remove('open'); return; }
     var matches = currentBoard.filter(function(r) {
-      return (r.patientName || '').toLowerCase().indexOf(q) !== -1 || (r.phone || '').indexOf(q) !== -1;
+      var uhid = r.patientId || caseIdToPatientId[r.caseId] || '';
+      return (r.patientName || '').toLowerCase().indexOf(q) !== -1 || (r.phone || '').indexOf(q) !== -1 ||
+        uhid.toLowerCase().indexOf(q) !== -1;
     }).slice(0, 6);
     if (matches.length === 0) {
       el.innerHTML = '<div class="search-empty">No active case matches — check spelling, or open them from Patients.</div>';
     } else {
       el.innerHTML = matches.map(function(r) {
+        var uhid = r.patientId || caseIdToPatientId[r.caseId];
         return '<div class="search-result" data-case-id="' + escapeHtml(r.caseId) + '">' +
-          '<span class="sr-name">' + escapeHtml(r.patientName) + '</span>' +
+          '<span class="sr-name">' + escapeHtml(r.patientName) +
+            (uhid ? '<span class="uhid-tag">UHID: ' + escapeHtml(uhid) + '</span>' : '') + '</span>' +
           '<span class="sr-meta">' + escapeHtml(r.phone || '') + ' · ' + escapeHtml(r.stage || '') + '</span>' +
         '</div>';
       }).join('');
@@ -1887,10 +1903,12 @@
       var overdueLabel = r.daysOverdue > 0
         ? (r.daysOverdue + ' day(s) overdue')
         : (r.daysOverdue === 0 ? 'Due today' : ('Due in ' + Math.abs(r.daysOverdue) + ' day(s)'));
+      var uhid = r.patientId || caseIdToPatientId[r.caseId];
       return '<div class="board-row ' + overdueClass + '" data-case-id="' + escapeHtml(r.caseId) + '">' +
         '<div class="board-row-main">' +
           '<div class="row-identity">' + avatarHtml(r.patientName) +
-            '<div><div class="board-row-name">' + escapeHtml(r.patientName || '(unnamed)') + '</div>' +
+            '<div><div class="board-row-name">' + escapeHtml(r.patientName || '(unnamed)') +
+              (uhid ? '<span class="uhid-tag">UHID: ' + escapeHtml(uhid) + '</span>' : '') + '</div>' +
             '<div class="board-row-stage">' + escapeHtml(r.stage || '') + '</div></div>' +
           '</div>' +
         '</div>' +
@@ -1928,7 +1946,8 @@
       return '<div class="patient-row">' +
         '<div class="patient-row-top">' +
           '<div class="row-identity">' + avatarHtml(p.name) +
-            '<div><div class="patient-name">' + escapeHtml(p.name || '(unnamed)') + '</div>' +
+            '<div><div class="patient-name">' + escapeHtml(p.name || '(unnamed)') +
+              (p.patientId ? '<span class="uhid-tag">UHID: ' + escapeHtml(p.patientId) + '</span>' : '') + '</div>' +
             '<div class="patient-meta">' + escapeHtml(p.phone || '') + (p.altPhone ? ' · Alt: ' + escapeHtml(p.altPhone) : '') + '</div></div>' +
           '</div>' +
           '<div class="patient-meta">' +
