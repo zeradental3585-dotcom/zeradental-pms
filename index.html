@@ -734,6 +734,41 @@
   .income-total{font-size:31px;font-weight:800;letter-spacing:-0.025em;position:relative;z-index:1;}
   .income-sub{font-size:13px;color:var(--dark-muted);margin-top:4px;font-weight:600;position:relative;z-index:1;}
 
+  /* ===== Insights tab ===== */
+  .insights-total-card{
+    background:var(--navy);color:#fff;border-radius:var(--r-lg);padding:22px 22px;margin-bottom:20px;
+    position:relative;overflow:hidden;cursor:pointer;transition:transform .15s ease;
+  }
+  .insights-total-card:hover{transform:translateY(-2px);}
+  .insights-total-card::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(280px 140px at 100% 0%, rgba(37,99,235,0.32), transparent 70%);
+  }
+  .insights-total-num{font-size:34px;font-weight:800;letter-spacing:-0.025em;position:relative;z-index:1;}
+  .insights-total-label{font-size:13.5px;color:var(--dark-muted);margin-top:4px;font-weight:600;position:relative;z-index:1;}
+  .insights-total-hint{font-size:12px;color:rgba(255,255,255,0.65);margin-top:10px;position:relative;z-index:1;font-weight:600;}
+  .insights-section-title{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-2);margin:0 0 12px;}
+  .insights-doctor-row{
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:14px 18px;
+    margin-bottom:10px;box-shadow:var(--shadow-xs);cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .insights-doctor-row:hover{border-color:var(--line);box-shadow:var(--shadow-sm);}
+  .insights-doctor-row-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .insights-doctor-name{font-weight:700;font-size:14.5px;color:var(--navy);}
+  .insights-doctor-name.is-unassigned{color:var(--muted);font-weight:600;font-style:italic;}
+  .insights-doctor-count{font-weight:800;font-size:15.5px;color:var(--blue-dark);flex-shrink:0;}
+  .insights-doctor-bar{background:var(--bg);border-radius:999px;height:7px;margin-top:10px;overflow:hidden;}
+  .insights-doctor-bar-fill{background:var(--blue);height:100%;border-radius:999px;transition:width .3s ease;}
+  .insights-patients-list{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:grid;gap:8px;}
+  .insights-patient-item{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--r-sm);padding:9px 12px;
+  }
+  .insights-patient-item.is-clickable{cursor:pointer;}
+  .insights-patient-item.is-clickable:hover{border-color:var(--green);background:var(--green-soft);}
+  .insights-patient-meta{font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;}
+  .insights-empty{font-size:13px;color:var(--muted);padding:4px 2px;}
+
   /* ===== Log visit: patient search ===== */
   .search-results{
     display:none;margin-top:6px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;max-height:220px;overflow-y:auto;
@@ -966,6 +1001,7 @@
       <button class="app-tab" data-tab="patients" type="button">Patients <span class="tab-count" data-tab-count="patients">0</span></button>
       <button class="app-tab" data-tab="enquiries" type="button">Enquiries <span class="tab-count" data-tab-count="enquiries">0</span></button>
       <button class="app-tab" data-tab="reviews" type="button">Reviews <span class="tab-count" data-tab-count="reviews">0</span></button>
+      <button class="app-tab" data-tab="insights" type="button">Insights</button>
     </div>
 
     <div id="tab-today" class="tab-panel active">
@@ -1005,6 +1041,21 @@
     <div id="tab-reviews" class="tab-panel">
       <div id="app-reviews"></div>
     </div>
+    <div id="tab-insights" class="tab-panel">
+      <div class="range-bar">
+        <div class="range-pills" id="insights-range-pills">
+          <button class="range-pill" data-range="today" type="button">Today</button>
+          <button class="range-pill" data-range="week" type="button">This week</button>
+          <button class="range-pill active" data-range="month" type="button">This month</button>
+          <button class="range-pill" data-range="lifetime" type="button">Lifetime</button>
+          <button class="range-pill" data-range="custom" type="button">Custom</button>
+        </div>
+        <div class="range-custom" id="insights-range-custom" style="display:none;">
+          <input type="date" id="insights-range-from" /> <span>to</span> <input type="date" id="insights-range-to" />
+        </div>
+      </div>
+      <div id="app-insights"></div>
+    </div>
   </div>
 
   <!-- Fixed bottom tab bar — phones only (hidden on tablet/desktop, where the
@@ -1036,6 +1087,10 @@
       <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M10 2.7l2.28 4.66 5.12.75-3.7 3.62.87 5.1L10 14.4l-4.57 2.43.87-5.1-3.7-3.62 5.12-.75z"/></svg></span>
       <span class="bn-label">Reviews</span>
       <span class="bn-badge" data-tab-count="reviews">0</span>
+    </button>
+    <button class="app-tab bottom-nav-tab" data-tab="insights" type="button">
+      <span class="bn-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5h14"/><rect x="4.3" y="10.6" width="2.9" height="5.9" rx="0.7"/><rect x="8.55" y="6.4" width="2.9" height="10.1" rx="0.7"/><rect x="12.8" y="3.4" width="2.9" height="13.1" rx="0.7"/></svg></span>
+      <span class="bn-label">Insights</span>
     </button>
   </nav>
 </div>
@@ -1329,6 +1384,9 @@
   // the first successful login response arrives.
   var currentCaseTypes = [{ key: 'Implant', label: 'Dental Implant', prefix: 'IMP', stages: [{ name: 'Enquiry' }] }];
   var todayRangeMode = 'today';
+  var insightsRangeMode = 'month';
+  var insightsExpandedTotal = false; // whether the "total patients" card's drill-down list is open
+  var insightsExpandedDoctor = null; // name of the doctor row currently expanded, or null
   var waComposeCtx = null; // { caseId, phone, name, defaultText } for the open WhatsApp compose modal
 
   function todayISO() {
@@ -1530,6 +1588,7 @@
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
     renderToday();
     renderStats();
+    renderInsights();
     setTabCount('board', currentBoard.length);
     setTabCount('patients', currentPatients.length);
     setTabCount('enquiries', currentEnquiries.length);
@@ -1687,6 +1746,158 @@
       '</div>';
     }).join('');
   }
+
+  // --- Insights tab: patients over time, broken down by doctor -------------
+  // Built entirely from data already loaded for other tabs (currentPatients,
+  // currentBoard) — no new backend endpoint needed. p.createdOn comes from
+  // the server as a display string ("01 Sep 2026"), not ISO, so it's parsed
+  // client-side rather than asking for a new backend field.
+  var MONTH_ABBR_ = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  function parseDisplayDate_(s) {
+    if (!s) return null;
+    var parts = String(s).trim().split(/\s+/);
+    if (parts.length !== 3) return null;
+    var day = parseInt(parts[0], 10);
+    var month = MONTH_ABBR_[parts[1]];
+    var year = parseInt(parts[2], 10);
+    if (isNaN(day) || month === undefined || isNaN(year)) return null;
+    return isoOf(new Date(year, month, day));
+  }
+  function patientCreatedISO_(p) {
+    return parseDisplayDate_(p.createdOn);
+  }
+  // Each patient is attributed to whoever is assigned on their most recent
+  // case (cases[] is already in chronological order) — so a patient only
+  // ever counts toward one doctor's total, never double-counted. Patients
+  // with no case, or no doctor assigned yet (including every clinic until
+  // the doctors feature is deployed there), fall into "Unassigned".
+  function patientDoctorName_(p) {
+    var cases = p.cases || [];
+    for (var i = cases.length - 1; i >= 0; i--) {
+      var name = String(cases[i].assignedTo || '').trim();
+      if (name) return name;
+    }
+    return 'Unassigned';
+  }
+  // Same shape as computeRangeBounds, plus a 'lifetime' mode (no bounds at
+  // all) — kept separate from the Today tab's range picker/state so the two
+  // tabs' range choices don't interfere with each other.
+  function computeInsightsRangeBounds(mode) {
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    var t = todayISO();
+    if (mode === 'lifetime') return { from: null, to: null };
+    if (mode === 'today') return { from: t, to: t };
+    if (mode === 'week') {
+      var day = now.getDay();
+      var mondayOffset = day === 0 ? -6 : 1 - day;
+      return { from: isoOf(new Date(y, m, d + mondayOffset)), to: isoOf(new Date(y, m, d + mondayOffset + 6)) };
+    }
+    if (mode === 'month') {
+      return { from: isoOf(new Date(y, m, 1)), to: isoOf(new Date(y, m + 1, 0)) };
+    }
+    return { from: document.getElementById('insights-range-from').value || t, to: document.getElementById('insights-range-to').value || t };
+  }
+  function insightsPatientInRange_(p, bounds) {
+    if (bounds.from === null) return true; // lifetime — everyone counts
+    var iso = patientCreatedISO_(p);
+    if (!iso) return false; // undated patient can't be placed in a specific range
+    return iso >= bounds.from && iso <= bounds.to;
+  }
+  function insightsPatientListHtml_(patients) {
+    if (!patients.length) return '<div class="insights-empty">No patients in this range.</div>';
+    return '<div class="insights-patients-list">' + patients.map(function(p) {
+      var lastCase = (p.cases || [])[(p.cases || []).length - 1];
+      var onBoard = lastCase && currentBoard.some(function(r) { return String(r.caseId) === String(lastCase.caseId); });
+      return '<div class="insights-patient-item' + (onBoard ? ' is-clickable' : '') + '"' +
+        (onBoard ? ' data-case-id="' + escapeHtml(lastCase.caseId) + '"' : '') + '>' +
+        '<div class="row-identity">' + avatarHtml(p.name) +
+          '<div><div class="patient-name" style="font-size:14px;">' + escapeHtml(p.name || '(unnamed)') +
+            (p.patientId ? '<span class="uhid-tag">UHID: ' + escapeHtml(p.patientId) + '</span>' : '') + '</div>' +
+          '</div></div>' +
+        '<div class="insights-patient-meta">' + escapeHtml(p.phone || '') +
+          (p.createdOn ? '<br>added ' + escapeHtml(p.createdOn) : '') + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  function renderInsights() {
+    var el = document.getElementById('app-insights');
+    if (!el) return;
+    var bounds = computeInsightsRangeBounds(insightsRangeMode);
+    var filtered = currentPatients.filter(function(p) { return insightsPatientInRange_(p, bounds); });
+
+    var byDoctor = {};
+    filtered.forEach(function(p) {
+      var name = patientDoctorName_(p);
+      (byDoctor[name] = byDoctor[name] || []).push(p);
+    });
+    var doctorRows = Object.keys(byDoctor).map(function(name) {
+      return { name: name, patients: byDoctor[name] };
+    }).sort(function(a, b) { return b.patients.length - a.patients.length; });
+    var maxCount = doctorRows.length ? doctorRows[0].patients.length : 0;
+
+    var rangeLabel = insightsRangeMode === 'lifetime' ? 'the full lifetime of the clinic' :
+      (insightsRangeMode === 'today' ? 'today' : insightsRangeMode === 'week' ? 'this week' :
+      insightsRangeMode === 'month' ? 'this month' : 'the selected dates');
+
+    var totalHtml =
+      '<div class="insights-total-card" id="insights-total-card">' +
+        '<div class="insights-total-num">' + filtered.length + '</div>' +
+        '<div class="insights-total-label">Total patients · ' + escapeHtml(rangeLabel) + '</div>' +
+        '<div class="insights-total-hint">' + (insightsExpandedTotal ? 'Tap to hide the list ▲' : 'Tap to see who ▼') + '</div>' +
+      '</div>' +
+      (insightsExpandedTotal ? insightsPatientListHtml_(filtered) : '');
+
+    var doctorHtml = '<div class="insights-section-title">By doctor</div>' +
+      (doctorRows.length === 0 ? '<div class="insights-empty">No patients in this range.</div>' : doctorRows.map(function(row) {
+        var pct = maxCount ? Math.round((row.patients.length / maxCount) * 100) : 0;
+        var expanded = insightsExpandedDoctor === row.name;
+        return '<div class="insights-doctor-row" data-doctor="' + escapeHtml(row.name) + '">' +
+          '<div class="insights-doctor-row-head">' +
+            '<div class="insights-doctor-name' + (row.name === 'Unassigned' ? ' is-unassigned' : '') + '">' + escapeHtml(row.name) + '</div>' +
+            '<div class="insights-doctor-count">' + row.patients.length + '</div>' +
+          '</div>' +
+          '<div class="insights-doctor-bar"><div class="insights-doctor-bar-fill" style="width:' + pct + '%"></div></div>' +
+          (expanded ? insightsPatientListHtml_(row.patients) : '') +
+        '</div>';
+      }).join(''));
+
+    el.innerHTML = totalHtml + doctorHtml;
+  }
+
+  document.querySelectorAll('#insights-range-pills .range-pill').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#insights-range-pills .range-pill').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      insightsRangeMode = btn.dataset.range;
+      document.getElementById('insights-range-custom').style.display = insightsRangeMode === 'custom' ? 'flex' : 'none';
+      if (insightsRangeMode !== 'custom') renderInsights();
+    });
+  });
+  document.getElementById('insights-range-from').addEventListener('change', renderInsights);
+  document.getElementById('insights-range-to').addEventListener('change', renderInsights);
+
+  document.getElementById('app-insights').addEventListener('click', function(e) {
+    var patientItem = e.target.closest('.insights-patient-item');
+    if (patientItem && patientItem.classList.contains('is-clickable')) {
+      var caseId = patientItem.dataset.caseId;
+      var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+      if (ctx) openCaseDetail(ctx);
+      return;
+    }
+    var doctorRow = e.target.closest('.insights-doctor-row');
+    if (doctorRow) {
+      var name = doctorRow.dataset.doctor;
+      insightsExpandedDoctor = (insightsExpandedDoctor === name) ? null : name;
+      renderInsights();
+      return;
+    }
+    var totalCard = e.target.closest('#insights-total-card');
+    if (totalCard) {
+      insightsExpandedTotal = !insightsExpandedTotal;
+      renderInsights();
+    }
+  });
 
   // --- Today tab: date-range appointments + income -------------------------
   function computeRangeBounds(mode) {
