@@ -58,6 +58,11 @@
     --green-soft:#ecfdf5;
     --green-ring:rgba(5,150,105,0.30);
 
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --blue-soft:#eff6ff;
+    --blue-ring:rgba(37,99,235,0.28);
+
     /* Status */
     --red:#dc2626;
     --red-bg:#fef2f2;
@@ -443,6 +448,12 @@
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   @media (max-width:480px){.uhid-tag{display:block;margin-left:0;margin-top:3px;width:fit-content;}}
+  .doctor-tag{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1px;
+    color:var(--blue-dark);background:var(--blue-soft);border:1px solid var(--blue-ring);
+    padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;white-space:nowrap;
+  }
+  @media (max-width:480px){.doctor-tag{display:block;margin-left:0;margin-top:3px;width:fit-content;}}
   .board-row-action{width:100%;font-size:13.5px;color:var(--ink-soft);padding-top:8px;border-top:1px dashed var(--line);margin-top:8px;}
 
   /* ===== Add patient modal ===== */
@@ -606,6 +617,20 @@
     background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--r-sm);font-size:13px;color:var(--muted);
   }
   .review-short-link strong{color:var(--navy);font-weight:700;}
+
+  /* ===== Doctors settings (Patients tab) ===== */
+  .doctor-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .doctor-chip{
+    display:inline-flex;align-items:center;gap:7px;padding:6px 8px 6px 12px;border-radius:999px;
+    background:var(--blue-soft);border:1px solid var(--blue-ring);font-size:13px;color:var(--blue-dark);font-weight:600;
+  }
+  .doctor-chip.inactive{background:var(--bg);border-color:var(--line);color:var(--muted);}
+  .doctor-chip button{
+    appearance:none;border:none;background:none;cursor:pointer;font-size:12px;font-weight:700;
+    padding:3px 7px;border-radius:999px;color:inherit;line-height:1;
+  }
+  .doctor-chip button:hover{background:rgba(0,0,0,0.07);}
+  .doctor-chip-empty{font-size:13px;color:var(--muted);}
   .review-short-link .btn{padding:6px 14px;font-size:13px;min-height:32px;}
   .review-row{
     background:var(--surface);border:1px solid var(--line-soft);border-left-width:3px;border-left-color:#25D366;
@@ -971,6 +996,7 @@
       <div id="app-board"></div>
     </div>
     <div id="tab-patients" class="tab-panel">
+      <div id="app-doctors-settings"></div>
       <div id="app-patients"></div>
     </div>
     <div id="tab-enquiries" class="tab-panel">
@@ -1054,8 +1080,8 @@
         <input id="cd-quoted-input" type="number" min="0" />
       </div>
       <div class="modal-field">
-        <label for="cd-assigned-input">Assigned to</label>
-        <input id="cd-assigned-input" type="text" />
+        <label for="cd-assigned-input">Doctor</label>
+        <select id="cd-assigned-input"></select>
       </div>
     </div>
     <div class="modal-field">
@@ -1166,9 +1192,15 @@
       </label>
     </div>
 
-    <div class="modal-field">
-      <label for="ap-stage">Current stage *</label>
-      <select id="ap-stage"></select>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-stage">Current stage *</label>
+        <select id="ap-stage"></select>
+      </div>
+      <div class="modal-field">
+        <label for="ap-assigned-doctor">Doctor</label>
+        <select id="ap-assigned-doctor"></select>
+      </div>
     </div>
 
     <div class="modal-row">
@@ -1283,6 +1315,7 @@
   var currentBoard = [];
   var currentPatients = [];
   var caseIdToPatientId = {}; // caseId -> UHID (patient's unique ID, e.g. "P-0001"), rebuilt whenever currentPatients refreshes
+  var currentDoctors = []; // [{name, active}], this clinic's doctor roster
   var currentEnquiries = [];
   var currentAppointments = [];
   var currentPayments = [];
@@ -1481,12 +1514,18 @@
     currentReviewCandidates = res.reviewCandidates || [];
     currentReviewLink = res.reviewLink || '';
     currentReviewLinkShort = res.reviewLinkShort || '';
+    // res.doctors is only present once the multi-doctor backend change is
+    // deployed — fall back to whatever was already loaded (usually []) so
+    // this keeps working cleanly against an older deployment in the meantime.
+    if (res.doctors) currentDoctors = res.doctors;
     if (res.caseTypes && res.caseTypes.length) {
       currentCaseTypes = res.caseTypes;
       populateTreatmentTypeSelect();
     }
     renderBoard(currentBoard);
     renderPatients(currentPatients);
+    renderDoctorsSettings();
+    populateDoctorSelects();
     renderEnquiries(currentEnquiries);
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
     renderToday();
@@ -1773,7 +1812,7 @@
     var matches = currentBoard.filter(function(r) {
       var uhid = r.patientId || caseIdToPatientId[r.caseId] || '';
       return (r.patientName || '').toLowerCase().indexOf(q) !== -1 || (r.phone || '').indexOf(q) !== -1 ||
-        uhid.toLowerCase().indexOf(q) !== -1;
+        uhid.toLowerCase().indexOf(q) !== -1 || (r.assignedTo || '').toLowerCase().indexOf(q) !== -1;
     }).slice(0, 6);
     if (matches.length === 0) {
       el.innerHTML = '<div class="search-empty">No active case matches — check spelling, or open them from Patients.</div>';
@@ -1782,7 +1821,8 @@
         var uhid = r.patientId || caseIdToPatientId[r.caseId];
         return '<div class="search-result" data-case-id="' + escapeHtml(r.caseId) + '">' +
           '<span class="sr-name">' + escapeHtml(r.patientName) +
-            (uhid ? '<span class="uhid-tag">UHID: ' + escapeHtml(uhid) + '</span>' : '') + '</span>' +
+            (uhid ? '<span class="uhid-tag">UHID: ' + escapeHtml(uhid) + '</span>' : '') +
+            (r.assignedTo ? '<span class="doctor-tag">' + escapeHtml(r.assignedTo) + '</span>' : '') + '</span>' +
           '<span class="sr-meta">' + escapeHtml(r.phone || '') + ' · ' + escapeHtml(r.stage || '') + '</span>' +
         '</div>';
       }).join('');
@@ -1908,7 +1948,8 @@
         '<div class="board-row-main">' +
           '<div class="row-identity">' + avatarHtml(r.patientName) +
             '<div><div class="board-row-name">' + escapeHtml(r.patientName || '(unnamed)') +
-              (uhid ? '<span class="uhid-tag">UHID: ' + escapeHtml(uhid) + '</span>' : '') + '</div>' +
+              (uhid ? '<span class="uhid-tag">UHID: ' + escapeHtml(uhid) + '</span>' : '') +
+              (r.assignedTo ? '<span class="doctor-tag">' + escapeHtml(r.assignedTo) + '</span>' : '') + '</div>' +
             '<div class="board-row-stage">' + escapeHtml(r.stage || '') + '</div></div>' +
           '</div>' +
         '</div>' +
@@ -1941,7 +1982,7 @@
         var cls = c.status === 'Completed' ? 'completed' : (c.status === 'Dropped' ? 'dropped' : '');
         return '<span class="patient-case-chip ' + cls + '" data-case-id="' + escapeHtml(c.caseId) + '" ' +
           'data-patient-id="' + escapeHtml(p.patientId) + '">' + escapeHtml(c.caseId) + ' · ' + escapeHtml(c.stage) +
-          ' (' + escapeHtml(c.status) + ')</span>';
+          ' (' + escapeHtml(c.status) + ')' + (c.assignedTo ? ' · ' + escapeHtml(c.assignedTo) : '') + '</span>';
       }).join('');
       return '<div class="patient-row">' +
         '<div class="patient-row-top">' +
@@ -1960,6 +2001,139 @@
         '<div class="patient-cases">' + (chips || '<span class="detail-empty">No cases on file</span>') + '</div>' +
       '</div>';
     }).join('');
+  }
+
+  // --- Doctors (multi-doctor clinics): roster management + dropdowns ------
+  function renderDoctorsSettings() {
+    var el = document.getElementById('app-doctors-settings');
+    if (!el) return;
+    var active = currentDoctors.filter(function(d) { return d.active; });
+    var inactive = currentDoctors.filter(function(d) { return !d.active; });
+    var chipsHtml = active.map(function(d) {
+      return '<span class="doctor-chip" data-name="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) +
+        '<button type="button" class="doctor-rename-btn" data-name="' + escapeHtml(d.name) + '" title="Rename">✎</button>' +
+        '<button type="button" class="doctor-remove-btn" data-name="' + escapeHtml(d.name) + '" title="Remove">×</button>' +
+      '</span>';
+    }).join('') + inactive.map(function(d) {
+      return '<span class="doctor-chip inactive" data-name="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + ' (removed)' +
+        '<button type="button" class="doctor-reactivate-btn" data-name="' + escapeHtml(d.name) + '" title="Add back">↺</button>' +
+      '</span>';
+    }).join('');
+    el.innerHTML =
+      '<div class="review-settings">' +
+        '<h3>Doctors at this clinic</h3>' +
+        '<p>Add every doctor who sees patients here — you can then assign a doctor to each case, and see at a glance who treated whom on the board, patient list and search.</p>' +
+        '<div class="review-settings-row">' +
+          '<input id="doctor-add-input" type="text" placeholder="e.g. Dr. Shilpa Yadav" autocomplete="off" />' +
+          '<button id="doctor-add-btn" class="btn btn-primary" type="button">+ Add doctor</button>' +
+        '</div>' +
+        '<div id="doctor-settings-status" class="modal-status"></div>' +
+        '<div class="doctor-chip-list">' + (chipsHtml || '<span class="doctor-chip-empty">No doctors added yet — add one above.</span>') + '</div>' +
+      '</div>';
+  }
+
+  function doctorSettingsStatus(msg, isError) {
+    var statusEl = document.getElementById('doctor-settings-status');
+    if (!statusEl) return;
+    statusEl.textContent = msg || '';
+    statusEl.className = 'modal-status' + (isError ? ' is-error' : '');
+  }
+
+  function doctorActionErrorMessage(err) {
+    var messages = {
+      doctor_name_required: 'Please enter a doctor’s name.',
+      duplicate_doctor: 'That doctor is already on the list.',
+      doctor_not_found: 'Could not find that doctor — try refreshing.',
+      doctors_tab_missing: 'This clinic hasn’t been set up for multiple doctors yet — contact Zera Dental.'
+    };
+    return messages[err] || 'Something went wrong. Please try again.';
+  }
+
+  function submitAddDoctor() {
+    var input = document.getElementById('doctor-add-input');
+    var name = (input.value || '').trim();
+    if (!name) { doctorSettingsStatus('Please enter a doctor’s name.', true); return; }
+    doctorSettingsStatus('Adding…', false);
+    apiCall('addDoctor', { name: name }).then(function(res) {
+      if (!res || !res.ok) { doctorSettingsStatus(doctorActionErrorMessage(res && res.error), true); return; }
+      applyDashboardData(res);
+      doctorSettingsStatus('Added ' + name + '.', false);
+    }).catch(function() { doctorSettingsStatus('Something went wrong. Please try again.', true); });
+  }
+
+  function submitRenameDoctor(oldName) {
+    var newName = window.prompt('Rename "' + oldName + '" to:', oldName);
+    if (newName === null) return; // cancelled
+    newName = newName.trim();
+    if (!newName || newName === oldName) return;
+    doctorSettingsStatus('Renaming…', false);
+    apiCall('renameDoctor', { oldName: oldName, newName: newName }).then(function(res) {
+      if (!res || !res.ok) { doctorSettingsStatus(doctorActionErrorMessage(res && res.error), true); return; }
+      applyDashboardData(res);
+      doctorSettingsStatus('Renamed to ' + newName + '.', false);
+    }).catch(function() { doctorSettingsStatus('Something went wrong. Please try again.', true); });
+  }
+
+  function submitRemoveDoctor(name) {
+    if (!window.confirm('Remove "' + name + '" from the doctor list?\n\nCases already assigned to them will keep showing their name — this just takes them out of the dropdown for new assignments.')) return;
+    doctorSettingsStatus('Removing…', false);
+    apiCall('removeDoctor', { name: name }).then(function(res) {
+      if (!res || !res.ok) { doctorSettingsStatus(doctorActionErrorMessage(res && res.error), true); return; }
+      applyDashboardData(res);
+      doctorSettingsStatus('Removed ' + name + '.', false);
+    }).catch(function() { doctorSettingsStatus('Something went wrong. Please try again.', true); });
+  }
+
+  function submitReactivateDoctor(name) {
+    doctorSettingsStatus('Adding back…', false);
+    apiCall('addDoctor', { name: name }).then(function(res) {
+      if (!res || !res.ok) { doctorSettingsStatus(doctorActionErrorMessage(res && res.error), true); return; }
+      applyDashboardData(res);
+      doctorSettingsStatus(name + ' is back on the list.', false);
+    }).catch(function() { doctorSettingsStatus('Something went wrong. Please try again.', true); });
+  }
+
+  document.getElementById('app-doctors-settings').addEventListener('click', function(e) {
+    if (e.target.closest('#doctor-add-btn')) { submitAddDoctor(); return; }
+    var renameBtn = e.target.closest('.doctor-rename-btn');
+    if (renameBtn) { submitRenameDoctor(renameBtn.dataset.name); return; }
+    var removeBtn = e.target.closest('.doctor-remove-btn');
+    if (removeBtn) { submitRemoveDoctor(removeBtn.dataset.name); return; }
+    var reactivateBtn = e.target.closest('.doctor-reactivate-btn');
+    if (reactivateBtn) { submitReactivateDoctor(reactivateBtn.dataset.name); return; }
+  });
+  document.getElementById('app-doctors-settings').addEventListener('keydown', function(e) {
+    if (e.target && e.target.id === 'doctor-add-input' && e.key === 'Enter') { e.preventDefault(); submitAddDoctor(); }
+  });
+
+  /** Ensures `value` exists as an option on a doctor dropdown (adding a
+   * placeholder one if it's an inactive/legacy name not in the active
+   * roster) before setting it, so a case's existing assignment is never
+   * silently dropped just because that doctor was later removed. */
+  function setDoctorSelectValue(selectEl, value) {
+    if (!selectEl) return;
+    if (!value) { selectEl.value = ''; return; }
+    var hasOption = Array.prototype.some.call(selectEl.options, function(o) { return o.value === value; });
+    if (!hasOption) {
+      var opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value + ' (not on current list)';
+      selectEl.appendChild(opt);
+    }
+    selectEl.value = value;
+  }
+
+  function populateDoctorSelects() {
+    var selects = [document.getElementById('cd-assigned-input'), document.getElementById('ap-assigned-doctor')];
+    var active = currentDoctors.filter(function(d) { return d.active; });
+    var optionsHtml = '<option value="">— Unassigned —</option>' +
+      active.map(function(d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join('');
+    selects.forEach(function(sel) {
+      if (!sel) return;
+      var prevValue = sel.value;
+      sel.innerHTML = optionsHtml;
+      if (prevValue) setDoctorSelectValue(sel, prevValue);
+    });
   }
 
   document.getElementById('app-patients').addEventListener('click', function(e) {
@@ -2210,6 +2384,7 @@
     onTreatmentTypeChange();
     document.getElementById('ap-graft').checked = false;
     document.getElementById('ap-consent').checked = false;
+    document.getElementById('ap-assigned-doctor').value = '';
   }
 
   function addCaseErrorMessage(err) {
@@ -2267,6 +2442,7 @@
       stage: stage,
       quotedAmount: document.getElementById('ap-quoted').value,
       nextAction: document.getElementById('ap-next-action').value,
+      assignedTo: document.getElementById('ap-assigned-doctor').value,
       notes: document.getElementById('ap-notes').value,
       consentGiven: consent
     };
@@ -2316,7 +2492,7 @@
     populateStageSelect(document.getElementById('cd-stage-select'), ctxTreatmentType, ctx.stage);
     document.getElementById('cd-status-select').value = ctx.status || 'Active';
     document.getElementById('cd-quoted-input').value = ctx.quotedAmount || '';
-    document.getElementById('cd-assigned-input').value = ctx.assignedTo || '';
+    setDoctorSelectValue(document.getElementById('cd-assigned-input'), ctx.assignedTo || '');
     document.getElementById('cd-nextaction-input').value = ctx.nextAction || '';
     document.getElementById('cd-notes-input').value = ctx.notes || '';
 
