@@ -19,17 +19,21 @@
 <meta name="twitter:description" content="Patient and case tracking for every treatment a dental clinic offers, plus one-tap Google review requests — built by Zera Dental." />
 <meta name="twitter:image" content="https://pms.zeradental.in/assets/og-image.png" />
 
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23059669'/%3E%3Ccircle cx='32' cy='32' r='12' fill='white'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='9' fill='%230B1F33'/%3E%3Cpath d='M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z' fill='none' stroke='%23A7EBDA' stroke-width='1.125' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E" />
 
 <!-- PWA / "add to home screen" — launches full-screen like a real app,
-     no address bar, with its own icon and splash background. -->
-<link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#059669" />
+     no address bar, with its own icon and splash background. When the page
+     URL carries a clinic slug (?c=<slug>), script near the end of <body>
+     swaps this to /api/manifest?c=<slug> so the installed icon is named
+     after THAT clinic and opens straight into their dashboard — see
+     initClinicBranding() / wirePwaManifest(). -->
+<link id="pwa-manifest-link" rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0B1F33" />
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Zera PMS" />
+<meta id="apple-web-app-title" name="apple-mobile-web-app-title" content="Zera PMS" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -803,9 +807,61 @@
     background:var(--bg-raised) radial-gradient(circle at 35% 30%, rgba(5,150,105,0.12), transparent 65%);
     border:1px solid var(--line-soft);
   }
+
+  /* --- "Add to Home Screen" install banner ---------------------------
+     Mobile-only, dismissible, brand-colored (navy/mint, matching the
+     tooth-logo icon). Two content modes toggled from JS: an iOS
+     instructions mode (Safari gives no install prompt, so we spell out
+     Share → Add to Home Screen) and an Android mode (uses the native
+     beforeinstallprompt flow when available, falling back to menu
+     instructions otherwise). */
+  #pwa-install-banner{
+    display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;
+    background:#0B1F33;color:#eafff7;border-radius:16px;
+    box-shadow:0 12px 32px -8px rgba(11,31,51,0.55),0 2px 8px rgba(11,31,51,0.3);
+    padding:14px 14px 14px 12px;
+  }
+  #pwa-install-banner.is-visible{display:flex;align-items:flex-start;gap:11px;}
+  #pwa-install-banner .pwa-ib-icon{
+    width:38px;height:38px;border-radius:10px;flex:none;display:block;
+  }
+  #pwa-install-banner .pwa-ib-body{flex:1 1 auto;min-width:0;}
+  #pwa-install-banner .pwa-ib-title{font-weight:800;font-size:13.5px;color:#fff;margin:0 0 2px;}
+  #pwa-install-banner .pwa-ib-text{font-size:12.5px;line-height:1.45;color:#A7EBDA;margin:0;}
+  #pwa-install-banner .pwa-ib-text b{color:#fff;font-weight:700;}
+  #pwa-install-banner .pwa-ib-actions{display:flex;align-items:center;gap:8px;margin-top:9px;}
+  #pwa-install-banner .pwa-ib-install{
+    display:none;border:none;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:700;
+    background:#12B48D;color:#06281f;cursor:pointer;
+  }
+  #pwa-install-banner .pwa-ib-install.is-shown{display:inline-flex;}
+  #pwa-install-banner .pwa-ib-dismiss{
+    flex:none;width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,0.1);
+    color:#eafff7;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  @media (min-width:641px){
+    /* Desktop installs happen via the browser's own omnibox icon — this
+       banner is for phones sharing a WhatsApp link, so keep it mobile-only. */
+    #pwa-install-banner{display:none !important;}
+  }
 </style>
 </head>
 <body>
+
+<!-- "Add to Home Screen" install banner — see pwa-install-banner CSS above
+     and the wiring script near the end of <body>. Content is filled in by
+     JS depending on platform (iOS vs Android) and install support. -->
+<div id="pwa-install-banner" role="complementary" aria-label="Install this app">
+  <img class="pwa-ib-icon" src="/assets/icon-192.png" alt="" />
+  <div class="pwa-ib-body">
+    <p class="pwa-ib-title" id="pwa-ib-title">Install this app</p>
+    <p class="pwa-ib-text" id="pwa-ib-text">Add it to your home screen for one-tap access, just like a regular app.</p>
+    <div class="pwa-ib-actions">
+      <button type="button" class="pwa-ib-install" id="pwa-ib-install">Install</button>
+    </div>
+  </div>
+  <button type="button" class="pwa-ib-dismiss" id="pwa-ib-dismiss" aria-label="Dismiss">✕</button>
+</div>
 
 <div id="marketing-view">
 <header>
@@ -1555,6 +1611,7 @@
     document.getElementById('app-view').style.display = 'block';
     document.getElementById('app-clinic-name').textContent = res.clinicName;
     document.getElementById('app-clinic-title').textContent = res.clinicName;
+    applyClinicTitle(res.clinicName);
     if (res.homepageUrl) clinicHomepageUrl = res.homepageUrl;
     var backLink = document.getElementById('app-back-to-site');
     if (clinicHomepageUrl) {
@@ -1661,14 +1718,44 @@
     document.getElementById('back-to-clinic-site').style.display = 'block';
   }
 
+  // --- PWA / "Add to Home Screen" branding ----------------------------
+  // Each clinic should get an install icon that shows THEIR name and
+  // opens straight into THEIR dashboard, not a generic "Zera PMS" shell.
+  // The manifest itself (name, short_name, start_url) is generated
+  // per-clinic by /api/manifest?c=<slug> (see api/manifest.js) — this just
+  // points the <link rel="manifest"> at it. iOS Safari ignores the Web
+  // Manifest for the home-screen label, so applyClinicTitle() below also
+  // sets document.title and the apple-mobile-web-app-title meta tag,
+  // which is what Safari's "Add to Home Screen" sheet actually reads.
+  function wirePwaManifest(slug) {
+    var link = document.getElementById('pwa-manifest-link');
+    if (link && slug) {
+      link.setAttribute('href', '/api/manifest?c=' + encodeURIComponent(slug));
+    }
+  }
+
+  function applyClinicTitle(clinicName) {
+    if (!clinicName) return;
+    document.title = clinicName + ' — Zera PMS';
+    var meta = document.getElementById('apple-web-app-title');
+    if (meta) {
+      // iOS truncates long home-screen labels onto two lines awkwardly —
+      // prefer the clinic's first word if the full name is long.
+      var short = clinicName.length <= 14 ? clinicName : clinicName.split(/\s+/)[0];
+      meta.setAttribute('content', short);
+    }
+  }
+
   function initClinicBranding() {
     var slug = getQueryParam('c');
+    wirePwaManifest(slug);
     if (!slug) return;
     apiCall('getClinicBranding', { slug: slug }).then(function(res) {
       if (res && res.ok) {
         document.getElementById('login-heading').textContent = 'Sign in to ' + res.clinicName + '’s dashboard';
         document.getElementById('login-sub').textContent = 'Enter the username and password provided by Zera Dental.';
         showBackToClinicLink(res.clinicName, res.homepageUrl);
+        applyClinicTitle(res.clinicName);
       }
     }).catch(function() {});
   }
@@ -2873,6 +2960,128 @@
         }
       });
   });
+
+  // --- Service worker (installability) --------------------------------
+  // See sw.js for why this is a pass-through worker with no caching —
+  // its presence is what both Android and iOS 16.4+ require before they'll
+  // treat this page as a real installable app.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
+    });
+  }
+
+  // --- "Add to Home Screen" install banner ----------------------------
+  // iOS Safari has no install prompt at all (no beforeinstallprompt), so
+  // the only way to get a client onto their home screen is to tell them
+  // the manual Share → Add to Home Screen steps. Android/Chrome does fire
+  // beforeinstallprompt — when it does we show a real "Install" button
+  // that triggers the native prompt; when it doesn't (older/other mobile
+  // browsers), we fall back to menu instructions, same as iOS.
+  (function() {
+    var DISMISS_KEY = 'zeraPwaBannerDismissedUntil';
+    var DISMISS_DAYS = 14;
+
+    function isStandalone() {
+      try {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    function isIOS() {
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function isDismissed() {
+      try {
+        var until = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+        return Date.now() < until;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function dismiss() {
+      try {
+        localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000));
+      } catch (e) {}
+      hideBanner();
+    }
+
+    var banner = document.getElementById('pwa-install-banner');
+    var titleEl = document.getElementById('pwa-ib-title');
+    var textEl = document.getElementById('pwa-ib-text');
+    var installBtn = document.getElementById('pwa-ib-install');
+    var dismissBtn = document.getElementById('pwa-ib-dismiss');
+    var deferredPrompt = null;
+
+    function showBanner(mode) {
+      if (!banner || isStandalone() || !isMobile() || isDismissed()) return;
+      if (mode === 'android-prompt') {
+        titleEl.textContent = 'Install this app';
+        textEl.innerHTML = 'Add this dashboard to your home screen for one-tap access.';
+        installBtn.classList.add('is-shown');
+        installBtn.textContent = 'Install';
+      } else if (mode === 'ios') {
+        titleEl.textContent = 'Add to Home Screen';
+        textEl.innerHTML = 'Tap <b>Share</b> <span style="font-size:13px">⬆️</span> below, then <b>Add to Home Screen</b>.';
+        installBtn.classList.remove('is-shown');
+      } else {
+        titleEl.textContent = 'Install this app';
+        textEl.innerHTML = 'Open your browser menu and choose <b>Add to Home screen</b> or <b>Install app</b>.';
+        installBtn.classList.remove('is-shown');
+      }
+      banner.classList.add('is-visible');
+    }
+
+    function hideBanner() {
+      if (banner) banner.classList.remove('is-visible');
+    }
+
+    if (dismissBtn) dismissBtn.addEventListener('click', dismiss);
+
+    if (installBtn) {
+      installBtn.addEventListener('click', function() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.finally(function() {
+          deferredPrompt = null;
+          hideBanner();
+        });
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      showBanner('android-prompt');
+    });
+
+    window.addEventListener('appinstalled', function() {
+      dismiss();
+    });
+
+    // iOS never fires beforeinstallprompt, so show its instructions banner
+    // right away. For Android/other mobile browsers, give
+    // beforeinstallprompt a short window to fire before falling back to
+    // generic menu instructions, so we don't show two different banners
+    // back to back.
+    if (!isStandalone() && isMobile() && !isDismissed()) {
+      if (isIOS()) {
+        showBanner('ios');
+      } else {
+        setTimeout(function() {
+          if (!deferredPrompt) showBanner('android-generic');
+        }, 2500);
+      }
+    }
+  })();
 </script>
 
 </body>
