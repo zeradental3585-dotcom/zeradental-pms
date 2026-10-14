@@ -408,6 +408,13 @@
   .app-main-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px;}
   .app-main h1{font-size:27px;margin:0 0 6px;letter-spacing:-0.02em;color:var(--navy);}
   .app-sub{color:var(--muted);font-size:14.5px;margin:0;}
+  /* A dentist signed in here lives inside #app-view all day and never sees
+     the marketing page's big <footer> — this is the only branding mark
+     that view gets. Kept deliberately small and muted so it never competes
+     with the dashboard itself. */
+  .app-footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line-soft);text-align:center;font-size:12px;color:var(--muted-2);}
+  .app-footer a{color:var(--green-dark);font-weight:600;}
+  @media (max-width:600px){.app-footer{margin-top:28px;padding-top:14px;}}
   @media (max-width:600px){
     .app-header{padding:12px 14px;gap:8px;}
     .app-header .logo span:first-of-type,.app-header .logo{font-size:15px;}
@@ -518,11 +525,12 @@
   /* ===== Stats bar ===== */
   .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:30px;}
   @media (max-width:900px){.stats-row{grid-template-columns:repeat(3,1fr);}}
-  @media (max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr);gap:10px;}}
+  @media (max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}}
   .stat-tile{
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:17px 18px;
     box-shadow:var(--shadow-xs);transition:box-shadow .15s ease,transform .15s ease,border-color .15s ease;
   }
+  @media (max-width:420px){.stat-tile{padding:13px 14px;}.stat-tile .stat-num{font-size:21px;}}
   .stat-tile:hover{box-shadow:var(--shadow-sm);border-color:var(--line);transform:translateY(-2px);}
   .stat-tile .stat-num{font-size:25px;font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--navy);}
   .stat-tile .stat-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:600;}
@@ -530,6 +538,15 @@
 
   /* ===== Header actions ===== */
   .app-main-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  /* A clean 2x2 grid reads much better than left-aligned flex-wrap once
+     four buttons of uneven width (two ghost-text buttons, a plain button,
+     a wider primary button with an icon) are forced onto two rows on a
+     phone — flex-wrap left a ragged gap under the shorter first-row
+     buttons instead of lining everything up. */
+  @media (max-width:560px){
+    .app-main-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;}
+    .app-main-actions .btn{width:100%;justify-content:center;}
+  }
 
   /* ===== Tabs ===== */
   .app-tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap;}
@@ -1152,6 +1169,11 @@
       </div>
       <div id="app-insights"></div>
     </div>
+
+    <p class="app-footer">
+      © 2026 Zera PMS, a property of Zera Dental ·
+      Designed and developed by <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer">Zera Dental</a>
+    </p>
   </div>
 
   <!-- Fixed bottom tab bar — phones only (hidden on tablet/desktop, where the
