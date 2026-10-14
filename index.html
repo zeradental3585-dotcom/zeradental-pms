@@ -2117,9 +2117,15 @@
     if (!patients.length) return '<div class="insights-empty">No patients in this range.</div>';
     return '<div class="insights-patients-list">' + patients.map(function(p) {
       var lastCase = (p.cases || [])[(p.cases || []).length - 1];
-      var onBoard = lastCase && currentBoard.some(function(r) { return String(r.caseId) === String(lastCase.caseId); });
-      return '<div class="insights-patient-item' + (onBoard ? ' is-clickable' : '') + '"' +
-        (onBoard ? ' data-case-id="' + escapeHtml(lastCase.caseId) + '"' : '') + '>' +
+      // Every patient with a case is clickable now, regardless of whether
+      // that case is on the active board — the Lifetime/By-doctor view is
+      // full of completed/dropped/on-hold cases by design, and those used
+      // to render with no click handler at all (gated on an onBoard check),
+      // so tapping them silently did nothing. The actual case lookup
+      // happens in the click handler below via currentAllCases, same as
+      // the Patients tab, so this only needs a caseId to hand off.
+      return '<div class="insights-patient-item' + (lastCase ? ' is-clickable' : '') + '"' +
+        (lastCase ? ' data-case-id="' + escapeHtml(lastCase.caseId) + '" data-patient-id="' + escapeHtml(p.patientId || '') + '"' : '') + '>' +
         '<div class="row-identity">' + avatarHtml(p.name) +
           '<div><div class="patient-name" style="font-size:14px;">' + escapeHtml(p.name || '(unnamed)') +
             (p.patientId ? '<span class="uhid-tag">UHID: ' + escapeHtml(p.patientId) + '</span>' : '') + '</div>' +
@@ -2190,8 +2196,27 @@
     var patientItem = e.target.closest('.insights-patient-item');
     if (patientItem && patientItem.classList.contains('is-clickable')) {
       var caseId = patientItem.dataset.caseId;
-      var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
-      if (ctx) openCaseDetail(ctx);
+      var patientId = patientItem.dataset.patientId;
+      // Same resolution order as the Patients tab's case-chip handler:
+      // currentAllCases (every case, any status, full field set) first,
+      // then the active board, then a lighter reconstruction from the
+      // patient summary — so a Lifetime-view case that's completed/
+      // dropped/on-hold still opens with its real data instead of either
+      // doing nothing (the old bug) or opening with blank fields.
+      var ctx = currentAllCases.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+      if (!ctx) ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+      if (ctx) { openCaseDetail(ctx); return; }
+      var patient = currentPatients.filter(function(p) { return String(p.patientId) === String(patientId); })[0];
+      var caseSummary = patient && (patient.cases || []).filter(function(c) { return String(c.caseId) === String(caseId); })[0];
+      if (!patient || !caseSummary) return;
+      openCaseDetail({
+        caseId: caseSummary.caseId, patientId: patient.patientId, patientName: patient.name,
+        phone: patient.phone, altPhone: patient.altPhone, age: patient.age, sex: patient.sex,
+        locality: patient.locality, source: patient.source, treatmentType: caseSummary.treatmentType, caseType: caseSummary.caseType,
+        site: '', implantSystem: '', graftRequired: false, stage: caseSummary.stage,
+        stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
+        quotedAmount: caseSummary.quotedAmount, notes: '', status: caseSummary.status
+      });
       return;
     }
     var doctorRow = e.target.closest('.insights-doctor-row');
