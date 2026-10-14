@@ -886,24 +886,6 @@
        banner is for phones sharing a WhatsApp link, so keep it mobile-only. */
     #pwa-install-banner{display:none !important;}
   }
-
-  .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:760px;margin:0 auto;}
-  .pricing-card{
-    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:32px 28px;
-    box-shadow:var(--shadow-xs);text-align:left;position:relative;
-  }
-  .pricing-card.featured{border-color:var(--green);box-shadow:0 10px 26px -10px rgba(5,150,105,0.28),var(--shadow-xs);}
-  .pricing-card .pricing-kicker{
-    font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--green-dark);margin:0 0 10px;
-  }
-  .pricing-card .pricing-amount{font-size:clamp(30px,4vw,38px);font-weight:800;letter-spacing:-0.02em;color:var(--navy);margin:0 0 2px;}
-  .pricing-card .pricing-amount small{font-size:15px;font-weight:600;color:var(--muted);}
-  .pricing-card .pricing-sub{font-size:14px;color:var(--muted);margin:0 0 18px;}
-  .pricing-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;}
-  .pricing-card li{font-size:14.5px;color:var(--ink-soft);display:flex;gap:9px;align-items:flex-start;line-height:1.5;}
-  .pricing-card li::before{content:'✓';color:var(--green-dark);font-weight:800;flex:0 0 auto;}
-  .pricing-note{text-align:center;max-width:620px;margin:28px auto 0;font-size:14.5px;color:var(--muted);line-height:1.6;}
-  .pricing-note strong{color:var(--navy);}
 </style>
 </head>
 <body>
@@ -1060,44 +1042,7 @@
     </div>
   </section>
 
-    <section id="pricing">
-    <div class="wrap">
-      <h2 class="section-title">Simple, transparent pricing</h2>
-      <p class="section-lede">One flat monthly fee per clinic. No per-patient charges, no hidden add-ons, no long-term lock-in.</p>
-      <div class="pricing-grid">
-        <div class="pricing-card featured">
-          <div class="pricing-kicker">Monthly subscription</div>
-          <div class="pricing-amount">₹7,999<small>/month</small></div>
-          <p class="pricing-sub">Per clinic, billed monthly</p>
-          <ul>
-            <li>Unlimited patients &amp; cases</li>
-            <li>WhatsApp follow-ups &amp; review requests</li>
-            <li>All treatment types, one board</li>
-            <li>Secure, always-on cloud, automatic backups</li>
-            <li>Priority WhatsApp support</li>
-          </ul>
-        </div>
-        <div class="pricing-card">
-          <div class="pricing-kicker">One-time setup</div>
-          <div class="pricing-amount">₹9,999</div>
-          <p class="pricing-sub">Paid once, when you come on board</p>
-          <ul>
-            <li>Your dashboard configured with your clinic's details</li>
-            <li>Staff Google logins set up</li>
-            <li>A short onboarding &amp; training call</li>
-            <li>Your board ready to use from day one</li>
-          </ul>
-        </div>
-      </div>
-      <p class="pricing-note">We don't offer a free trial — instead, message us for a <strong>free live demo</strong> on a call, so you can see your own clinic's board before you decide.</p>
-      <div class="cta-row" style="justify-content:center;margin-top:28px;">
-        <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20a%20free%20live%20demo%20of%20Zera%20PMS" class="btn btn-primary">Get a free live demo</a>
-        <a href="#login-card" class="btn btn-ghost">↑ Sign in now</a>
-      </div>
-    </div>
-  </section>
-
-<section class="cta-final">
+  <section class="cta-final">
     <div class="wrap">
       <h2>Your dashboard is one sign-in away.</h2>
       <p>Jump back up to sign in with Google or your clinic's username — or message us on WhatsApp if you'd rather talk it through first.</p>
@@ -1811,12 +1756,18 @@
     currentPatients.forEach(function(p) {
       (p.cases || []).forEach(function(c) { caseIdToPatientId[c.caseId] = p.patientId; });
     });
-    currentEnquiries = res.enquiries || [];
-    currentAppointments = res.appointments || [];
-    currentPayments = res.payments || [];
-    currentReviewCandidates = res.reviewCandidates || [];
-    currentReviewLink = res.reviewLink || '';
-    currentReviewLinkShort = res.reviewLinkShort || '';
+    // res.enquiries/appointments/payments/reviewCandidates/reviewLink/
+    // reviewLinkShort are only present on a full dashboard rebuild
+    // (buildDashboardExtras_). The trimmed updateCase save path
+    // (buildCaseSaveExtras_) only sends board/patients/allCases, so these
+    // stay defensive like res.doctors/res.allCases below — keep whatever
+    // was already loaded instead of wiping these tabs to empty.
+    if (res.enquiries) currentEnquiries = res.enquiries;
+    if (res.appointments) currentAppointments = res.appointments;
+    if (res.payments) currentPayments = res.payments;
+    if (res.reviewCandidates) currentReviewCandidates = res.reviewCandidates;
+    if (res.reviewLink) currentReviewLink = res.reviewLink;
+    if (res.reviewLinkShort) currentReviewLinkShort = res.reviewLinkShort;
     // res.doctors is only present once the multi-doctor backend change is
     // deployed — fall back to whatever was already loaded (usually []) so
     // this keeps working cleanly against an older deployment in the meantime.
@@ -1852,14 +1803,52 @@
     return currentCaseTypes.filter(function(t) { return t.key === key; })[0] || currentCaseTypes[0];
   }
 
+  // Sentinel option value that triggers the "add a brand-new treatment
+  // type" flow from either dropdown below — never a real stored value,
+  // see promptAddTreatmentType().
+  var ADD_NEW_TREATMENT_TYPE = '__ADD_NEW_TREATMENT_TYPE__';
+
   function populateTreatmentTypeSelect() {
     var sel = document.getElementById('ap-treatment-type');
     var prevValue = sel.value;
     sel.innerHTML = currentCaseTypes.map(function(t) {
       return '<option value="' + escapeHtml(t.key) + '">' + escapeHtml(t.label) + '</option>';
-    }).join('');
+    }).join('') + '<option value="' + ADD_NEW_TREATMENT_TYPE + '">+ Add new treatment type…</option>';
     sel.value = currentCaseTypes.some(function(t) { return t.key === prevValue; }) ? prevValue : currentCaseTypes[0].key;
+    sel.dataset.lastValue = sel.value;
     onTreatmentTypeChange();
+  }
+
+  // Posts a brand-new treatment type to the backend and folds the response
+  // straight back into currentCaseTypes via applyDashboardData() — shared
+  // by both treatment-type dropdowns (Add-patient form + case-detail
+  // modal) so a type added from either place is instantly available in
+  // both. Resolves to the new type's key, or null if the dentist cancelled
+  // the prompt or the save failed (an alert explains why in that case).
+  function promptAddTreatmentType() {
+    var name = window.prompt('Name the new treatment type (e.g. "Veneers", "Night guard"):');
+    if (name === null) return Promise.resolve(null);
+    name = name.trim();
+    if (!name) return Promise.resolve(null);
+    return apiCall('addTreatmentType', { name: name }).then(function(res) {
+      if (!res || !res.ok) {
+        window.alert(addTreatmentTypeErrorMessage(res && res.error));
+        return null;
+      }
+      applyDashboardData(res);
+      return res.added && res.added.key;
+    }).catch(function() {
+      window.alert('Something went wrong adding that treatment type. Please try again.');
+      return null;
+    });
+  }
+
+  function addTreatmentTypeErrorMessage(err) {
+    var messages = {
+      name_required: 'Please enter a name for the treatment type.',
+      duplicate_treatment_type: 'A treatment type with that name already exists.'
+    };
+    return messages[err] || 'Something went wrong. Please try again.';
   }
 
   function populateStageSelect(selectEl, treatmentType, selectedValue) {
@@ -1878,7 +1867,21 @@
   // system, bone graft) only make sense for Implant cases — every other
   // treatment type hides them rather than showing fields that don't apply.
   function onTreatmentTypeChange() {
-    var type = document.getElementById('ap-treatment-type').value;
+    var sel = document.getElementById('ap-treatment-type');
+    var type = sel.value;
+    if (type === ADD_NEW_TREATMENT_TYPE) {
+      var fallback = sel.dataset.lastValue || currentCaseTypes[0].key;
+      sel.value = fallback; // never leave the sentinel "selected" while the prompt is open
+      promptAddTreatmentType().then(function(newKey) {
+        var finalKey = (newKey && currentCaseTypes.some(function(t) { return t.key === newKey; })) ? newKey : fallback;
+        sel.value = finalKey;
+        sel.dataset.lastValue = finalKey;
+        document.getElementById('ap-implant-fields').style.display = (finalKey === 'Implant') ? 'block' : 'none';
+        populateStageSelect(document.getElementById('ap-stage'), finalKey, null);
+      });
+      return;
+    }
+    sel.dataset.lastValue = type;
     document.getElementById('ap-implant-fields').style.display = (type === 'Implant') ? 'block' : 'none';
     populateStageSelect(document.getElementById('ap-stage'), type, null);
   }
@@ -1897,8 +1900,9 @@
     var prevValue = sel.value;
     sel.innerHTML = currentCaseTypes.map(function(t) {
       return '<option value="' + escapeHtml(t.key) + '">' + escapeHtml(t.label) + '</option>';
-    }).join('');
+    }).join('') + '<option value="' + ADD_NEW_TREATMENT_TYPE + '">+ Add new treatment type…</option>';
     if (currentCaseTypes.some(function(t) { return t.key === prevValue; })) sel.value = prevValue;
+    sel.dataset.lastValue = sel.value;
   }
 
   // The implant-only fields (case type Single/Bridge/Full-arch, implant
@@ -1908,7 +1912,21 @@
   // starts the dentist at that new type's first stage rather than trying
   // to carry over a stage name the new type may not even have.
   function onCdTreatmentTypeChange() {
-    var type = document.getElementById('cd-treatment-type-select').value;
+    var sel = document.getElementById('cd-treatment-type-select');
+    var type = sel.value;
+    if (type === ADD_NEW_TREATMENT_TYPE) {
+      var fallback = sel.dataset.lastValue || currentCaseTypes[0].key;
+      sel.value = fallback; // never leave the sentinel "selected" while the prompt is open
+      promptAddTreatmentType().then(function(newKey) {
+        var finalKey = (newKey && currentCaseTypes.some(function(t) { return t.key === newKey; })) ? newKey : fallback;
+        sel.value = finalKey;
+        sel.dataset.lastValue = finalKey;
+        document.getElementById('cd-implant-fields').style.display = (finalKey === 'Implant') ? 'block' : 'none';
+        populateStageSelect(document.getElementById('cd-stage-select'), finalKey, null);
+      });
+      return;
+    }
+    sel.dataset.lastValue = type;
     document.getElementById('cd-implant-fields').style.display = (type === 'Implant') ? 'block' : 'none';
     populateStageSelect(document.getElementById('cd-stage-select'), type, null);
   }
@@ -3141,11 +3159,9 @@
   document.getElementById('cd-save-btn').addEventListener('click', function() {
     var statusEl = document.getElementById('cd-save-status');
     if (!currentCaseId || !isSignedIn()) { return; }
-    statusEl.textContent = 'Saving…';
-    statusEl.className = 'modal-status';
     var treatmentTypeForSave = document.getElementById('cd-treatment-type-select').value;
     var isImplantForSave = treatmentTypeForSave === 'Implant';
-    apiCall('updateCase', {
+    var payload = {
       idToken: zeraIdToken,
       caseId: currentCaseId,
       stage: document.getElementById('cd-stage-select').value,
@@ -3170,20 +3186,83 @@
       sex: document.getElementById('cd-sex-select').value,
       locality: document.getElementById('cd-locality-input').value,
       source: document.getElementById('cd-source-input').value
-    }).then(function(res) {
+    };
+
+    // --- Optimistic UI ------------------------------------------------
+    // Apps Script round trips are slow (a few seconds even after trimming
+    // the backend response — see buildCaseSaveExtras_). Rather than make
+    // the dentist wait and stare at "Saving…", patch the board/all-cases
+    // entries for this case locally and show "Saved." right away. If the
+    // request actually fails, roll the local patch back and show the
+    // real error. currentPatients is deliberately left alone here (its
+    // nested cases[] shape is lower-confidence) — it still updates once
+    // the background response lands via applyDashboardData below.
+    var prevBoardEntry = null, prevBoardIndex = -1;
+    var prevAllCasesEntry = null, prevAllCasesIndex = -1;
+    currentBoard.forEach(function(c, i) { if (c.caseId === currentCaseId) { prevBoardEntry = c; prevBoardIndex = i; } });
+    currentAllCases.forEach(function(c, i) { if (c.caseId === currentCaseId) { prevAllCasesEntry = c; prevAllCasesIndex = i; } });
+
+    var optimisticFields = {
+      stage: payload.stage, status: payload.status, quotedAmount: payload.quotedAmount,
+      assignedTo: payload.assignedTo, nextAction: payload.nextAction, notes: payload.notes,
+      treatmentType: payload.treatmentType, caseType: payload.caseType, site: payload.site,
+      implantSystem: payload.implantSystem, graftRequired: payload.graftRequired,
+      patientName: payload.patientName, phone: payload.phone, altPhone: payload.altPhone,
+      age: payload.age, sex: payload.sex, locality: payload.locality, source: payload.source
+    };
+
+    function applyOptimisticPatch() {
+      // buildBoardData_ only includes Status === 'Active' cases — if this
+      // save moves a case off Active, drop it from the local board the
+      // same way the real rebuild would; otherwise patch it in place.
+      if (prevBoardIndex > -1) {
+        if (payload.status !== 'Active') {
+          currentBoard.splice(prevBoardIndex, 1);
+        } else {
+          currentBoard[prevBoardIndex] = Object.assign({}, prevBoardEntry, optimisticFields);
+        }
+      }
+      // allCases is every case regardless of Status, so always patch in place.
+      if (prevAllCasesIndex > -1) {
+        currentAllCases[prevAllCasesIndex] = Object.assign({}, prevAllCasesEntry, optimisticFields);
+      }
+      renderBoard(currentBoard);
+      renderStats();
+      renderInsights();
+      setTabCount('board', currentBoard.length);
+    }
+
+    function revertOptimisticPatch() {
+      if (prevBoardIndex > -1 && currentBoard.indexOf(prevBoardEntry) === -1) {
+        currentBoard.splice(Math.min(prevBoardIndex, currentBoard.length), 0, prevBoardEntry);
+      } else if (prevBoardIndex > -1) {
+        currentBoard[prevBoardIndex] = prevBoardEntry;
+      }
+      if (prevAllCasesIndex > -1) currentAllCases[prevAllCasesIndex] = prevAllCasesEntry;
+      renderBoard(currentBoard);
+      renderStats();
+      renderInsights();
+      setTabCount('board', currentBoard.length);
+    }
+
+    applyOptimisticPatch();
+    document.getElementById('cd-name').textContent = payload.patientName || '(unnamed)';
+    statusEl.textContent = 'Saved.';
+    statusEl.className = 'modal-status';
+
+    apiCall('updateCase', payload).then(function(res) {
       if (!res || !res.ok) {
+        revertOptimisticPatch();
         statusEl.textContent = addCaseErrorMessage(res && res.error);
         statusEl.className = 'modal-status is-error';
         return;
       }
+      // Reconcile with the authoritative server response (correct due-date
+      // math, patients roster, etc.) now that it's back.
       applyDashboardData(res);
-      // The h2 title and subtitle are a plain display label, not an input —
-      // keep them in sync with whatever was just saved (a renamed patient,
-      // for instance) without needing to reopen the modal.
       document.getElementById('cd-name').textContent = document.getElementById('cd-name-input').value || '(unnamed)';
-      statusEl.textContent = 'Saved.';
-      statusEl.className = 'modal-status';
     }).catch(function() {
+      revertOptimisticPatch();
       statusEl.textContent = 'Something went wrong. Please try again.';
       statusEl.className = 'modal-status is-error';
     });
