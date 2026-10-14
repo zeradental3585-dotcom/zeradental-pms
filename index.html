@@ -886,6 +886,24 @@
        banner is for phones sharing a WhatsApp link, so keep it mobile-only. */
     #pwa-install-banner{display:none !important;}
   }
+
+  .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:760px;margin:0 auto;}
+  .pricing-card{
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:32px 28px;
+    box-shadow:var(--shadow-xs);text-align:left;position:relative;
+  }
+  .pricing-card.featured{border-color:var(--green);box-shadow:0 10px 26px -10px rgba(5,150,105,0.28),var(--shadow-xs);}
+  .pricing-card .pricing-kicker{
+    font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--green-dark);margin:0 0 10px;
+  }
+  .pricing-card .pricing-amount{font-size:clamp(30px,4vw,38px);font-weight:800;letter-spacing:-0.02em;color:var(--navy);margin:0 0 2px;}
+  .pricing-card .pricing-amount small{font-size:15px;font-weight:600;color:var(--muted);}
+  .pricing-card .pricing-sub{font-size:14px;color:var(--muted);margin:0 0 18px;}
+  .pricing-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;}
+  .pricing-card li{font-size:14.5px;color:var(--ink-soft);display:flex;gap:9px;align-items:flex-start;line-height:1.5;}
+  .pricing-card li::before{content:'✓';color:var(--green-dark);font-weight:800;flex:0 0 auto;}
+  .pricing-note{text-align:center;max-width:620px;margin:28px auto 0;font-size:14.5px;color:var(--muted);line-height:1.6;}
+  .pricing-note strong{color:var(--navy);}
 </style>
 </head>
 <body>
@@ -1042,7 +1060,44 @@
     </div>
   </section>
 
-  <section class="cta-final">
+    <section id="pricing">
+    <div class="wrap">
+      <h2 class="section-title">Simple, transparent pricing</h2>
+      <p class="section-lede">One flat monthly fee per clinic. No per-patient charges, no hidden add-ons, no long-term lock-in.</p>
+      <div class="pricing-grid">
+        <div class="pricing-card featured">
+          <div class="pricing-kicker">Monthly subscription</div>
+          <div class="pricing-amount">₹7,999<small>/month</small></div>
+          <p class="pricing-sub">Per clinic, billed monthly</p>
+          <ul>
+            <li>Unlimited patients &amp; cases</li>
+            <li>WhatsApp follow-ups &amp; review requests</li>
+            <li>All treatment types, one board</li>
+            <li>Secure, always-on cloud, automatic backups</li>
+            <li>Priority WhatsApp support</li>
+          </ul>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-kicker">One-time setup</div>
+          <div class="pricing-amount">₹9,999</div>
+          <p class="pricing-sub">Paid once, when you come on board</p>
+          <ul>
+            <li>Your dashboard configured with your clinic's details</li>
+            <li>Staff Google logins set up</li>
+            <li>A short onboarding &amp; training call</li>
+            <li>Your board ready to use from day one</li>
+          </ul>
+        </div>
+      </div>
+      <p class="pricing-note">We don't offer a free trial — instead, message us for a <strong>free live demo</strong> on a call, so you can see your own clinic's board before you decide.</p>
+      <div class="cta-row" style="justify-content:center;margin-top:28px;">
+        <a href="https://wa.me/919835102324?text=Hi%2C%20I%27d%20like%20a%20free%20live%20demo%20of%20Zera%20PMS" class="btn btn-primary">Get a free live demo</a>
+        <a href="#login-card" class="btn btn-ghost">↑ Sign in now</a>
+      </div>
+    </div>
+  </section>
+
+<section class="cta-final">
     <div class="wrap">
       <h2>Your dashboard is one sign-in away.</h2>
       <p>Jump back up to sign in with Google or your clinic's username — or message us on WhatsApp if you'd rather talk it through first.</p>
