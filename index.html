@@ -481,6 +481,11 @@
   .modal-card h2{margin:0 0 4px;font-size:20px;letter-spacing:-0.015em;color:var(--navy);}
   .modal-sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;line-height:1.5;}
   .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  /* The case-detail modal turned every field into a real input this
+     release, so a phone-width .modal-row now holds two live inputs
+     (name/phone, age/sex, etc.) squeezed into ~160px columns — stack them
+     so each field gets the full width to type and tap comfortably. */
+  @media (max-width:520px){.modal-row{grid-template-columns:1fr;}}
   .modal-field{margin-bottom:14px;}
   .modal-field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin:0 0 5px;}
   .modal-field input,.modal-field select,.modal-field textarea{
@@ -490,6 +495,14 @@
   }
   .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
   .modal-field textarea{resize:vertical;min-height:60px;}
+  /* iOS Safari auto-zooms the whole page on focus into any input/select/
+     textarea under 16px — with 14.5px fields that meant every tap into a
+     case-detail field on an iPhone yanked the viewport into a zoomed-in
+     state until the field lost focus again, which reads as "broken" even
+     though the field itself works. 16px on touch-width screens avoids it. */
+  @media (max-width:480px){
+    .modal-field input,.modal-field select,.modal-field textarea{font-size:16px;}
+  }
   .modal-checkbox{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--navy);margin:0 0 16px;line-height:1.4;}
   /* Left at the OS default, every checkbox in the product renders as a
      plain black-and-white box — the one control that doesn't pick up the
@@ -498,6 +511,7 @@
   input[type="checkbox"],input[type="radio"]{accent-color:var(--green);}
   .modal-checkbox input{margin-top:3px;flex-shrink:0;width:16px;height:16px;cursor:pointer;}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
+  @media (max-width:420px){.modal-actions{flex-wrap:wrap;}.modal-actions .btn{flex:1;min-width:140px;justify-content:center;}}
   .modal-status{font-size:13.5px;margin:2px 0 10px;min-height:18px;color:var(--muted);}
   .modal-status.is-error{color:var(--red);}
 
@@ -670,7 +684,13 @@
   .review-row-actions .btn{flex:1;min-width:160px;justify-content:center;}
 
   /* ===== Case detail modal ===== */
-  .modal-card.wide{max-width:620px;}
+  /* min-width guarded so this never fights the mobile full-width override
+     above (@media max-width:480px .modal-card.wide{max-width:100%}) — both
+     rules have equal specificity, so without this guard the one that comes
+     later in the file (this one) would win even on a phone screen and push
+     a 620px-wide modal off the edges of the viewport, making the right-hand
+     column of every field pair impossible to reach. */
+  @media (min-width:481px){.modal-card.wide{max-width:620px;}}
   .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-bottom:18px;}
   @media (max-width:520px){.detail-grid{grid-template-columns:1fr;}}
   .detail-item{padding:8px 0;border-bottom:1px solid var(--line-soft);}
