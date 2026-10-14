@@ -40,6 +40,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- SheetJS (xlsx) — powers the Export/Import data buttons (download every
+     patient+case+appointment+payment as a workbook, re-upload an edited
+     Patients & Cases sheet). Loaded deferred: both features run from a
+     button click well after page load, never on the critical render path. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 
 <style>
   :root{
@@ -1051,10 +1056,15 @@
         <p class="app-sub">Every patient, case, enquiry and payment — nothing needs the Sheet.</p>
       </div>
       <div class="app-main-actions">
+        <button id="export-data-btn" class="btn btn-ghost" type="button">Export data</button>
+        <button id="import-data-btn" class="btn btn-ghost" type="button">Import data</button>
+        <input id="import-data-file" type="file" accept=".xlsx" style="display:none;" />
         <button id="log-visit-btn" class="btn btn-ghost" type="button">Log visit</button>
         <button id="add-patient-btn" class="btn btn-primary" type="button">+ Add patient</button>
       </div>
     </div>
+    <div id="export-import-status" class="modal-status" style="margin:0 0 4px;"></div>
+    <div id="import-results-list" class="detail-list" style="display:none; margin:0 0 10px; font-size:13px;"></div>
 
     <div id="app-stats" class="stats-row"></div>
 
@@ -1167,17 +1177,80 @@
     <p class="modal-sub" id="cd-subtitle"></p>
 
     <div class="detail-grid">
-      <div class="detail-item"><div class="dl">Phone</div><div class="dv" id="cd-phone">—</div></div>
-      <div class="detail-item"><div class="dl">Alt. phone</div><div class="dv" id="cd-altphone">—</div></div>
-      <div class="detail-item"><div class="dl">Age / Sex</div><div class="dv" id="cd-agesex">—</div></div>
-      <div class="detail-item"><div class="dl">Locality</div><div class="dv" id="cd-locality">—</div></div>
-      <div class="detail-item"><div class="dl">Source</div><div class="dv" id="cd-source">—</div></div>
       <div class="detail-item"><div class="dl">Case ID</div><div class="dv" id="cd-caseid">—</div></div>
-      <div class="detail-item"><div class="dl">Treatment type</div><div class="dv" id="cd-treatment-type">—</div></div>
-      <div class="detail-item"><div class="dl">Case type / Site</div><div class="dv" id="cd-typesite">—</div></div>
-      <div class="detail-item" id="cd-implant-row"><div class="dl">Implant system</div><div class="dv" id="cd-implant">—</div></div>
-      <div class="detail-item" id="cd-graft-row"><div class="dl">Graft required</div><div class="dv" id="cd-graft">—</div></div>
       <div class="detail-item"><div class="dl">Stage entered on</div><div class="dv" id="cd-enteredon">—</div></div>
+    </div>
+
+    <div class="modal-field">
+      <label for="cd-treatment-type-select">Treatment type</label>
+      <select id="cd-treatment-type-select"></select>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-name-input">Patient name</label>
+        <input id="cd-name-input" type="text" />
+      </div>
+      <div class="modal-field">
+        <label for="cd-phone-input">Phone</label>
+        <input id="cd-phone-input" type="text" />
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-altphone-input">Alt. phone</label>
+        <input id="cd-altphone-input" type="text" />
+      </div>
+      <div class="modal-field">
+        <label for="cd-age-input">Age</label>
+        <input id="cd-age-input" type="number" min="0" />
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-sex-select">Sex</label>
+        <select id="cd-sex-select">
+          <option value="">—</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label for="cd-locality-input">Locality</label>
+        <input id="cd-locality-input" type="text" />
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-source-input">Source</label>
+        <input id="cd-source-input" type="text" />
+      </div>
+      <div class="modal-field">
+        <label for="cd-site-input">Site (tooth no., if relevant)</label>
+        <input id="cd-site-input" type="text" placeholder="e.g. 36" />
+      </div>
+    </div>
+
+    <div id="cd-implant-fields">
+      <div class="modal-row">
+        <div class="modal-field">
+          <label for="cd-casetype-select">Case type</label>
+          <select id="cd-casetype-select">
+            <option value="Single">Single</option>
+            <option value="Bridge">Bridge</option>
+            <option value="Full arch">Full arch</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label for="cd-implant-system-input">Implant system</label>
+          <input id="cd-implant-system-input" type="text" placeholder="e.g. Osstem" />
+        </div>
+      </div>
+      <label class="modal-checkbox">
+        <input id="cd-graft-checkbox" type="checkbox" />
+        Bone graft required
+      </label>
     </div>
 
     <div class="modal-row">
@@ -1450,6 +1523,13 @@
   // backend actually validates. Falls back to a bare Implant entry before
   // the first successful login response arrives.
   var currentCaseTypes = [{ key: 'Implant', label: 'Dental Implant', prefix: 'IMP', stages: [{ name: 'Enquiry' }] }];
+  // Every case regardless of Status (active, completed, dropped, on hold),
+  // with the complete editable field set — populated from res.allCases once
+  // the backend that adds it is deployed. Powers the Export/Import feature
+  // and lets the case-detail modal open a non-active case with every field
+  // intact (the active-only board row lacks site/implantSystem/notes/etc
+  // once a case leaves the active board).
+  var currentAllCases = [];
   var todayRangeMode = 'today';
   var insightsRangeMode = 'month';
   var insightsExpandedTotal = false; // whether the "total patients" card's drill-down list is open
@@ -1644,9 +1724,13 @@
     // deployed — fall back to whatever was already loaded (usually []) so
     // this keeps working cleanly against an older deployment in the meantime.
     if (res.doctors) currentDoctors = res.doctors;
+    // res.allCases is only present once the full-field-editability backend
+    // change is deployed — same defensive fallback style as res.doctors.
+    if (res.allCases) currentAllCases = res.allCases;
     if (res.caseTypes && res.caseTypes.length) {
       currentCaseTypes = res.caseTypes;
       populateTreatmentTypeSelect();
+      populateCdTreatmentTypeSelect();
     }
     renderBoard(currentBoard);
     renderPatients(currentPatients);
@@ -1703,6 +1787,36 @@
   }
   document.getElementById('ap-treatment-type').addEventListener('change', onTreatmentTypeChange);
   populateTreatmentTypeSelect();
+
+  // Case-detail modal's own treatment-type dropdown. Kept separate from
+  // populateTreatmentTypeSelect() above (the Add-patient form's) because
+  // that one resets the stage dropdown as a side effect every time it
+  // repopulates (fine for a blank new-patient form) — this one must NOT
+  // reset the stage when the dashboard simply refreshes data while the
+  // modal happens to be open, only when the dentist deliberately changes
+  // the dropdown (see onCdTreatmentTypeChange below).
+  function populateCdTreatmentTypeSelect() {
+    var sel = document.getElementById('cd-treatment-type-select');
+    var prevValue = sel.value;
+    sel.innerHTML = currentCaseTypes.map(function(t) {
+      return '<option value="' + escapeHtml(t.key) + '">' + escapeHtml(t.label) + '</option>';
+    }).join('');
+    if (currentCaseTypes.some(function(t) { return t.key === prevValue; })) sel.value = prevValue;
+  }
+
+  // The implant-only fields (case type Single/Bridge/Full-arch, implant
+  // system, bone graft) only make sense for Implant cases, same as the
+  // Add-patient form. Resetting the stage here is deliberate: the stage
+  // vocabulary is type-specific, so switching treatment type mid-edit
+  // starts the dentist at that new type's first stage rather than trying
+  // to carry over a stage name the new type may not even have.
+  function onCdTreatmentTypeChange() {
+    var type = document.getElementById('cd-treatment-type-select').value;
+    document.getElementById('cd-implant-fields').style.display = (type === 'Implant') ? 'block' : 'none';
+    populateStageSelect(document.getElementById('cd-stage-select'), type, null);
+  }
+  document.getElementById('cd-treatment-type-select').addEventListener('change', onCdTreatmentTypeChange);
+  populateCdTreatmentTypeSelect();
 
   // --- Agency-managed username/password login (alongside Google) --------
   // Shows this client's own name + a link back to their website, driven by
@@ -2473,11 +2587,15 @@
     if (!chip) return;
     var caseId = chip.dataset.caseId;
     var patientId = chip.dataset.patientId;
-    // Prefer the richer board-row context (full case fields) when this case
-    // is still active; otherwise build a lighter context from the patient +
-    // case summary so completed/dropped/on-hold cases can still be opened.
-    var fromBoard = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
-    if (fromBoard) { openCaseDetail(fromBoard); return; }
+    // currentAllCases carries every case (any status) with the complete
+    // editable field set, so a completed/dropped/on-hold case opens with
+    // site/implant system/notes intact, not just the active-board subset.
+    // Falls back to the active board row, then a lighter patient+case-
+    // summary reconstruction, for a deployment where allCases hasn't
+    // arrived yet (older backend — res.allCases absent).
+    var ctx = currentAllCases.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+    if (!ctx) ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
+    if (ctx) { openCaseDetail(ctx); return; }
     var patient = currentPatients.filter(function(p) { return String(p.patientId) === String(patientId); })[0];
     var caseSummary = patient && (patient.cases || []).filter(function(c) { return String(c.caseId) === String(caseId); })[0];
     if (!patient || !caseSummary) return;
@@ -2724,6 +2842,7 @@
       name_required: 'Please enter the patient’s name.',
       phone_required: 'Please enter a phone number.',
       invalid_stage: 'Please choose a stage.',
+      invalid_treatment_type: 'Please choose a treatment type.',
       consent_required: 'Patient consent is required before saving.',
       not_registered: 'Please sign in again.',
       suspended: 'This account is on hold — WhatsApp us to restore access.',
@@ -2733,7 +2852,9 @@
       case_not_found: 'This case could not be found — try refreshing.',
       case_id_required: 'Something went wrong. Please try again.',
       date_required: 'Please choose a date.',
-      amount_required: 'Please enter an amount.'
+      amount_required: 'Please enter an amount.',
+      no_rows: 'That file has no data rows to import.',
+      too_many_rows: 'That file has more than 1000 rows — split it into smaller batches.'
     };
     return messages[err] || 'Something went wrong. Please try again.';
   }
@@ -2805,20 +2926,27 @@
     currentCaseId = ctx.caseId;
     document.getElementById('cd-name').textContent = ctx.patientName || '(unnamed)';
     document.getElementById('cd-subtitle').textContent = 'Case ' + (ctx.caseId || '');
-    document.getElementById('cd-phone').textContent = ctx.phone || '—';
-    document.getElementById('cd-altphone').textContent = ctx.altPhone || '—';
-    document.getElementById('cd-agesex').textContent = (ctx.age ? ctx.age + ' yrs' : '') + (ctx.age && ctx.sex ? ', ' : '') + (ctx.sex || '') || '—';
-    document.getElementById('cd-locality').textContent = ctx.locality || '—';
-    document.getElementById('cd-source').textContent = ctx.source || '—';
+    document.getElementById('cd-name-input').value = ctx.patientName || '';
+    document.getElementById('cd-phone-input').value = ctx.phone || '';
+    document.getElementById('cd-altphone-input').value = ctx.altPhone || '';
+    document.getElementById('cd-age-input').value = ctx.age || '';
+    document.getElementById('cd-sex-select').value = ctx.sex || '';
+    document.getElementById('cd-locality-input').value = ctx.locality || '';
+    document.getElementById('cd-source-input').value = ctx.source || '';
     document.getElementById('cd-caseid').textContent = ctx.caseId || '—';
     var ctxTreatmentType = ctx.treatmentType || 'Implant';
-    document.getElementById('cd-treatment-type').textContent = getCaseType(ctxTreatmentType).label || ctxTreatmentType;
-    document.getElementById('cd-typesite').textContent = [ctx.caseType, ctx.site].filter(Boolean).join(' · ') || '—';
-    document.getElementById('cd-implant').textContent = ctx.implantSystem || '—';
-    document.getElementById('cd-graft').textContent = ctx.graftRequired ? 'Yes' : 'No';
+    // Populate the dropdown's options fresh (no stage-reset side effect),
+    // then set its value directly — openCaseDetail is the one place a
+    // treatment type is applied without wanting the stage to jump to that
+    // type's first stage (see onCdTreatmentTypeChange for when it should).
+    populateCdTreatmentTypeSelect();
+    document.getElementById('cd-treatment-type-select').value = ctxTreatmentType;
+    document.getElementById('cd-site-input').value = ctx.site || '';
+    document.getElementById('cd-casetype-select').value = ctx.caseType || 'Single';
+    document.getElementById('cd-implant-system-input').value = ctx.implantSystem || '';
+    document.getElementById('cd-graft-checkbox').checked = !!ctx.graftRequired;
     var isImplantCase = ctxTreatmentType === 'Implant';
-    document.getElementById('cd-implant-row').style.display = isImplantCase ? '' : 'none';
-    document.getElementById('cd-graft-row').style.display = isImplantCase ? '' : 'none';
+    document.getElementById('cd-implant-fields').style.display = isImplantCase ? 'block' : 'none';
     document.getElementById('cd-enteredon').textContent = ctx.stageEnteredOn || '—';
 
     populateStageSelect(document.getElementById('cd-stage-select'), ctxTreatmentType, ctx.stage);
@@ -2893,6 +3021,8 @@
     if (!currentCaseId || !isSignedIn()) { return; }
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
+    var treatmentTypeForSave = document.getElementById('cd-treatment-type-select').value;
+    var isImplantForSave = treatmentTypeForSave === 'Implant';
     apiCall('updateCase', {
       idToken: zeraIdToken,
       caseId: currentCaseId,
@@ -2901,7 +3031,23 @@
       quotedAmount: document.getElementById('cd-quoted-input').value,
       assignedTo: document.getElementById('cd-assigned-input').value,
       nextAction: document.getElementById('cd-nextaction-input').value,
-      notes: document.getElementById('cd-notes-input').value
+      notes: document.getElementById('cd-notes-input').value,
+      treatmentType: treatmentTypeForSave,
+      // Case type / implant system / graft are implant-only fields in the
+      // UI (hidden for every other treatment type, same as Add-patient) —
+      // send blank/false rather than whatever was last typed while hidden,
+      // so switching a case away from Implant actually clears them server-side.
+      caseType: isImplantForSave ? document.getElementById('cd-casetype-select').value : '',
+      site: document.getElementById('cd-site-input').value,
+      implantSystem: isImplantForSave ? document.getElementById('cd-implant-system-input').value : '',
+      graftRequired: isImplantForSave ? document.getElementById('cd-graft-checkbox').checked : false,
+      patientName: document.getElementById('cd-name-input').value,
+      phone: document.getElementById('cd-phone-input').value,
+      altPhone: document.getElementById('cd-altphone-input').value,
+      age: document.getElementById('cd-age-input').value,
+      sex: document.getElementById('cd-sex-select').value,
+      locality: document.getElementById('cd-locality-input').value,
+      source: document.getElementById('cd-source-input').value
     }).then(function(res) {
       if (!res || !res.ok) {
         statusEl.textContent = addCaseErrorMessage(res && res.error);
@@ -2909,6 +3055,10 @@
         return;
       }
       applyDashboardData(res);
+      // The h2 title and subtitle are a plain display label, not an input —
+      // keep them in sync with whatever was just saved (a renamed patient,
+      // for instance) without needing to reopen the modal.
+      document.getElementById('cd-name').textContent = document.getElementById('cd-name-input').value || '(unnamed)';
       statusEl.textContent = 'Saved.';
       statusEl.className = 'modal-status';
     }).catch(function() {
@@ -2919,9 +3069,9 @@
 
   document.getElementById('cd-whatsapp-btn').addEventListener('click', function() {
     if (!currentCaseId) return;
-    var phone = document.getElementById('cd-phone').textContent.replace(/[^0-9]/g, '');
+    var phone = document.getElementById('cd-phone-input').value.replace(/[^0-9]/g, '');
     var nextAction = document.getElementById('cd-nextaction-input').value || 'checking in on your treatment';
-    var name = document.getElementById('cd-name').textContent;
+    var name = document.getElementById('cd-name-input').value || document.getElementById('cd-name').textContent;
     var text = 'Hi ' + name + ', this is regarding your treatment — ' + nextAction + '. Please let us know a good time to connect.';
     openWhatsAppCompose({ caseId: currentCaseId, phone: phone, name: name, defaultText: text });
   });
@@ -2959,6 +3109,220 @@
           document.getElementById('cd-pay-mode').value = '';
         }
       });
+  });
+
+  // --- Export / Import data (download everything, edit it, upload it back) -
+  //
+  // Export builds a multi-sheet .xlsx workbook entirely client-side from
+  // data already loaded into the dashboard (currentAllCases/currentAppointments/
+  // currentPayments) — no extra API call needed. "Patients & Cases" is the
+  // one sheet Import reads back; Appointments/Payments/Instructions are
+  // included for completeness (per Satish's choice to export "Everything,
+  // including Appointments & Payments history") but are history, not editable
+  // records — re-uploading changes made there would either double-count
+  // payments or corrupt the RunningBalance chain, so Import ignores them
+  // entirely and only ever reads the first sheet.
+  //
+  // Column headers on the Patients & Cases sheet are deliberately the exact
+  // same camelCase field names the backend's updateCase/bulkSaveCases
+  // actions already expect (caseId, patientName, phone, ...) — so Import
+  // needs no header-to-field translation step, which is one whole class of
+  // "my column got renamed and now nothing maps" bug this avoids entirely.
+  var EXPORT_CASE_COLUMNS = [
+    'caseId', 'patientId', 'patientName', 'phone', 'altPhone', 'age', 'sex',
+    'locality', 'source', 'treatmentType', 'caseType', 'site', 'implantSystem',
+    'graftRequired', 'stage', 'stageEnteredOn', 'status', 'nextAction',
+    'assignedTo', 'quotedAmount', 'notes'
+  ];
+  // nextActionDue is deliberately left out: buildCaseUpdatesFromBody_ on the
+  // backend DOES read a 'nextActionDue' field if present, but nothing in the
+  // case-detail modal exposes it for editing — including it here would let a
+  // re-upload silently set it from a formatted display string ("14 Oct
+  // 2026") that was never meant to round-trip. patientId and stageEnteredOn
+  // are included for the dentist's own reference but are not field names
+  // buildCaseUpdatesFromBody_ reads, so they're harmless if left in the
+  // upload — Import still strips them before sending, to keep the payload
+  // exactly what the backend understands.
+
+  function exportStatus_(msg, isError) {
+    var el = document.getElementById('export-import-status');
+    el.textContent = msg || '';
+    el.className = isError ? 'modal-status is-error' : 'modal-status';
+  }
+
+  function ensureXlsxLoaded_() {
+    if (window.XLSX) return Promise.resolve();
+    // The script tag is `defer`, so by the time a button can be clicked
+    // it has almost certainly already run — this just covers the rare
+    // case of a click landing in the small window before it has.
+    return new Promise(function(resolve, reject) {
+      var tries = 0;
+      var iv = setInterval(function() {
+        tries++;
+        if (window.XLSX) { clearInterval(iv); resolve(); }
+        else if (tries > 100) { clearInterval(iv); reject(new Error('xlsx_not_loaded')); }
+      }, 100);
+    });
+  }
+
+  document.getElementById('export-data-btn').addEventListener('click', function() {
+    exportStatus_('Preparing export…', false);
+    ensureXlsxLoaded_().then(function() {
+      var casesSheetData = [EXPORT_CASE_COLUMNS].concat(
+        currentAllCases.map(function(c) {
+          return EXPORT_CASE_COLUMNS.map(function(col) {
+            // graftRequired must stay a real boolean cell (TRUE/FALSE), never
+            // "Yes"/"No" text — the backend's updates.graftRequired = !!body.graftRequired
+            // would treat the non-empty string "No" as truthy and silently
+            // flip it on re-upload.
+            if (col === 'graftRequired') return !!c[col];
+            return c[col] == null ? '' : c[col];
+          });
+        })
+      );
+      var apptColumns = ['apptId', 'caseId', 'patientName', 'phone', 'treatmentType', 'caseType', 'stage', 'caseStatus', 'date', 'time', 'type', 'status'];
+      var apptSheetData = [apptColumns].concat(
+        currentAppointments.map(function(a) { return apptColumns.map(function(col) { return a[col] == null ? '' : a[col]; }); })
+      );
+      var paySheetData = [['paymentId', 'caseId', 'patientName', 'phone', 'amount', 'date', 'mode', 'runningBalance']].concat(
+        currentPayments.map(function(p) {
+          return [p.paymentId, p.caseId, p.patientName, p.phone, p.amount, p.date, p.mode, p.runningBalance].map(function(v) { return v == null ? '' : v; });
+        })
+      );
+      var instructionsData = [
+        ['Zera PMS — data export'],
+        [''],
+        ['"Patients & Cases" is the only sheet this dashboard reads back when you use Import data.'],
+        ['Edit any cell there and re-upload the file — a row whose Case ID matches an existing case updates it in place;'],
+        ['a row with a blank Case ID is added as a brand-new patient. Nothing is ever deleted by an upload.'],
+        [''],
+        ['"Appointments" and "Payments" are history, for your reference only — changes made there are not read back on upload.'],
+        [''],
+        ['Do not rename the column headers on the Patients & Cases sheet, or Import will not recognize them.']
+      ];
+
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(casesSheetData), 'Patients & Cases');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(apptSheetData), 'Appointments');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(paySheetData), 'Payments');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(instructionsData), 'Instructions');
+
+      var clinicLabel = (document.getElementById('app-clinic-name').textContent || 'clinic').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      var filename = 'zera-pms-export-' + clinicLabel + '-' + todayISO() + '.xlsx';
+      XLSX.writeFile(wb, filename);
+      exportStatus_('Downloaded ' + filename, false);
+    }).catch(function() {
+      exportStatus_('Could not build the export file. Please try again.', true);
+    });
+  });
+
+  // Normalizes a cell's graftRequired value to a real boolean before it ever
+  // reaches the backend. The backend's own coercion is `!!body.graftRequired`,
+  // which would treat ANY non-empty string — including the text "No" or
+  // "FALSE" someone typed into the sheet instead of using Excel's TRUE/FALSE
+  // — as truthy. Doing the real parsing here, once, is what makes the
+  // dentist's export → edit → re-upload loop safe regardless of what they
+  // typed into that cell.
+  function coerceGraftRequired_(val) {
+    if (val === true) return true;
+    if (val === false || val == null || val === '') return false;
+    var s = String(val).trim().toLowerCase();
+    return s === 'true' || s === 'yes' || s === 'y' || s === '1';
+  }
+
+  function importResultsStatus_(summary) {
+    var parts = [];
+    if (summary.updated) parts.push(summary.updated + ' updated');
+    if (summary.added) parts.push(summary.added + ' added');
+    if (summary.errors && summary.errors.length) parts.push(summary.errors.length + ' skipped (see below)');
+    if (!parts.length) parts.push('Nothing to import — the file had no rows.');
+    exportStatus_(parts.join(', ') + '.', !!(summary.errors && summary.errors.length));
+
+    var listEl = document.getElementById('import-results-list');
+    if (summary.errors && summary.errors.length) {
+      listEl.style.display = 'block';
+      listEl.innerHTML = '<div class="dl" style="margin-bottom:4px;">Rows not imported</div>' +
+        summary.errors.map(function(e) {
+          return '<div class="detail-list-row"><span>Row ' + e.row + (e.caseId ? ' (' + escapeHtml(e.caseId) + ')' : '') + '</span>' +
+            '<span>' + escapeHtml(importErrorReason_(e.reason)) + '</span></div>';
+        }).join('');
+    } else {
+      listEl.style.display = 'none';
+      listEl.innerHTML = '';
+    }
+  }
+
+  function importErrorReason_(reason) {
+    var messages = {
+      case_id_not_found: 'Case ID not found — fix the typo, or clear it to add as a new patient instead.',
+      name_required: 'Patient name is required for a new row (blank Case ID).',
+      phone_required: 'Phone is required for a new row (blank Case ID).',
+      invalid_stage: 'Stage name not recognized for this treatment type.',
+      invalid_treatment_type: 'Treatment type not recognized.'
+    };
+    return messages[reason] || reason || 'Could not be imported.';
+  }
+
+  document.getElementById('import-data-btn').addEventListener('click', function() {
+    if (!isSignedIn()) return;
+    document.getElementById('import-data-file').click();
+  });
+
+  document.getElementById('import-data-file').addEventListener('change', function(e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow re-selecting the same file next time
+    if (!file) return;
+    exportStatus_('Reading ' + file.name + '…', false);
+    document.getElementById('import-results-list').style.display = 'none';
+
+    ensureXlsxLoaded_().then(function() {
+      return file.arrayBuffer();
+    }).then(function(buf) {
+      var wb = XLSX.read(buf, { type: 'array' });
+      var sheetName = wb.SheetNames.indexOf('Patients & Cases') !== -1 ? 'Patients & Cases' : wb.SheetNames[0];
+      var sheet = wb.Sheets[sheetName];
+      if (!sheet) throw new Error('no_sheet');
+      // defval:'' so a blank cell comes through as '' rather than being
+      // omitted from the row object entirely (an omitted key and an
+      // explicit blank mean different things to buildCaseUpdatesFromBody_
+      // for some fields, e.g. notes — this keeps a cleared cell behaving
+      // like a deliberate clear, not "field not mentioned, leave alone").
+      var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      // Drop fully-blank rows (common at the end of a sheet someone scrolled
+      // past while editing) rather than sending them as 1000 near-empty
+      // bulkSaveCases rows that would all fail with phone_required.
+      rows = rows.filter(function(r) {
+        return Object.keys(r).some(function(k) { return String(r[k]).trim() !== ''; });
+      });
+      if (!rows.length) throw new Error('no_rows');
+      if (rows.length > 1000) throw new Error('too_many_rows');
+
+      var payloadRows = rows.map(function(r) {
+        return {
+          caseId: r.caseId != null ? String(r.caseId).trim() : '',
+          patientName: r.patientName, phone: r.phone, altPhone: r.altPhone, age: r.age, sex: r.sex,
+          locality: r.locality, source: r.source, treatmentType: r.treatmentType, caseType: r.caseType,
+          site: r.site, implantSystem: r.implantSystem, graftRequired: coerceGraftRequired_(r.graftRequired),
+          stage: r.stage, status: r.status, nextAction: r.nextAction, assignedTo: r.assignedTo,
+          quotedAmount: r.quotedAmount, notes: r.notes
+        };
+      });
+
+      exportStatus_('Uploading ' + payloadRows.length + ' row(s)…', false);
+      return apiCall('bulkSaveCases', { rows: payloadRows });
+    }).then(function(res) {
+      if (!res || !res.ok) {
+        exportStatus_(addCaseErrorMessage(res && res.error) || 'Import failed.', true);
+        return;
+      }
+      applyDashboardData(res);
+      importResultsStatus_(res.summary || { updated: 0, added: 0, errors: [] });
+    }).catch(function(err) {
+      if (err && err.message === 'no_rows') { exportStatus_('That file has no data rows to import.', true); return; }
+      if (err && err.message === 'too_many_rows') { exportStatus_('That file has more than 1000 rows — split it into smaller batches.', true); return; }
+      if (err && err.message === 'no_sheet') { exportStatus_('Could not find a sheet to read in that file.', true); return; }
+      exportStatus_('Could not read that file. Make sure it is an .xlsx export from this dashboard.', true);
+    });
   });
 
   // --- Service worker (installability) --------------------------------
