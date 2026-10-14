@@ -1090,7 +1090,7 @@
     <div class="app-main-head">
       <div>
         <h1 id="app-clinic-title">Dashboard</h1>
-        <p class="app-sub">Every patient, case, enquiry and payment — nothing needs the Sheet.</p>
+        <p class="app-sub">Every patient, case, enquiry and payment — all in one place.</p>
       </div>
       <div class="app-main-actions">
         <button id="export-data-btn" class="btn btn-ghost" type="button">Export data</button>
@@ -1366,7 +1366,7 @@
 <div id="add-patient-modal" class="modal-overlay">
   <div class="modal-card">
     <h2 id="ap-title">Add patient</h2>
-    <p class="modal-sub" id="ap-subtitle">Creates a new patient and case on your board directly — nothing to enter in a spreadsheet.</p>
+    <p class="modal-sub" id="ap-subtitle">Creates a new patient and case on your board, ready to track right away.</p>
     <input type="hidden" id="ap-mode" value="add" />
     <input type="hidden" id="ap-enquiry-row" value="" />
 
@@ -2944,7 +2944,7 @@
     document.getElementById('ap-title').textContent = mode === 'convert' ? 'Convert enquiry to patient' : 'Add patient';
     document.getElementById('ap-subtitle').textContent = mode === 'convert'
       ? 'Creates a patient and case from this enquiry, and marks it converted.'
-      : 'Creates a new patient and case on your board directly — nothing to enter in a spreadsheet.';
+      : 'Creates a new patient and case on your board, ready to track right away.';
     document.getElementById('add-patient-submit').textContent = mode === 'convert' ? 'Convert to patient' : 'Add patient';
 
     resetAddPatientForm();
