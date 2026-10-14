@@ -642,21 +642,45 @@
   .enquiry-meta{font-size:13px;color:var(--muted);margin-top:2px;}
   .enquiry-message{width:100%;font-size:13.5px;color:var(--ink-soft);padding-top:8px;border-top:1px dashed var(--line);margin-top:6px;}
 
-  /* ===== Reviews list ===== */
-  .review-settings{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:19px 20px;margin-bottom:20px;box-shadow:var(--shadow-xs);}
-  .review-settings h3{margin:0 0 6px;font-size:14.5px;color:var(--navy);}
-  .review-settings p{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.5;}
-  .review-settings-row{display:flex;gap:10px;flex-wrap:wrap;}
-  .review-settings-row input{
+  /* ===== Reviews tab: premium hero + list ===== */
+  .review-hero{
+    display:flex;align-items:flex-start;gap:16px;
+    background:linear-gradient(135deg,var(--green-soft) 0%,var(--surface) 72%);
+    border:1px solid var(--line-soft);border-radius:var(--r-xl);
+    padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow-xs);
+  }
+  .review-hero-icon{
+    width:46px;height:46px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(155deg,var(--green-bright),var(--green-dark));
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    box-shadow:0 8px 18px -6px rgba(5,150,105,0.5);
+  }
+  .review-hero-icon svg{width:22px;height:22px;}
+  .review-hero-text h3{margin:0 0 4px;font-size:16.5px;color:var(--navy);letter-spacing:-0.01em;}
+  .review-hero-text p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.55;max-width:600px;}
+  @media (max-width:600px){
+    .review-hero{padding:18px;gap:12px;border-radius:var(--r-lg);}
+    .review-hero-text p{max-width:none;}
+  }
+  .review-list-head{display:flex;justify-content:flex-end;margin-bottom:10px;}
+  .review-list-head span{
+    font-size:12px;font-weight:700;color:var(--green-dark);background:var(--green-soft);
+    padding:5px 12px;border-radius:999px;
+  }
+  .review-empty{padding:48px 24px;}
+  .review-empty-title{font-size:15.5px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .review-empty-sub{font-size:13.5px;color:var(--muted);max-width:420px;margin:0 auto;line-height:1.5;}
+
+  /* ===== Generic settings box (shared by Doctors settings etc.) ===== */
+  .settings-box{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:19px 20px;margin-bottom:20px;box-shadow:var(--shadow-xs);}
+  .settings-box h3{margin:0 0 6px;font-size:14.5px;color:var(--navy);}
+  .settings-box p{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .settings-box-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .settings-box-row input{
     flex:1;min-width:220px;padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--line);
     font-size:14px;font-family:inherit;transition:border-color .15s ease,box-shadow .15s ease;
   }
-  .review-settings-row input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
-  .review-short-link{
-    display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;
-    background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--r-sm);font-size:13px;color:var(--muted);
-  }
-  .review-short-link strong{color:var(--navy);font-weight:700;}
+  .settings-box-row input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
 
   /* ===== Doctors settings (Patients tab) ===== */
   .doctor-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
@@ -678,12 +702,17 @@
     box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
   }
   .patients-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
-  .review-short-link .btn{padding:6px 14px;font-size:13px;min-height:32px;}
   .review-row{
-    background:var(--surface);border:1px solid var(--line-soft);border-left-width:3px;border-left-color:#25D366;
-    border-radius:var(--r-md);padding:16px 20px;margin-bottom:10px;box-shadow:var(--shadow-xs);
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);
+    padding:18px 22px;margin-bottom:12px;box-shadow:var(--shadow-xs);position:relative;overflow:hidden;
+    transition:box-shadow .15s ease,transform .15s ease,border-color .15s ease;
   }
-  .review-row-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin-bottom:10px;}
+  .review-row::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,#25D366,#128c4a);
+  }
+  .review-row:hover{box-shadow:var(--shadow-md);border-color:var(--line);transform:translateY(-1px);}
+  .review-row-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin-bottom:12px;}
   .review-name{font-weight:700;font-size:15.5px;color:var(--navy);}
   .review-meta{font-size:13px;color:var(--muted);margin-top:2px;}
   .review-wait-badge{
@@ -692,13 +721,15 @@
   }
   .review-wait-badge.is-waiting{color:var(--amber);background:var(--amber-bg);}
   .review-message{
-    width:100%;font-size:13.5px;color:var(--ink-soft);padding:10px 12px;border:1px solid var(--line);
+    width:100%;font-size:13.5px;color:var(--ink-soft);padding:12px 14px;border:1px solid var(--line);
     border-radius:var(--r-sm);background:var(--bg);resize:vertical;min-height:100px;font-family:inherit;
-    margin-bottom:10px;box-sizing:border-box;transition:border-color .15s ease,box-shadow .15s ease;
+    margin-bottom:12px;box-sizing:border-box;transition:border-color .15s ease,box-shadow .15s ease;
   }
   .review-message:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
   .review-row-actions{display:flex;flex-wrap:wrap;gap:10px;}
   .review-row-actions .btn{flex:1;min-width:160px;justify-content:center;}
+  .whatsapp-btn{background:linear-gradient(155deg,#2fd673,#1fa855);color:#fff;box-shadow:0 6px 16px -6px rgba(31,168,85,0.5),var(--shadow-xs);}
+  .whatsapp-btn:hover{background:linear-gradient(155deg,#25D366,#128c4a);box-shadow:0 10px 22px -6px rgba(18,140,74,0.55);transform:translateY(-1px);}
 
   /* ===== Case detail modal ===== */
   /* min-width guarded so this never fights the mobile full-width override
@@ -727,8 +758,6 @@
   .balance-note{font-size:13px;font-weight:700;margin-top:8px;}
   .balance-note.owed{color:var(--red);}
   .balance-note.clear{color:var(--green-dark);}
-  .whatsapp-btn{background:#25D366;color:#fff;}
-  .whatsapp-btn:hover{background:#1fb356;}
 
   /* ===== Modal open animation ===== */
   .modal-overlay{opacity:0;transition:opacity .15s ease;}
@@ -2606,10 +2635,10 @@
       '</span>';
     }).join('');
     el.innerHTML =
-      '<div class="review-settings">' +
+      '<div class="settings-box">' +
         '<h3>Doctors at this clinic</h3>' +
         '<p>Add every doctor who sees patients here — you can then assign a doctor to each case, and see at a glance who treated whom on the board, patient list and search.</p>' +
-        '<div class="review-settings-row">' +
+        '<div class="settings-box-row">' +
           '<input id="doctor-add-input" type="text" placeholder="e.g. Dr. Shilpa Yadav" autocomplete="off" />' +
           '<button id="doctor-add-btn" class="btn btn-primary" type="button">+ Add doctor</button>' +
         '</div>' +
@@ -2783,45 +2812,45 @@
     });
   });
 
-  // --- Reviews tab: Google review link + one-click WhatsApp requests -------
-  // Every patient shows up here the moment they're added and stays until a
-  // request has actually been sent — the dentist decides the right moment
-  // to tap send, rather than waiting on a fixed delay. The message is
-  // pre-filled and empathetic by default but sits in an editable textarea,
-  // so sending is genuinely one click while still allowing a tweak first.
-  // When a short link is available (auto-generated server-side when the
-  // review link is saved) it's used in the message instead of Google's long
-  // review-link URL, and is also shown here with its own Copy button.
+  // --- Reviews tab: one-click 5-star WhatsApp requests ----------------------
+  // The Google review link itself is configured by Zera on the backend per
+  // clinic — the dentist never sees or manages that link here, so this tab
+  // is purely the premium, ready-to-use request flow. Every patient shows up
+  // here the moment they're added and stays until a request has actually
+  // been sent — the dentist decides the right moment to tap send, rather
+  // than waiting on a fixed delay. The message is pre-filled and empathetic
+  // by default but sits in an editable textarea, so sending is genuinely one
+  // click while still allowing a tweak first. When a short link is available
+  // it's used in the message automatically, behind the scenes.
   function renderReviews(candidates, reviewLink, reviewLinkShort) {
     var el = document.getElementById('app-reviews');
-    var shortLinkRowHtml = reviewLinkShort ?
-      '<div class="review-short-link">' +
-        '<span>Short link used in messages: <strong>' + escapeHtml(reviewLinkShort) + '</strong></span>' +
-        '<button class="btn btn-ghost review-copy-short-btn" type="button" data-link="' +
-          escapeHtml(reviewLinkShort) + '">Copy link</button>' +
-      '</div>' : '';
-    var settingsHtml =
-      '<div class="review-settings">' +
-        '<h3>Google review link</h3>' +
-        '<p>Paste your clinic’s Google Business review link here. Patients show up below as soon as ' +
-        'they’re added, each with a ready-to-send WhatsApp message asking for a 5-star review — send ' +
-        'it whenever suits you.</p>' +
-        '<div class="review-settings-row">' +
-          '<input type="url" id="review-link-input" placeholder="https://g.page/r/.../review" value="' +
-            escapeHtml(reviewLink || '') + '" />' +
-          '<button class="btn btn-primary" id="review-link-save" type="button">Save</button>' +
+    var heroHtml =
+      '<div class="review-hero">' +
+        '<div class="review-hero-icon">' +
+          '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.3l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L10 15.98l-5.8 3.22 1.1-6.47-4.7-4.58 6.5-.95z"/></svg>' +
         '</div>' +
-        shortLinkRowHtml +
-        '<div class="modal-status" id="review-link-status"></div>' +
+        '<div class="review-hero-text">' +
+          '<h3>5-star review requests</h3>' +
+          '<p>Every new patient lands here automatically with a ready-to-send WhatsApp message asking for a review — pick the right moment and send it in one tap.</p>' +
+        '</div>' +
       '</div>';
 
     var listHtml;
     if (!reviewLink) {
-      listHtml = '<div class="board-empty">Add your Google review link above to start sending 5-star review requests.</div>';
+      listHtml =
+        '<div class="board-empty review-empty">' +
+          '<div class="review-empty-title">Getting set up</div>' +
+          '<div class="review-empty-sub">Review requests are being switched on for your clinic — there’s nothing you need to do, this will light up on its own.</div>' +
+        '</div>';
     } else if (!candidates || candidates.length === 0) {
-      listHtml = '<div class="board-empty">No review requests waiting right now — new patients show up here the moment they’re added.</div>';
+      listHtml =
+        '<div class="board-empty review-empty">' +
+          '<div class="review-empty-title">All caught up</div>' +
+          '<div class="review-empty-sub">No review requests waiting right now — new patients show up here the moment they’re added.</div>' +
+        '</div>';
     } else {
-      listHtml = candidates.map(function(c) {
+      listHtml = '<div class="review-list-head"><span>' + candidates.length + ' waiting</span></div>' +
+        candidates.map(function(c) {
         var days = Number(c.daysSince) || 0;
         var waitLabel = days <= 0 ? 'Added today' : ('Added ' + days + ' day' + (days === 1 ? '' : 's') + ' ago');
         var waitClass = days >= 3 ? ' is-waiting' : '';
@@ -2843,42 +2872,10 @@
         '</div>';
       }).join('');
     }
-    el.innerHTML = settingsHtml + listHtml;
+    el.innerHTML = heroHtml + listHtml;
   }
 
   document.getElementById('app-reviews').addEventListener('click', function(e) {
-    if (e.target.closest('#review-link-save')) {
-      var link = document.getElementById('review-link-input').value.trim();
-      var statusEl = document.getElementById('review-link-status');
-      statusEl.textContent = 'Saving…';
-      statusEl.className = 'modal-status';
-      apiCall('saveReviewLink', { reviewLink: link }).then(function(res) {
-        if (!res || !res.ok) {
-          statusEl.textContent = res && res.error === 'invalid_link' ? 'Link should start with https://' : 'Something went wrong.';
-          statusEl.className = 'modal-status is-error';
-          return;
-        }
-        currentReviewLink = res.reviewLink || '';
-        currentReviewLinkShort = res.reviewLinkShort || '';
-        currentReviewCandidates = res.reviewCandidates || [];
-        renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
-        setTabCount('reviews', currentReviewCandidates.length);
-      }).catch(function() {
-        statusEl.textContent = 'Something went wrong.';
-        statusEl.className = 'modal-status is-error';
-      });
-      return;
-    }
-    var copyShortBtn = e.target.closest('.review-copy-short-btn');
-    if (copyShortBtn) {
-      var linkToCopy = copyShortBtn.dataset.link || '';
-      var originalShortLabel = copyShortBtn.textContent;
-      copyTextToClipboard(linkToCopy).then(function(ok) {
-        copyShortBtn.textContent = ok ? 'Copied!' : 'Couldn’t copy';
-        setTimeout(function() { copyShortBtn.textContent = originalShortLabel; }, 1800);
-      });
-      return;
-    }
     var copyMsgBtn = e.target.closest('.review-copy-msg-btn');
     if (copyMsgBtn) {
       var msgPatientId = copyMsgBtn.dataset.patientId;
