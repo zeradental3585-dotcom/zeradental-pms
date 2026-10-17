@@ -2442,9 +2442,13 @@
     var q = (query || '').trim().toLowerCase();
     if (!q) { el.innerHTML = ''; el.classList.remove('open'); return; }
     var matches = currentBoard.filter(function(r) {
-      var uhid = r.patientId || caseIdToPatientId[r.caseId] || '';
-      return (r.patientName || '').toLowerCase().indexOf(q) !== -1 || (r.phone || '').indexOf(q) !== -1 ||
-        uhid.toLowerCase().indexOf(q) !== -1 || (r.assignedTo || '').toLowerCase().indexOf(q) !== -1;
+      // String()-coerce every field before lowercasing — sheet values can come
+      // back as numbers (e.g. a phone number Sheets auto-converted), and
+      // .toLowerCase() on a number throws, which crashes the whole filter and
+      // silently breaks this search for everyone, not just that one case.
+      var uhid = String(r.patientId || caseIdToPatientId[r.caseId] || '');
+      return String(r.patientName || '').toLowerCase().indexOf(q) !== -1 || String(r.phone || '').indexOf(q) !== -1 ||
+        uhid.toLowerCase().indexOf(q) !== -1 || String(r.assignedTo || '').toLowerCase().indexOf(q) !== -1;
     }).slice(0, 6);
     if (matches.length === 0) {
       el.innerHTML = '<div class="search-empty">No active case matches — check spelling, or open them from Patients.</div>';
@@ -2631,11 +2635,16 @@
   // doctor's name surfaces everyone they've ever treated, not just current.
   function patientMatchesSearch_(p, q) {
     if (!q) return true;
-    if ((p.name || '').toLowerCase().indexOf(q) !== -1) return true;
-    if ((p.phone || '').toLowerCase().indexOf(q) !== -1) return true;
-    if ((p.altPhone || '').toLowerCase().indexOf(q) !== -1) return true;
-    if ((p.patientId || '').toLowerCase().indexOf(q) !== -1) return true;
-    return (p.cases || []).some(function(c) { return (c.assignedTo || '').toLowerCase().indexOf(q) !== -1; });
+    // Coerce every field with String() before lowercasing — sheet values can
+    // come back as numbers (e.g. a phone number typed without a leading 0
+    // gets auto-converted by Google Sheets), and calling .toLowerCase() on a
+    // number throws, which previously crashed the whole filter and made
+    // search silently stop working for everyone, not just that one patient.
+    if (String(p.name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(p.phone || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(p.altPhone || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(p.patientId || '').toLowerCase().indexOf(q) !== -1) return true;
+    return (p.cases || []).some(function(c) { return String(c.assignedTo || '').toLowerCase().indexOf(q) !== -1; });
   }
 
   function renderPatients(patients) {
