@@ -544,9 +544,37 @@
   .ap-uhid-preview strong{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;letter-spacing:.3px;}
 
   /* ===== Stats bar ===== */
-  .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:30px;}
-  @media (max-width:900px){.stats-row{grid-template-columns:repeat(3,1fr);}}
-  @media (max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}}
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
+  @media (max-width:480px){.stats-row{gap:8px;margin-bottom:10px;}}
+  /* "Needs attention" -- Overdue today / Outstanding (active) used to sit in
+     the stats row as two big red numbers the dentist saw every time they
+     opened the app, even on a calm day. They're real, actionable numbers,
+     so they're not hidden -- just tucked into a quiet, collapsed-by-default
+     strip under the calm stats, and only shown at all once there's actually
+     something in it. */
+  .attn-wrap{margin-bottom:22px;}
+  .attn-toggle{
+    width:100%;display:flex;align-items:center;gap:9px;appearance:none;cursor:pointer;font-family:inherit;
+    background:var(--amber-bg);border:1px solid rgba(217,119,6,0.25);border-radius:999px;
+    padding:9px 14px;color:var(--amber);font-size:13px;font-weight:700;text-align:left;
+    transition:border-color .15s ease,background .15s ease,border-radius .15s ease;
+  }
+  .attn-toggle:hover{border-color:var(--amber);}
+  .attn-toggle.open{border-radius:var(--r-md) var(--r-md) 0 0;}
+  .attn-toggle-icon{width:15px;height:15px;flex-shrink:0;}
+  .attn-toggle-label{flex:1;}
+  .attn-toggle-chevron{font-size:11px;opacity:0.75;flex-shrink:0;}
+  .attn-panel{
+    display:none;background:var(--amber-bg);border:1px solid rgba(217,119,6,0.25);border-top:none;
+    border-radius:0 0 var(--r-md) var(--r-md);padding:2px 14px 4px;
+  }
+  .attn-panel.open{display:block;}
+  .attn-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;
+    font-size:13.5px;color:#92400e;font-weight:600;cursor:pointer;border-top:1px solid rgba(217,119,6,0.18);
+  }
+  .attn-row:first-child{border-top:none;}
+  .attn-row-num{font-weight:800;color:var(--amber);}
   .stat-tile{
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:17px 18px;
     box-shadow:var(--shadow-xs);transition:box-shadow .15s ease,transform .15s ease,border-color .15s ease;
@@ -854,6 +882,7 @@
     width:22px;height:22px;border-radius:50%;color:var(--green-dark);line-height:1;flex-shrink:0;
   }
   .board-filter-clear:hover{background:#fff;}
+  .tab-sort-row{margin-bottom:14px;}
   .patients-search-bar{margin-bottom:16px;}
   .patients-search-bar input{
     width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);
@@ -1345,6 +1374,7 @@
     <div id="import-results-list" class="detail-list" style="display:none; margin:0 0 10px; font-size:13px;"></div>
 
     <div id="app-stats" class="stats-row"></div>
+    <div id="app-attn-wrap" class="attn-wrap" style="display:none;"></div>
 
     <div class="app-tabs">
       <button class="app-tab active" data-tab="today" type="button">Today <span class="tab-count" data-tab-count="today">0</span></button>
@@ -1381,6 +1411,7 @@
     </div>
     <div id="tab-board" class="tab-panel">
       <div id="board-filter-indicator" class="board-filter-indicator" style="display:none;"></div>
+      <div id="board-sort-row" class="review-sort tab-sort-row"></div>
       <div id="app-board"></div>
     </div>
     <div id="tab-patients" class="tab-panel">
@@ -1396,9 +1427,11 @@
           <div id="patients-doctor-filter-menu" class="patients-doctor-filter-menu"></div>
         </div>
       </div>
+      <div id="patients-sort-row" class="review-sort tab-sort-row"></div>
       <div id="app-patients"></div>
     </div>
     <div id="tab-enquiries" class="tab-panel">
+      <div id="enquiries-sort-row" class="review-sort tab-sort-row"></div>
       <div id="app-enquiries"></div>
     </div>
     <div id="tab-reviews" class="tab-panel">
@@ -1542,6 +1575,26 @@
         <input id="cd-site-input" type="text" placeholder="e.g. 36" />
       </div>
     </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-dob-input">Date of birth</label>
+        <input id="cd-dob-input" type="date" />
+      </div>
+      <div class="modal-field">
+        <label for="cd-aadhaar-input">Aadhaar (last 4 digits)</label>
+        <input id="cd-aadhaar-input" type="text" inputmode="numeric" maxlength="4" placeholder="e.g. 4821" />
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="cd-email-input">Email</label>
+        <input id="cd-email-input" type="email" placeholder="e.g. patient@example.com" />
+      </div>
+      <div class="modal-field">
+        <label for="cd-address-input">Postal address</label>
+        <input id="cd-address-input" type="text" placeholder="e.g. House no., street, locality, city" />
+      </div>
+    </div>
 
     <div id="cd-implant-fields">
       <div class="modal-row">
@@ -1645,11 +1698,6 @@
       <span>This patient will be registered as <strong id="ap-uhid-preview">—</strong></span>
     </div>
 
-    <div class="modal-field">
-      <label for="ap-treatment-type">Treatment type *</label>
-      <select id="ap-treatment-type"></select>
-    </div>
-
     <div class="modal-row">
       <div class="modal-field">
         <label for="ap-name">Patient name *</label>
@@ -1700,7 +1748,12 @@
     </div>
 
     <div class="modal-field">
-      <label for="ap-chief-complaint">Chief complaint</label>
+      <label for="ap-treatment-type">Treatment type</label>
+      <select id="ap-treatment-type"></select>
+    </div>
+
+    <div class="modal-field">
+      <label for="ap-chief-complaint">Chief complaint *</label>
       <input id="ap-chief-complaint" type="text" placeholder="e.g. Pain in lower left molar for 3 days" />
     </div>
 
@@ -1732,7 +1785,7 @@
 
     <div class="modal-row">
       <div class="modal-field">
-        <label for="ap-stage">Current stage *</label>
+        <label for="ap-stage">Current stage</label>
         <select id="ap-stage"></select>
       </div>
       <div class="modal-field">
@@ -1882,6 +1935,12 @@
   var selectedDoctorFilter = null; // Board tab: doctor name to filter by, or null for everyone
   var reviewsSortMode = 'oldest'; // Reviews tab sort: 'oldest' | 'newest' | 'name'
   var REVIEW_SORT_LABELS_ = { oldest: 'Oldest first', newest: 'Newest first', name: 'Name A–Z' };
+  var boardSortMode = 'overdue'; // Board tab sort: 'overdue' | 'name' | 'doctor'
+  var BOARD_SORT_LABELS_ = { overdue: 'Most overdue first', name: 'Name A–Z', doctor: 'By doctor' };
+  var patientsSortMode = 'recent'; // Patients tab sort: 'recent' | 'name' | 'doctor'
+  var PATIENTS_SORT_LABELS_ = { recent: 'Recently added', name: 'Name A–Z', doctor: 'By doctor' };
+  var enquiriesSortMode = 'newest'; // Enquiries tab sort: 'newest' | 'oldest' | 'name'
+  var ENQUIRIES_SORT_LABELS_ = { newest: 'Newest first', oldest: 'Oldest first', name: 'Name A–Z' };
   var currentCaseId = null; // case detail modal currently open on this CaseID
   var currentPatientId = null; // the PatientID behind that case, for delete/archive
   // Treatment types + their stage journeys, straight from the server (see
@@ -2408,18 +2467,15 @@
   var STAT_ICON_ALERT_ = '<circle cx="10" cy="10" r="7.25"/><path d="M10 6.5v4.2"/><circle cx="10" cy="13.4" r="0.75" fill="currentColor" stroke="none"/>';
   var STAT_ICON_TRAY_ = '<path d="M3 11.2l1.4-6.3A1 1 0 0 1 5.4 4h9.2a1 1 0 0 1 1 .9L17 11.2"/><path d="M3 11.2h4a1 1 0 0 1 .9.55l.5 1a1 1 0 0 0 .9.55h1.4a1 1 0 0 0 .9-.55l.5-1a1 1 0 0 1 .9-.55h4v3.8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3.8z"/>';
 
+  var attnPanelOpen = false; // "Needs attention" strip -- collapsed by default
   function renderStats() {
-    var overdue = currentBoard.filter(function(r) { return r.daysOverdue >= 0; }).length;
-    var outstanding = computeOutstanding();
     // Every tile carries a data-tab so clicking it jumps straight to the
     // tab that explains the number, instead of leaving the dentist to go
     // hunt for it — 'click a number, see the thing behind it'.
     var tiles = [
       { num: currentPatients.length, label: 'Total patients', icon: STAT_ICON_PATIENTS_, tab: 'patients' },
       { num: currentBoard.length, label: 'Active cases', icon: STAT_ICON_CASES_, tab: 'board' },
-      { num: overdue, label: 'Overdue today', attn: overdue > 0, icon: STAT_ICON_ALERT_, tab: 'board' },
-      { num: currentEnquiries.length, label: 'New enquiries', icon: STAT_ICON_TRAY_, tab: 'enquiries' },
-      { num: '₹' + outstanding.toLocaleString('en-IN'), label: 'Outstanding (active)', attn: outstanding > 0, iconText: '₹', tab: 'board' }
+      { num: currentEnquiries.length, label: 'New enquiries', icon: STAT_ICON_TRAY_, tab: 'enquiries' }
     ];
     document.getElementById('app-stats').innerHTML = tiles.map(function(t) {
       var iconHtml = t.iconText
@@ -2431,12 +2487,54 @@
         '<div class="stat-label">' + escapeHtml(t.label) + '</div>' +
       '</div>';
     }).join('');
+    renderAttnPanel();
   }
   document.getElementById('app-stats').addEventListener('click', function(e) {
     var tile = e.target.closest('.stat-tile');
     if (!tile || !tile.dataset.tab) return;
     var tabBtn = document.querySelector('.app-tab[data-tab="' + tile.dataset.tab + '"]');
     if (tabBtn) tabBtn.click();
+  });
+  // Overdue today / Outstanding (active) -- real numbers the dentist does
+  // need, just not shouted at them as big red tiles every time the app
+  // opens. Collapsed by default; hidden entirely on a day with nothing to
+  // flag, rather than showing a reassuring "0" nobody needs to see.
+  function renderAttnPanel() {
+    var overdue = currentBoard.filter(function(r) { return r.daysOverdue >= 0; }).length;
+    var outstanding = computeOutstanding();
+    var wrap = document.getElementById('app-attn-wrap');
+    if (!wrap) return;
+    if (overdue <= 0 && outstanding <= 0) {
+      wrap.style.display = 'none';
+      wrap.innerHTML = '';
+      return;
+    }
+    wrap.style.display = 'block';
+    var badgeParts = [];
+    if (overdue > 0) badgeParts.push(overdue + (overdue === 1 ? ' case' : ' cases') + ' overdue');
+    if (outstanding > 0) badgeParts.push('₹' + outstanding.toLocaleString('en-IN') + ' outstanding');
+    wrap.innerHTML =
+      '<button type="button" id="app-attn-toggle" class="attn-toggle' + (attnPanelOpen ? ' open' : '') + '">' +
+        '<svg class="attn-toggle-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + STAT_ICON_ALERT_ + '</svg>' +
+        '<span class="attn-toggle-label">Needs attention — ' + escapeHtml(badgeParts.filter(Boolean).join(' · ')) + '</span>' +
+        '<span class="attn-toggle-chevron">' + (attnPanelOpen ? '▴' : '▾') + '</span>' +
+      '</button>' +
+      '<div class="attn-panel' + (attnPanelOpen ? ' open' : '') + '">' +
+        (overdue > 0 ? '<div class="attn-row" data-tab="board"><span>Overdue today</span><span class="attn-row-num">' + overdue + '</span></div>' : '') +
+        (outstanding > 0 ? '<div class="attn-row" data-tab="board"><span>Outstanding (active)</span><span class="attn-row-num">₹' + outstanding.toLocaleString('en-IN') + '</span></div>' : '') +
+      '</div>';
+  }
+  document.getElementById('app-attn-wrap').addEventListener('click', function(e) {
+    if (e.target.closest('.attn-toggle')) {
+      attnPanelOpen = !attnPanelOpen;
+      renderAttnPanel();
+      return;
+    }
+    var row = e.target.closest('.attn-row');
+    if (row && row.dataset.tab) {
+      var tabBtn = document.querySelector('.app-tab[data-tab="' + row.dataset.tab + '"]');
+      if (tabBtn) tabBtn.click();
+    }
   });
 
   // --- Insights tab: patients over time, broken down by doctor -------------
@@ -2814,6 +2912,8 @@
   document.getElementById('log-visit-modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeLogVisitModal(); });
 
   document.getElementById('log-visit-submit').addEventListener('click', function() {
+    var submitBtn = document.getElementById('log-visit-submit');
+    if (submitBtn.disabled) return; // already saving -- ignore a fast double-tap/double-click
     var statusEl = document.getElementById('log-visit-status');
     var caseId = document.getElementById('lv-case-id').value;
     var visitDate = document.getElementById('lv-date').value;
@@ -2821,6 +2921,7 @@
     if (!visitDate) { statusEl.textContent = 'Please choose the visit date.'; statusEl.className = 'modal-status is-error'; return; }
     if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
 
+    submitBtn.disabled = true;
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
     apiCall('logVisit', {
@@ -2834,6 +2935,7 @@
       nextAction: document.getElementById('lv-next-action').value,
       notes: document.getElementById('lv-notes').value
     }).then(function(res) {
+      submitBtn.disabled = false;
       if (!res || !res.ok) {
         statusEl.textContent = addCaseErrorMessage(res && res.error);
         statusEl.className = 'modal-status is-error';
@@ -2842,6 +2944,7 @@
       applyDashboardData(res);
       closeLogVisitModal();
     }).catch(function() {
+      submitBtn.disabled = false;
       statusEl.textContent = 'Something went wrong. Please try again.';
       statusEl.className = 'modal-status is-error';
     });
@@ -2962,8 +3065,16 @@
       if (boardTab) boardTab.click();
     }
   }
+  function updateBoardSortRow() {
+    var el = document.getElementById('board-sort-row');
+    if (!el) return;
+    el.innerHTML = ['overdue', 'name', 'doctor'].map(function(key) {
+      return '<button type="button" class="review-sort-btn' + (boardSortMode === key ? ' active' : '') + '" data-board-sort="' + key + '">' + BOARD_SORT_LABELS_[key] + '</button>';
+    }).join('');
+  }
   function renderBoard(rows) {
     updateBoardFilterIndicator();
+    updateBoardSortRow();
     var el = document.getElementById('app-board');
     var filtered = selectedDoctorFilter ? (rows || []).filter(function(r) { return r.assignedTo === selectedDoctorFilter; }) : (rows || []);
     if (!filtered || filtered.length === 0) {
@@ -2972,7 +3083,15 @@
         : 'No active cases right now.') + '</div>';
       return;
     }
-    el.innerHTML = filtered.map(function(r) {
+    var sorted = filtered.slice();
+    if (boardSortMode === 'name') {
+      sorted.sort(function(a, b) { return String(a.patientName || '').localeCompare(String(b.patientName || '')); });
+    } else if (boardSortMode === 'doctor') {
+      sorted.sort(function(a, b) { return String(a.assignedTo || '').localeCompare(String(b.assignedTo || '')) || ((Number(b.daysOverdue) || -9999) - (Number(a.daysOverdue) || -9999)); });
+    } else {
+      sorted.sort(function(a, b) { return (Number(b.daysOverdue) || -9999) - (Number(a.daysOverdue) || -9999); });
+    }
+    el.innerHTML = sorted.map(function(r) {
       var overdueClass = r.daysOverdue >= 0 ? 'overdue' : 'ontrack';
       var overdueLabel = r.daysOverdue > 0
         ? (pluralDays_(r.daysOverdue) + ' overdue')
@@ -3003,6 +3122,12 @@
     var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
     if (ctx) openCaseDetail(ctx);
   });
+  document.getElementById('board-sort-row').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-board-sort]');
+    if (!btn) return;
+    boardSortMode = btn.dataset.boardSort;
+    renderBoard(currentBoard);
+  });
 
   // --- Patients tab ---------------------------------------------------------
   // Matches the search box against patient name, phone/alt phone, UHID, and
@@ -3031,7 +3156,15 @@
     return (p.cases || []).some(function(c) { return patientsDoctorFilter.indexOf(c.assignedTo) !== -1; });
   }
 
+  function updatePatientsSortRow() {
+    var el = document.getElementById('patients-sort-row');
+    if (!el) return;
+    el.innerHTML = ['recent', 'name', 'doctor'].map(function(key) {
+      return '<button type="button" class="review-sort-btn' + (patientsSortMode === key ? ' active' : '') + '" data-patients-sort="' + key + '">' + PATIENTS_SORT_LABELS_[key] + '</button>';
+    }).join('');
+  }
   function renderPatients(patients) {
+    updatePatientsSortRow();
     var el = document.getElementById('app-patients');
     if (!patients || patients.length === 0) {
       el.innerHTML = '<div class="board-empty">No patients yet — use "+ Add patient" to create the first one.</div>';
@@ -3043,7 +3176,18 @@
       el.innerHTML = '<div class="board-empty">No patients match' + (patientsSearchQuery ? ' “' + escapeHtml(patientsSearchQuery) + '”' : ' the selected filters') + '.</div>';
       return;
     }
-    el.innerHTML = filtered.map(function(p) {
+    var sorted = filtered.slice();
+    if (patientsSortMode === 'name') {
+      sorted.sort(function(a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+    } else if (patientsSortMode === 'doctor') {
+      sorted.sort(function(a, b) { return String(patientDoctorName_(a)).localeCompare(String(patientDoctorName_(b))); });
+    } else {
+      sorted.sort(function(a, b) {
+        var da = parseDisplayDate_(a.createdOn), db = parseDisplayDate_(b.createdOn);
+        return (db ? new Date(db).getTime() : 0) - (da ? new Date(da).getTime() : 0);
+      });
+    }
+    el.innerHTML = sorted.map(function(p) {
       var chips = (p.cases || []).map(function(c) {
         var cls = c.status === 'Completed' ? 'completed' : (c.status === 'Dropped' ? 'dropped' : '');
         return '<span class="patient-case-chip ' + cls + '" data-case-id="' + escapeHtml(c.caseId) + '" ' +
@@ -3074,6 +3218,12 @@
 
   document.getElementById('patients-search-input').addEventListener('input', function(e) {
     patientsSearchQuery = e.target.value;
+    renderPatients(currentPatients);
+  });
+  document.getElementById('patients-sort-row').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-patients-sort]');
+    if (!btn) return;
+    patientsSortMode = btn.dataset.patientsSort;
     renderPatients(currentPatients);
   });
 
@@ -3330,13 +3480,29 @@
   });
 
   // --- Enquiries tab ---------------------------------------------------------
+  function updateEnquiriesSortRow() {
+    var el = document.getElementById('enquiries-sort-row');
+    if (!el) return;
+    el.innerHTML = ['newest', 'oldest', 'name'].map(function(key) {
+      return '<button type="button" class="review-sort-btn' + (enquiriesSortMode === key ? ' active' : '') + '" data-enquiries-sort="' + key + '">' + ENQUIRIES_SORT_LABELS_[key] + '</button>';
+    }).join('');
+  }
   function renderEnquiries(enquiries) {
+    updateEnquiriesSortRow();
     var el = document.getElementById('app-enquiries');
     if (!enquiries || enquiries.length === 0) {
       el.innerHTML = '<div class="board-empty">No new enquiries — leads from your website contact form will show up here.</div>';
       return;
     }
-    el.innerHTML = enquiries.map(function(e) {
+    var sorted = enquiries.slice();
+    if (enquiriesSortMode === 'name') {
+      sorted.sort(function(a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+    } else if (enquiriesSortMode === 'oldest') {
+      sorted.sort(function(a, b) { return (Number(a.rowIndex) || 0) - (Number(b.rowIndex) || 0); });
+    } else {
+      sorted.sort(function(a, b) { return (Number(b.rowIndex) || 0) - (Number(a.rowIndex) || 0); });
+    }
+    el.innerHTML = sorted.map(function(e) {
       return '<div class="enquiry-row">' +
         '<div class="enquiry-main row-identity">' + avatarHtml(e.name) +
           '<div><div class="enquiry-name">' + escapeHtml(e.name || '(no name)') + '</div>' +
@@ -3361,6 +3527,12 @@
       phone: btn.dataset.phone,
       locality: btn.dataset.city
     });
+  });
+  document.getElementById('enquiries-sort-row').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-enquiries-sort]');
+    if (!btn) return;
+    enquiriesSortMode = btn.dataset.enquiriesSort;
+    renderEnquiries(currentEnquiries);
   });
 
   // --- Reviews tab: one-click 5-star WhatsApp requests ----------------------
@@ -3594,6 +3766,9 @@
   document.getElementById('ap-aadhaar-last4').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);
   });
+  document.getElementById('cd-aadhaar-input').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+  });
 
   function addCaseErrorMessage(err) {
     var messages = {
@@ -3627,6 +3802,8 @@
   });
 
   document.getElementById('add-patient-submit').addEventListener('click', function() {
+    var submitBtn = document.getElementById('add-patient-submit');
+    if (submitBtn.disabled) return; // already saving -- ignore a fast double-tap/double-click
     var statusEl = document.getElementById('add-patient-status');
     var mode = document.getElementById('ap-mode').value;
     var name = document.getElementById('ap-name').value.trim();
@@ -3640,10 +3817,12 @@
     if (!name) { statusEl.textContent = 'Please enter the patient’s name.'; statusEl.className = 'modal-status is-error'; return; }
     if (!phone) { statusEl.textContent = 'Please enter a phone number.'; statusEl.className = 'modal-status is-error'; return; }
     if (!dob) { statusEl.textContent = 'Please enter the patient’s date of birth.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!chiefComplaint) { statusEl.textContent = 'Please enter the patient’s chief complaint.'; statusEl.className = 'modal-status is-error'; return; }
     if (aadhaarLast4 && !/^\d{4}$/.test(aadhaarLast4)) { statusEl.textContent = 'Aadhaar should be just the last 4 digits (numbers only).'; statusEl.className = 'modal-status is-error'; return; }
     if (!consent) { statusEl.textContent = 'Patient consent is required before saving.'; statusEl.className = 'modal-status is-error'; return; }
     if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
 
+    submitBtn.disabled = true;
     statusEl.textContent = 'Saving…';
     statusEl.className = 'modal-status';
 
@@ -3679,6 +3858,7 @@
     }
 
     apiCall(action, payload).then(function(res) {
+      submitBtn.disabled = false;
       if (!res || !res.ok) {
         statusEl.textContent = addCaseErrorMessage(res && res.error);
         statusEl.className = 'modal-status is-error';
@@ -3686,8 +3866,21 @@
       }
       applyDashboardData(res);
       closeAddPatientModal();
+      // Thank-you WhatsApp message for the newly registered patient --
+      // pre-filled and editable before sending, via the same compose flow
+      // every other WhatsApp message in the app uses. currentBoard was
+      // just rebuilt by applyDashboardData above, so the new case for this
+      // phone number is already in it.
+      var newCaseForThanks = currentBoard.filter(function(r) { return String(r.phone) === String(phone); })[0];
+      openWhatsAppCompose({
+        caseId: newCaseForThanks ? newCaseForThanks.caseId : '',
+        phone: phone,
+        name: name,
+        defaultText: 'Hi ' + name + ', thank you for registering with us! We truly appreciate you choosing us for your dental care. Our team will be in touch shortly, and feel free to message us here anytime with questions.'
+      });
       resetAddPatientForm();
     }).catch(function() {
+      submitBtn.disabled = false;
       statusEl.textContent = 'Something went wrong. Please try again.';
       statusEl.className = 'modal-status is-error';
     });
@@ -3697,6 +3890,23 @@
   function openCaseDetail(ctx) {
     currentCaseId = ctx.caseId;
     currentPatientId = ctx.patientId;
+    // DOB, Aadhaar, email and postal address live on the patient record,
+    // not on every board/case row that can open this modal -- merge the
+    // full patient record in by patientId so every entry point (board tap,
+    // Patients-tab chip, Insights) shows the complete picture, not just
+    // whatever subset that particular row happened to carry.
+    var fullPatientForCtx = currentPatients.filter(function(p) { return String(p.patientId) === String(ctx.patientId); })[0];
+    if (fullPatientForCtx) {
+      ctx = Object.assign({}, ctx, {
+        dob: ctx.dob || fullPatientForCtx.dob,
+        email: ctx.email || fullPatientForCtx.email,
+        address: ctx.address || fullPatientForCtx.address,
+        aadhaarLast4: ctx.aadhaarLast4 || fullPatientForCtx.aadhaarLast4,
+        altPhone: ctx.altPhone || fullPatientForCtx.altPhone,
+        locality: ctx.locality || fullPatientForCtx.locality,
+        source: ctx.source || fullPatientForCtx.source
+      });
+    }
     document.getElementById('cd-name').textContent = ctx.patientName || '(unnamed)';
     document.getElementById('cd-subtitle').textContent = 'Case ' + (ctx.caseId || '');
     document.getElementById('cd-name-input').value = ctx.patientName || '';
@@ -3706,6 +3916,10 @@
     document.getElementById('cd-sex-select').value = ctx.sex || '';
     document.getElementById('cd-locality-input').value = ctx.locality || '';
     document.getElementById('cd-source-input').value = ctx.source || '';
+    document.getElementById('cd-dob-input').value = parseDisplayDate_(ctx.dob) || (/^\d{4}-\d{2}-\d{2}/.test(String(ctx.dob || '')) ? String(ctx.dob).slice(0, 10) : '');
+    document.getElementById('cd-aadhaar-input').value = ctx.aadhaarLast4 || '';
+    document.getElementById('cd-email-input').value = ctx.email || '';
+    document.getElementById('cd-address-input').value = ctx.address || '';
     document.getElementById('cd-caseid').textContent = ctx.caseId || '—';
     var ctxTreatmentType = ctx.treatmentType || 'Implant';
     // Populate the dropdown's options fresh (no stage-reset side effect),
@@ -3816,7 +4030,8 @@
 
   document.getElementById('cd-save-btn').addEventListener('click', function() {
     var statusEl = document.getElementById('cd-save-status');
-    if (!currentCaseId || !isSignedIn()) { return; }
+    var saveBtn = document.getElementById('cd-save-btn');
+    if (!currentCaseId || !isSignedIn() || saveBtn.disabled) { return; }
     var treatmentTypeForSave = document.getElementById('cd-treatment-type-select').value;
     var isImplantForSave = treatmentTypeForSave === 'Implant';
     var payload = {
@@ -3844,7 +4059,11 @@
       sex: document.getElementById('cd-sex-select').value,
       locality: document.getElementById('cd-locality-input').value,
       source: document.getElementById('cd-source-input').value,
-      registeredOn: document.getElementById('cd-registeredon-input').value
+      registeredOn: document.getElementById('cd-registeredon-input').value,
+      dob: document.getElementById('cd-dob-input').value,
+      aadhaarLast4: document.getElementById('cd-aadhaar-input').value.trim(),
+      email: document.getElementById('cd-email-input').value.trim(),
+      address: document.getElementById('cd-address-input').value.trim()
     };
 
     // --- Optimistic UI ------------------------------------------------
@@ -3868,7 +4087,8 @@
       implantSystem: payload.implantSystem, graftRequired: payload.graftRequired,
       patientName: payload.patientName, phone: payload.phone, altPhone: payload.altPhone,
       age: payload.age, sex: payload.sex, locality: payload.locality, source: payload.source,
-      registeredOn: payload.registeredOn
+      registeredOn: payload.registeredOn, dob: payload.dob, aadhaarLast4: payload.aadhaarLast4,
+      email: payload.email, address: payload.address
     };
 
     function applyOptimisticPatch() {
@@ -3905,12 +4125,14 @@
       setTabCount('board', currentBoard.length);
     }
 
+    saveBtn.disabled = true;
     applyOptimisticPatch();
     document.getElementById('cd-name').textContent = payload.patientName || '(unnamed)';
     statusEl.textContent = 'Saved.';
     statusEl.className = 'modal-status is-success';
 
     apiCall('updateCase', payload).then(function(res) {
+      saveBtn.disabled = false;
       if (!res || !res.ok) {
         revertOptimisticPatch();
         statusEl.textContent = addCaseErrorMessage(res && res.error);
@@ -3922,6 +4144,7 @@
       applyDashboardData(res);
       document.getElementById('cd-name').textContent = document.getElementById('cd-name-input').value || '(unnamed)';
     }).catch(function() {
+      saveBtn.disabled = false;
       revertOptimisticPatch();
       statusEl.textContent = 'Something went wrong. Please try again.';
       statusEl.className = 'modal-status is-error';
