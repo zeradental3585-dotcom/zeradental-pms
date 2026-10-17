@@ -170,6 +170,8 @@
   .btn-primary:active{transform:translateY(0);}
   .btn-ghost{background:var(--surface);border-color:var(--line);color:var(--navy);box-shadow:var(--shadow-xs);}
   .btn-ghost:hover{border-color:#c7cbd1;box-shadow:var(--shadow-sm);}
+  .btn-danger-ghost{background:var(--red-bg);border-color:var(--red-bg);color:var(--red);box-shadow:var(--shadow-xs);}
+  .btn-danger-ghost:hover{background:var(--red);border-color:var(--red);color:#fff;}
   .btn:disabled{opacity:0.55;cursor:default;box-shadow:none;transform:none;}
   .btn:active,.app-tab:active,.range-pill:active,.type-card:active,.patient-case-chip:active{transform:scale(0.97);}
   .board-row:active,.patient-row:active,.enquiry-row:active,.today-appt-row:active,.review-row:active,.stat-tile:active{transform:scale(0.985);}
@@ -859,6 +861,28 @@
     box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
   }
   .patients-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
+  .patients-filter-bar{display:flex;gap:10px;margin-bottom:16px;}
+  .patients-filter-bar .patients-search-bar{flex:1;margin-bottom:0;}
+  .patients-doctor-filter-wrap{position:relative;flex-shrink:0;}
+  .patients-doctor-filter-btn{
+    appearance:none;height:100%;padding:0 16px;border-radius:999px;border:1px solid var(--line);
+    font-size:13.5px;font-weight:700;font-family:inherit;background:var(--surface);color:var(--ink-soft);
+    box-shadow:var(--shadow-xs);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
+  }
+  .patients-doctor-filter-btn:hover{border-color:var(--green);}
+  .patients-doctor-filter-btn.is-active{border-color:var(--green);color:var(--green-dark);background:var(--green-soft);}
+  .pdf-count{background:var(--green);color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:1px 6px;}
+  .patients-doctor-filter-menu{
+    display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:30;min-width:200px;max-height:280px;overflow-y:auto;
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);
+    box-shadow:0 14px 32px -10px rgba(15,23,32,0.22);padding:8px;
+  }
+  .patients-doctor-filter-menu.open{display:block;}
+  .pdf-option{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);}
+  .pdf-option:hover{background:var(--bg);}
+  .pdf-option input{margin:0;}
+  .pdf-clear{width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--line-soft);margin-top:4px;padding:8px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;}
+  .pdf-clear:hover{color:var(--red);}
   .review-row{
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);
     padding:18px 22px;margin-bottom:12px;box-shadow:var(--shadow-xs);position:relative;overflow:hidden;
@@ -901,6 +925,12 @@
   .detail-item{padding:8px 0;border-bottom:1px solid var(--line-soft);}
   .detail-item .dl{font-size:11px;font-weight:700;color:var(--muted-2);text-transform:uppercase;letter-spacing:0.04em;}
   .detail-item .dv{font-size:14.5px;margin-top:2px;word-break:break-word;color:var(--navy);}
+  .detail-item .dv-input{
+    font-size:14.5px;margin-top:2px;color:var(--navy);font-family:inherit;width:100%;background:none;
+    border:1px solid transparent;border-radius:6px;padding:1px 4px;
+  }
+  .detail-item .dv-input:hover{border-color:var(--line);}
+  .detail-item .dv-input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);background:var(--surface);}
   .detail-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--line-soft);}
   .detail-section h3{margin:0 0 12px;font-size:14px;font-weight:800;color:var(--navy);letter-spacing:-0.01em;}
   .detail-list-row{
@@ -1355,8 +1385,16 @@
     </div>
     <div id="tab-patients" class="tab-panel">
       <div id="app-doctors-settings"></div>
-      <div class="patients-search-bar">
-        <input type="text" id="patients-search-input" placeholder="Search by patient name, doctor, mobile number or UHID…" autocomplete="off" />
+      <div class="patients-filter-bar">
+        <div class="patients-search-bar">
+          <input type="text" id="patients-search-input" placeholder="Search by patient name, doctor, mobile, UHID or locality…" autocomplete="off" />
+        </div>
+        <div class="patients-doctor-filter-wrap">
+          <button type="button" id="patients-doctor-filter-btn" class="patients-doctor-filter-btn">
+            <span>Doctors</span><span id="patients-doctor-filter-count" class="pdf-count" style="display:none;"></span>
+          </button>
+          <div id="patients-doctor-filter-menu" class="patients-doctor-filter-menu"></div>
+        </div>
       </div>
       <div id="app-patients"></div>
     </div>
@@ -1451,7 +1489,7 @@
 
     <div class="detail-grid">
       <div class="detail-item"><div class="dl">Case ID</div><div class="dv" id="cd-caseid">—</div></div>
-      <div class="detail-item"><div class="dl">Stage entered on</div><div class="dv" id="cd-enteredon">—</div></div>
+      <div class="detail-item"><div class="dl">Patient registered on</div><input id="cd-registeredon-input" type="date" class="dv-input" /></div>
     </div>
 
     <div class="modal-field">
@@ -1588,7 +1626,8 @@
       </div>
     </div>
 
-    <div class="modal-actions">
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button id="cd-archive-btn" class="btn btn-danger-ghost" type="button">Delete patient</button>
       <button id="cd-close-btn" class="btn btn-ghost" type="button">Close</button>
     </div>
   </div>
@@ -1624,6 +1663,17 @@
 
     <div class="modal-row">
       <div class="modal-field">
+        <label for="ap-email">Email</label>
+        <input id="ap-email" type="email" placeholder="e.g. patient@example.com" />
+      </div>
+      <div class="modal-field">
+        <label for="ap-address">Postal address</label>
+        <input id="ap-address" type="text" placeholder="e.g. House no., street, locality, city" />
+      </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
         <label for="ap-dob">Date of birth *</label>
         <input id="ap-dob" type="date" />
       </div>
@@ -1650,7 +1700,7 @@
     </div>
 
     <div class="modal-field">
-      <label for="ap-chief-complaint">Chief complaint *</label>
+      <label for="ap-chief-complaint">Chief complaint</label>
       <input id="ap-chief-complaint" type="text" placeholder="e.g. Pain in lower left molar for 3 days" />
     </div>
 
@@ -1699,6 +1749,19 @@
       <div class="modal-field">
         <label for="ap-next-action">Next action</label>
         <input id="ap-next-action" type="text" placeholder="e.g. Call to book next visit" />
+      </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-next-date">Next appointment</label>
+        <input id="ap-next-date" type="date" />
+      </div>
+      <div class="modal-field">
+        <label class="modal-checkbox">
+          <input id="ap-no-next-date" type="checkbox" />
+          No appointment scheduled yet
+        </label>
       </div>
     </div>
 
@@ -1760,6 +1823,10 @@
       <div class="modal-field">
         <label for="lv-next-date">Next visit date</label>
         <input id="lv-next-date" type="date" />
+        <label class="modal-checkbox" style="margin-top:6px;">
+          <input id="lv-no-next-date" type="checkbox" />
+          No next visit scheduled
+        </label>
       </div>
       <div class="modal-field">
         <label for="lv-next-action">Next action</label>
@@ -1804,7 +1871,8 @@
   var currentPatients = [];
   var caseIdToPatientId = {}; // caseId -> UHID (patient's unique ID, e.g. "P-0001"), rebuilt whenever currentPatients refreshes
   var currentDoctors = []; // [{name, active}], this clinic's doctor roster
-  var patientsSearchQuery = ''; // Patients tab search box: matches name, doctor, phone, UHID
+  var patientsSearchQuery = ''; // Patients tab search box: matches name, doctor, phone, UHID, locality
+  var patientsDoctorFilter = []; // Patients tab: doctor names to filter by (OR across selections), empty = everyone
   var currentEnquiries = [];
   var currentAppointments = [];
   var currentPayments = [];
@@ -1815,6 +1883,7 @@
   var reviewsSortMode = 'oldest'; // Reviews tab sort: 'oldest' | 'newest' | 'name'
   var REVIEW_SORT_LABELS_ = { oldest: 'Oldest first', newest: 'Newest first', name: 'Name A–Z' };
   var currentCaseId = null; // case detail modal currently open on this CaseID
+  var currentPatientId = null; // the PatientID behind that case, for delete/archive
   // Treatment types + their stage journeys, straight from the server (see
   // Code.gs CASE_TYPES) so the dropdowns below never drift from what the
   // backend actually validates. Falls back to a bare Implant entry before
@@ -2048,6 +2117,7 @@
     renderBoard(currentBoard);
     renderPatients(currentPatients);
     renderDoctorsSettings();
+    renderPatientsDoctorFilterMenu();
     populateDoctorSelects();
     renderEnquiries(currentEnquiries);
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
@@ -2116,6 +2186,14 @@
     return messages[err] || 'Something went wrong. Please try again.';
   }
 
+  // General defaults straight to "Consultation done" (a walk-in patient
+  // getting a checkup has already had their consultation by the time
+  // staff are adding them) — every other type keeps the usual fallback
+  // to its first stage. See populateStageSelect's selectedValue param.
+  function defaultStageForType(type) {
+    return type === 'General' ? 'Consultation done' : null;
+  }
+
   function populateStageSelect(selectEl, treatmentType, selectedValue) {
     var stages = getCaseType(treatmentType).stages || [];
     selectEl.innerHTML = stages.map(function(s) {
@@ -2142,13 +2220,13 @@
         sel.value = finalKey;
         sel.dataset.lastValue = finalKey;
         document.getElementById('ap-implant-fields').style.display = (finalKey === 'Implant') ? 'block' : 'none';
-        populateStageSelect(document.getElementById('ap-stage'), finalKey, null);
+        populateStageSelect(document.getElementById('ap-stage'), finalKey, defaultStageForType(finalKey));
       });
       return;
     }
     sel.dataset.lastValue = type;
     document.getElementById('ap-implant-fields').style.display = (type === 'Implant') ? 'block' : 'none';
-    populateStageSelect(document.getElementById('ap-stage'), type, null);
+    populateStageSelect(document.getElementById('ap-stage'), type, defaultStageForType(type));
   }
   document.getElementById('ap-treatment-type').addEventListener('change', onTreatmentTypeChange);
   populateTreatmentTypeSelect();
@@ -2519,7 +2597,7 @@
         phone: patient.phone, altPhone: patient.altPhone, age: patient.age, sex: patient.sex,
         locality: patient.locality, source: patient.source, treatmentType: caseSummary.treatmentType, caseType: caseSummary.caseType,
         site: '', implantSystem: '', graftRequired: false, stage: caseSummary.stage,
-        stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
+        registeredOn: patient.createdOn || '', stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
         quotedAmount: caseSummary.quotedAmount, notes: '', status: caseSummary.status
       });
       return;
@@ -2712,17 +2790,25 @@
     document.getElementById('log-visit-modal').classList.remove('open');
   }
   function resetLogVisitForm() {
-    ['lv-search', 'lv-type', 'lv-amount', 'lv-mode', 'lv-next-date', 'lv-next-action', 'lv-notes'].forEach(function(id) {
+    ['lv-search', 'lv-type', 'lv-amount', 'lv-mode', 'lv-next-action', 'lv-notes'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     document.getElementById('lv-case-id').value = '';
     document.getElementById('lv-date').value = todayISO();
+    document.getElementById('lv-no-next-date').checked = false;
+    document.getElementById('lv-next-date').disabled = false;
+    document.getElementById('lv-next-date').value = isoOf(new Date(Date.now() + 90 * 86400000));
     document.getElementById('lv-search-results').innerHTML = '';
     document.getElementById('lv-search-results').classList.remove('open');
     document.getElementById('lv-selected').style.display = 'none';
     document.getElementById('log-visit-status').textContent = '';
     document.getElementById('log-visit-status').className = 'modal-status';
   }
+  document.getElementById('lv-no-next-date').addEventListener('change', function() {
+    var dateInput = document.getElementById('lv-next-date');
+    if (this.checked) { dateInput.value = ''; dateInput.disabled = true; }
+    else { dateInput.disabled = false; dateInput.value = isoOf(new Date(Date.now() + 90 * 86400000)); }
+  });
   document.getElementById('log-visit-btn').addEventListener('click', openLogVisitModal);
   document.getElementById('log-visit-cancel').addEventListener('click', closeLogVisitModal);
   document.getElementById('log-visit-modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeLogVisitModal(); });
@@ -2933,7 +3019,16 @@
     if (String(p.phone || '').toLowerCase().indexOf(q) !== -1) return true;
     if (String(p.altPhone || '').toLowerCase().indexOf(q) !== -1) return true;
     if (String(p.patientId || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(p.locality || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(p.source || '').toLowerCase().indexOf(q) !== -1) return true;
     return (p.cases || []).some(function(c) { return String(c.assignedTo || '').toLowerCase().indexOf(q) !== -1; });
+  }
+  // Patients tab doctor filter (multi-select, OR across whoever's picked):
+  // a patient matches if ANY of their cases is assigned to ANY selected
+  // doctor. No doctors picked = everyone matches (filter is off).
+  function patientMatchesDoctorFilter_(p) {
+    if (!patientsDoctorFilter.length) return true;
+    return (p.cases || []).some(function(c) { return patientsDoctorFilter.indexOf(c.assignedTo) !== -1; });
   }
 
   function renderPatients(patients) {
@@ -2943,9 +3038,9 @@
       return;
     }
     var q = patientsSearchQuery.trim().toLowerCase();
-    var filtered = patients.filter(function(p) { return patientMatchesSearch_(p, q); });
+    var filtered = patients.filter(function(p) { return patientMatchesSearch_(p, q) && patientMatchesDoctorFilter_(p); });
     if (filtered.length === 0) {
-      el.innerHTML = '<div class="board-empty">No patients match “' + escapeHtml(patientsSearchQuery) + '”.</div>';
+      el.innerHTML = '<div class="board-empty">No patients match' + (patientsSearchQuery ? ' “' + escapeHtml(patientsSearchQuery) + '”' : ' the selected filters') + '.</div>';
       return;
     }
     el.innerHTML = filtered.map(function(p) {
@@ -2980,6 +3075,52 @@
   document.getElementById('patients-search-input').addEventListener('input', function(e) {
     patientsSearchQuery = e.target.value;
     renderPatients(currentPatients);
+  });
+
+  // --- Patients tab doctor filter (multi-select) -----------------------
+  function renderPatientsDoctorFilterMenu() {
+    var menu = document.getElementById('patients-doctor-filter-menu');
+    var btn = document.getElementById('patients-doctor-filter-btn');
+    var countEl = document.getElementById('patients-doctor-filter-count');
+    var active = currentDoctors.filter(function(d) { return d.active; });
+    menu.innerHTML = (active.length
+      ? active.map(function(d) {
+          var checked = patientsDoctorFilter.indexOf(d.name) !== -1;
+          return '<label class="pdf-option"><input type="checkbox" data-doctor="' + escapeHtml(d.name) + '" ' + (checked ? 'checked' : '') + ' />' + escapeHtml(d.name) + '</label>';
+        }).join('')
+      : '<div class="doctor-strip-empty">No doctors added yet.</div>') +
+      (patientsDoctorFilter.length ? '<button type="button" class="pdf-clear">Clear filter</button>' : '');
+    countEl.textContent = patientsDoctorFilter.length;
+    countEl.style.display = patientsDoctorFilter.length ? 'inline-block' : 'none';
+    btn.classList.toggle('is-active', patientsDoctorFilter.length > 0);
+  }
+  renderPatientsDoctorFilterMenu();
+  document.getElementById('patients-doctor-filter-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('patients-doctor-filter-menu').classList.toggle('open');
+  });
+  document.getElementById('patients-doctor-filter-menu').addEventListener('click', function(e) {
+    e.stopPropagation();
+    var cb = e.target.closest('input[data-doctor]');
+    if (cb) {
+      var name = cb.dataset.doctor;
+      var idx = patientsDoctorFilter.indexOf(name);
+      if (cb.checked && idx === -1) patientsDoctorFilter.push(name);
+      if (!cb.checked && idx !== -1) patientsDoctorFilter.splice(idx, 1);
+      renderPatientsDoctorFilterMenu();
+      renderPatients(currentPatients);
+      return;
+    }
+    if (e.target.closest('.pdf-clear')) {
+      patientsDoctorFilter = [];
+      renderPatientsDoctorFilterMenu();
+      renderPatients(currentPatients);
+    }
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.patients-doctor-filter-wrap')) {
+      document.getElementById('patients-doctor-filter-menu').classList.remove('open');
+    }
   });
 
   // --- Doctors (multi-doctor clinics): roster management + dropdowns ------
@@ -3183,7 +3324,7 @@
       phone: patient.phone, altPhone: patient.altPhone, age: patient.age, sex: patient.sex,
       locality: patient.locality, source: patient.source, treatmentType: caseSummary.treatmentType, caseType: caseSummary.caseType,
       site: '', implantSystem: '', graftRequired: false, stage: caseSummary.stage,
-      stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
+      registeredOn: patient.createdOn || '', stageEnteredOn: '', dueDate: '', daysOverdue: null, nextAction: '', assignedTo: '',
       quotedAmount: caseSummary.quotedAmount, notes: '', status: caseSummary.status
     });
   });
@@ -3407,18 +3548,34 @@
   }
 
   function resetAddPatientForm() {
-    ['ap-name', 'ap-phone', 'ap-age', 'ap-dob', 'ap-aadhaar-last4', 'ap-chief-complaint', 'ap-site', 'ap-implant-system', 'ap-quoted', 'ap-next-action', 'ap-notes'].forEach(function(id) {
+    ['ap-name', 'ap-phone', 'ap-email', 'ap-address', 'ap-age', 'ap-dob', 'ap-aadhaar-last4', 'ap-chief-complaint', 'ap-site', 'ap-implant-system', 'ap-quoted', 'ap-next-action', 'ap-notes'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     document.getElementById('ap-sex').value = '';
     document.getElementById('ap-case-type').value = 'Single';
-    document.getElementById('ap-treatment-type').value = currentCaseTypes[0].key;
+    // Defaults to "General Checkup / Scaling & Cleaning" when that type
+    // exists (the everyday walk-in) rather than whichever type happens to
+    // be first in the list.
+    var generalType = currentCaseTypes.some(function(t) { return t.key === 'General'; }) ? 'General' : currentCaseTypes[0].key;
+    document.getElementById('ap-treatment-type').value = generalType;
     onTreatmentTypeChange();
     document.getElementById('ap-graft').checked = false;
     document.getElementById('ap-consent').checked = false;
-    document.getElementById('ap-assigned-doctor').value = '';
+    // First active doctor in THIS clinic's own roster — never a hardcoded
+    // name, since every tenant shares this one frontend deployment.
+    // Unassigned when the clinic hasn't set up a doctor yet.
+    var firstActiveDoctor = currentDoctors.filter(function(d) { return d.active; })[0];
+    setDoctorSelectValue(document.getElementById('ap-assigned-doctor'), firstActiveDoctor ? firstActiveDoctor.name : '');
+    document.getElementById('ap-no-next-date').checked = false;
+    document.getElementById('ap-next-date').disabled = false;
+    document.getElementById('ap-next-date').value = isoOf(new Date(Date.now() + 90 * 86400000));
     document.getElementById('ap-uhid-preview-wrap').style.display = 'none';
   }
+  document.getElementById('ap-no-next-date').addEventListener('change', function() {
+    var dateInput = document.getElementById('ap-next-date');
+    if (this.checked) { dateInput.value = ''; dateInput.disabled = true; }
+    else { dateInput.disabled = false; dateInput.value = isoOf(new Date(Date.now() + 90 * 86400000)); }
+  });
 
   // Convenience only — DOB stays the source of truth NABH/the backend cares
   // about; this just saves staff from typing age separately when they've
@@ -3483,7 +3640,6 @@
     if (!name) { statusEl.textContent = 'Please enter the patient’s name.'; statusEl.className = 'modal-status is-error'; return; }
     if (!phone) { statusEl.textContent = 'Please enter a phone number.'; statusEl.className = 'modal-status is-error'; return; }
     if (!dob) { statusEl.textContent = 'Please enter the patient’s date of birth.'; statusEl.className = 'modal-status is-error'; return; }
-    if (!chiefComplaint) { statusEl.textContent = 'Please enter the patient’s chief complaint.'; statusEl.className = 'modal-status is-error'; return; }
     if (aadhaarLast4 && !/^\d{4}$/.test(aadhaarLast4)) { statusEl.textContent = 'Aadhaar should be just the last 4 digits (numbers only).'; statusEl.className = 'modal-status is-error'; return; }
     if (!consent) { statusEl.textContent = 'Patient consent is required before saving.'; statusEl.className = 'modal-status is-error'; return; }
     if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
@@ -3495,6 +3651,8 @@
       idToken: zeraIdToken,
       name: name,
       phone: phone,
+      email: document.getElementById('ap-email').value.trim(),
+      address: document.getElementById('ap-address').value.trim(),
       age: document.getElementById('ap-age').value,
       sex: document.getElementById('ap-sex').value,
       dob: dob,
@@ -3508,6 +3666,7 @@
       stage: stage,
       quotedAmount: document.getElementById('ap-quoted').value,
       nextAction: document.getElementById('ap-next-action').value,
+      nextActionDue: document.getElementById('ap-no-next-date').checked ? '' : document.getElementById('ap-next-date').value,
       assignedTo: document.getElementById('ap-assigned-doctor').value,
       notes: document.getElementById('ap-notes').value,
       consentGiven: consent
@@ -3537,6 +3696,7 @@
   // --- Case detail modal ---------------------------------------------------
   function openCaseDetail(ctx) {
     currentCaseId = ctx.caseId;
+    currentPatientId = ctx.patientId;
     document.getElementById('cd-name').textContent = ctx.patientName || '(unnamed)';
     document.getElementById('cd-subtitle').textContent = 'Case ' + (ctx.caseId || '');
     document.getElementById('cd-name-input').value = ctx.patientName || '';
@@ -3560,7 +3720,7 @@
     document.getElementById('cd-graft-checkbox').checked = !!ctx.graftRequired;
     var isImplantCase = ctxTreatmentType === 'Implant';
     document.getElementById('cd-implant-fields').style.display = isImplantCase ? 'block' : 'none';
-    document.getElementById('cd-enteredon').textContent = ctx.stageEnteredOn || '—';
+    document.getElementById('cd-registeredon-input').value = parseDisplayDate_(ctx.registeredOn) || '';
 
     populateStageSelect(document.getElementById('cd-stage-select'), ctxTreatmentType, ctx.stage);
     document.getElementById('cd-status-select').value = ctx.status || 'Active';
@@ -3585,11 +3745,36 @@
   function closeCaseDetail() {
     document.getElementById('case-detail-modal').classList.remove('open');
     currentCaseId = null;
+    currentPatientId = null;
   }
 
   document.getElementById('cd-close-btn').addEventListener('click', closeCaseDetail);
   document.getElementById('case-detail-modal').addEventListener('click', function(e) {
     if (e.target === e.currentTarget) closeCaseDetail();
+  });
+
+  // Soft-delete only -- archives the patient (every linked case, appointment
+  // and payment record is kept intact, nothing is ever erased). Meant for
+  // duplicate entries. Restoring is a manual, support-assisted step.
+  document.getElementById('cd-archive-btn').addEventListener('click', function() {
+    if (!currentPatientId || !isSignedIn()) return;
+    var patientNameForDelete = document.getElementById('cd-name-input').value || document.getElementById('cd-name').textContent || 'this patient';
+    if (!window.confirm('Delete "' + patientNameForDelete + '" from your patient list?\n\nThis removes them (and this case) from the board, patient list and search -- use it for duplicate entries. It is not permanent: nothing is erased, and you can WhatsApp us if you ever need a record restored.')) return;
+    var archiveStatusEl = document.getElementById('cd-save-status');
+    archiveStatusEl.textContent = 'Deleting\u2026';
+    archiveStatusEl.className = 'modal-status';
+    apiCall('archivePatient', { patientId: currentPatientId }).then(function(res) {
+      if (!res || !res.ok) {
+        archiveStatusEl.textContent = 'Something went wrong. Please try again.';
+        archiveStatusEl.className = 'modal-status is-error';
+        return;
+      }
+      applyDashboardData(res);
+      closeCaseDetail();
+    }).catch(function() {
+      archiveStatusEl.textContent = 'Something went wrong. Please try again.';
+      archiveStatusEl.className = 'modal-status is-error';
+    });
   });
 
   function renderAppointments(appts) {
@@ -3658,7 +3843,8 @@
       age: document.getElementById('cd-age-input').value,
       sex: document.getElementById('cd-sex-select').value,
       locality: document.getElementById('cd-locality-input').value,
-      source: document.getElementById('cd-source-input').value
+      source: document.getElementById('cd-source-input').value,
+      registeredOn: document.getElementById('cd-registeredon-input').value
     };
 
     // --- Optimistic UI ------------------------------------------------
@@ -3681,7 +3867,8 @@
       treatmentType: payload.treatmentType, caseType: payload.caseType, site: payload.site,
       implantSystem: payload.implantSystem, graftRequired: payload.graftRequired,
       patientName: payload.patientName, phone: payload.phone, altPhone: payload.altPhone,
-      age: payload.age, sex: payload.sex, locality: payload.locality, source: payload.source
+      age: payload.age, sex: payload.sex, locality: payload.locality, source: payload.source,
+      registeredOn: payload.registeredOn
     };
 
     function applyOptimisticPatch() {
