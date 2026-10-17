@@ -779,6 +779,18 @@
   .range-pill.active{background:var(--navy);color:#fff;}
   .range-custom{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);}
   .range-custom input{padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--line);font-family:inherit;font-size:13.5px;}
+  @media (max-width:480px){
+    /* The 5 range pills (Today/This week/This month/Lifetime/Custom) don't
+       fit a phone's width at full size — they were silently clipped at the
+       screen edge with no way to reach "Custom". Same horizontal-scroll
+       pattern already used for .app-tabs, so it's at least reachable, plus
+       a touch more breathing room from smaller pills. */
+    .range-pills{
+      max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    }
+    .range-pills::-webkit-scrollbar{display:none;}
+    .range-pill{white-space:nowrap;padding:7px 12px;font-size:13px;flex-shrink:0;}
+  }
 
   /* ===== Today tab: two-column layout ===== */
   .today-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:start;}
@@ -2503,12 +2515,35 @@
   // Two nav bars share this markup: the horizontal top tabs and the fixed
   // bottom tab bar shown on phones. Both use class="app-tab" with the same
   // data-tab values, so switching one activates its twin in the other bar.
+  // Tapping a tab must visibly change what's on screen immediately, even if
+  // the person is scrolled deep into the previous tab — otherwise, since the
+  // quick-action buttons and stats bar sit above every tab panel and on a
+  // phone screen can fill the entire first view by themselves, switching
+  // tabs can look like nothing happened until the person manually scrolls
+  // past that shared header. Fix: every switch moves the viewport too —
+  // Today (the overview/home tab) scrolls all the way up so its stats and
+  // quick actions are visible, since that's their natural home; every other
+  // tab scrolls straight to the top of ITS OWN panel, skipping past the
+  // shared header, so it starts immediately with content unique to that tab.
+  function scrollToActiveTab(name) {
+    if (name === 'today') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+    var panel = document.getElementById('tab-' + name);
+    var header = document.querySelector('.app-header');
+    if (!panel) return;
+    var headerHeight = header ? header.offsetHeight : 0;
+    var targetTop = panel.getBoundingClientRect().top + window.pageYOffset - headerHeight - 12;
+    window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'auto' });
+  }
   document.querySelectorAll('.app-tab').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var name = btn.dataset.tab;
       document.querySelectorAll('.app-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === name); });
       document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
       document.getElementById('tab-' + name).classList.add('active');
+      scrollToActiveTab(name);
     });
   });
 
