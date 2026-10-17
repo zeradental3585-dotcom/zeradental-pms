@@ -542,7 +542,20 @@
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);padding:17px 18px;
     box-shadow:var(--shadow-xs);transition:box-shadow .15s ease,transform .15s ease,border-color .15s ease;
   }
-  @media (max-width:420px){.stat-tile{padding:13px 14px;}.stat-tile .stat-num{font-size:21px;}}
+  .stat-icon{
+    width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    margin-bottom:10px;background:var(--green-soft);color:var(--green-dark);
+  }
+  .stat-icon svg{width:15px;height:15px;}
+  .stat-icon-text{font-weight:800;font-size:13px;}
+  .stat-tile.attn .stat-icon{background:var(--red-bg);color:var(--red);}
+  @media (max-width:420px){
+    .stat-tile{padding:13px 14px;}
+    .stat-tile .stat-num{font-size:21px;}
+    .stat-icon{width:21px;height:21px;margin-bottom:7px;border-radius:7px;}
+    .stat-icon svg{width:12px;height:12px;}
+    .stat-icon-text{font-size:11px;}
+  }
   .stat-tile:hover{box-shadow:var(--shadow-sm);border-color:var(--line);transform:translateY(-2px);}
   .stat-tile .stat-num{font-size:25px;font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--navy);}
   .stat-tile .stat-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:600;}
@@ -616,7 +629,7 @@
     .bn-label{font-size:10.5px;font-weight:700;letter-spacing:0.01em;}
     .bn-badge{
       position:absolute;top:2px;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;
-      background:var(--red);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;
+      background:var(--line-soft);color:var(--ink-soft);font-size:10px;font-weight:800;line-height:16px;text-align:center;
       border-radius:999px;box-shadow:0 0 0 2px rgba(255,255,255,0.92);
     }
     .bn-badge.is-zero{display:none;}
@@ -789,7 +802,7 @@
     background:none;border:none;font-family:inherit;font-size:13.5px;font-weight:600;
     color:var(--muted);padding:7px 15px;border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease;
   }
-  .range-pill.active{background:var(--navy);color:#fff;}
+  .range-pill.active{background:var(--green-dark);color:#fff;}
   .range-custom{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);}
   .range-custom input{padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--line);font-family:inherit;font-size:13.5px;}
   @media (max-width:480px){
@@ -865,7 +878,7 @@
   .insights-doctor-name.is-unassigned{color:var(--muted);font-weight:600;font-style:italic;}
   .insights-doctor-count{font-weight:800;font-size:15.5px;color:var(--blue-dark);flex-shrink:0;}
   .insights-doctor-bar{background:var(--bg);border-radius:999px;height:7px;margin-top:10px;overflow:hidden;}
-  .insights-doctor-bar-fill{background:var(--blue);height:100%;border-radius:999px;transition:width .3s ease;}
+  .insights-doctor-bar-fill{background:var(--green);height:100%;border-radius:999px;transition:width .3s ease;}
   .insights-patients-list{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:grid;gap:8px;}
   .insights-patient-item{
     display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -874,6 +887,10 @@
   .insights-patient-item.is-clickable{cursor:pointer;}
   .insights-patient-item.is-clickable:hover{border-color:var(--green);background:var(--green-soft);}
   .insights-patient-meta{font-size:12px;color:var(--muted);text-align:right;flex-shrink:0;}
+  @media (max-width:480px){
+    .insights-patient-item{flex-direction:column;align-items:flex-start;gap:6px;}
+    .insights-patient-meta{text-align:left;}
+  }
   .insights-empty{font-size:13px;color:var(--muted);padding:4px 2px;}
 
   /* ===== Log visit: patient search ===== */
@@ -900,7 +917,11 @@
   /* ===== Empty state icon ===== */
   .board-empty::before{
     content:'';display:block;width:40px;height:40px;margin:0 auto 14px;border-radius:50%;
-    background:var(--bg-raised) radial-gradient(circle at 35% 30%, rgba(5,150,105,0.12), transparent 65%);
+    background-color:var(--bg-raised);
+    background-image:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="%23059669" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="M3 11.2l1.4-6.3A1 1 0 0 1 5.4 4h9.2a1 1 0 0 1 1 .9L17 11.2"/%3E%3Cpath d="M3 11.2h4a1 1 0 0 1 .9.55l.5 1a1 1 0 0 0 .9.55h1.4a1 1 0 0 0 .9-.55l.5-1a1 1 0 0 1 .9-.55h4v3.8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3.8z"/%3E%3C/svg%3E'),radial-gradient(circle at 35% 30%, rgba(5,150,105,0.12), transparent 65%);
+    background-repeat:no-repeat,no-repeat;
+    background-position:center,center;
+    background-size:18px 18px,cover;
     border:1px solid var(--line-soft);
   }
 
@@ -1667,6 +1688,12 @@
     });
   }
 
+  // "1 day" / "2 days" — small grammar helper so overdue/due-in labels
+  // never show the placeholder-looking "day(s)" text.
+  function pluralDays_(n) {
+    return n + (n === 1 ? ' day' : ' days');
+  }
+
   // Small "initials avatar" helper used across the board/patients/enquiries/
   // reviews list rows — a deterministic color per name (same person always
   // gets the same color) picked from a curated palette that stays legible
@@ -2139,18 +2166,27 @@
     return total;
   }
 
+  var STAT_ICON_PATIENTS_ = '<circle cx="10" cy="6.6" r="3"/><path d="M3.6 17c0-3.5 2.9-6 6.4-6s6.4 2.5 6.4 6"/>';
+  var STAT_ICON_CASES_ = '<rect x="2.4" y="3.2" width="4.3" height="13.6" rx="1.1"/><rect x="8" y="3.2" width="4.3" height="8.6" rx="1.1"/><rect x="13.6" y="3.2" width="4" height="11" rx="1.1"/>';
+  var STAT_ICON_ALERT_ = '<circle cx="10" cy="10" r="7.25"/><path d="M10 6.5v4.2"/><circle cx="10" cy="13.4" r="0.75" fill="currentColor" stroke="none"/>';
+  var STAT_ICON_TRAY_ = '<path d="M3 11.2l1.4-6.3A1 1 0 0 1 5.4 4h9.2a1 1 0 0 1 1 .9L17 11.2"/><path d="M3 11.2h4a1 1 0 0 1 .9.55l.5 1a1 1 0 0 0 .9.55h1.4a1 1 0 0 0 .9-.55l.5-1a1 1 0 0 1 .9-.55h4v3.8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3.8z"/>';
+
   function renderStats() {
     var overdue = currentBoard.filter(function(r) { return r.daysOverdue >= 0; }).length;
     var outstanding = computeOutstanding();
     var tiles = [
-      { num: currentPatients.length, label: 'Total patients' },
-      { num: currentBoard.length, label: 'Active cases' },
-      { num: overdue, label: 'Overdue today', attn: overdue > 0 },
-      { num: currentEnquiries.length, label: 'New enquiries' },
-      { num: '₹' + outstanding.toLocaleString('en-IN'), label: 'Outstanding (active)', attn: outstanding > 0 }
+      { num: currentPatients.length, label: 'Total patients', icon: STAT_ICON_PATIENTS_ },
+      { num: currentBoard.length, label: 'Active cases', icon: STAT_ICON_CASES_ },
+      { num: overdue, label: 'Overdue today', attn: overdue > 0, icon: STAT_ICON_ALERT_ },
+      { num: currentEnquiries.length, label: 'New enquiries', icon: STAT_ICON_TRAY_ },
+      { num: '₹' + outstanding.toLocaleString('en-IN'), label: 'Outstanding (active)', attn: outstanding > 0, iconText: '₹' }
     ];
     document.getElementById('app-stats').innerHTML = tiles.map(function(t) {
+      var iconHtml = t.iconText
+        ? ('<div class="stat-icon stat-icon-text">' + t.iconText + '</div>')
+        : ('<div class="stat-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + t.icon + '</svg></div>');
       return '<div class="stat-tile' + (t.attn ? ' attn' : '') + '">' +
+        iconHtml +
         '<div class="stat-num">' + t.num + '</div>' +
         '<div class="stat-label">' + escapeHtml(t.label) + '</div>' +
       '</div>';
@@ -2614,8 +2650,8 @@
     el.innerHTML = rows.map(function(r) {
       var overdueClass = r.daysOverdue >= 0 ? 'overdue' : 'ontrack';
       var overdueLabel = r.daysOverdue > 0
-        ? (r.daysOverdue + ' day(s) overdue')
-        : (r.daysOverdue === 0 ? 'Due today' : ('Due in ' + Math.abs(r.daysOverdue) + ' day(s)'));
+        ? (pluralDays_(r.daysOverdue) + ' overdue')
+        : (r.daysOverdue === 0 ? 'Due today' : ('Due in ' + pluralDays_(Math.abs(r.daysOverdue))));
       var uhid = r.patientId || caseIdToPatientId[r.caseId];
       return '<div class="board-row ' + overdueClass + '" data-case-id="' + escapeHtml(r.caseId) + '">' +
         '<div class="board-row-main">' +
