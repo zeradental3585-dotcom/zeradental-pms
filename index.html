@@ -408,7 +408,14 @@
   }
   .app-user{display:flex;align-items:center;gap:14px;font-size:14.5px;font-weight:600;color:var(--navy);}
   .app-main{padding:32px 24px 60px;}
-  .app-main-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px;}
+  /* No flex-wrap: the overflow-menu button used to wrap onto its own
+     line below the title on mobile, leaving a large empty gap (nothing
+     else sits in that row any more since Export/Import/Log visit/Add
+     patient moved out) — it read as a broken, orphaned control. Keeping
+     both on one row and letting the title column shrink instead fixes
+     that. */
+  .app-main-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .app-main-head > div:first-child{flex:1;min-width:0;}
   .app-main h1{font-size:27px;margin:0 0 6px;letter-spacing:-0.02em;color:var(--navy);}
   .app-sub{color:var(--muted);font-size:14.5px;margin:0;}
   /* A dentist signed in here lives inside #app-view all day and never sees
@@ -783,30 +790,56 @@
   }
   .settings-box-row input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
 
-  /* ===== Doctors settings (Patients tab) — avatar-based chips, the main
-     area (avatar + name) is a click target that filters the Board tab
-     down to that doctor's cases; the edit/remove icons stay separate
-     click targets so they never trigger the filter by accident. ===== */
-  .doctor-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
-  .doctor-chip{
-    display:inline-flex;align-items:center;gap:2px;padding:4px 7px 4px 4px;border-radius:999px;
-    background:var(--surface);border:1px solid var(--line);font-size:13px;color:var(--navy);font-weight:600;
-    transition:border-color .15s ease,box-shadow .15s ease;
+  /* ===== Doctors strip (Patients tab) — a horizontal scroll of avatar
+     bubbles replaces the old stacked list of full-width pill rows, which
+     read as a repetitive plain form once there were more than 2-3
+     doctors. Tapping a bubble/name filters the Board tab to that
+     doctor; a small overlay badge opens a tiny rename/remove menu so
+     those actions stay out of the way until needed. ===== */
+  .doctor-strip-sub{color:var(--muted);font-size:12.5px;margin:2px 0 10px;}
+  .doctor-strip{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 8px;margin:0 -2px;scrollbar-width:none;-ms-overflow-style:none;}
+  .doctor-strip::-webkit-scrollbar{display:none;}
+  .doctor-bubble{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;width:76px;}
+  .doctor-bubble-avatar-wrap{position:relative;}
+  .doctor-bubble-avatar-btn{
+    appearance:none;border:2px solid transparent;border-radius:50%;padding:0;cursor:pointer;background:none;
+    display:block;transition:border-color .15s ease,transform .15s ease;
   }
-  .doctor-chip-main{display:inline-flex;align-items:center;gap:7px;cursor:pointer;padding:3px 6px 3px 3px;border-radius:999px;}
-  .doctor-chip-main:hover{background:var(--green-soft);}
-  .doctor-chip-name{white-space:nowrap;}
-  .doctor-chip.is-selected{border-color:var(--green);box-shadow:0 0 0 2px var(--green-soft);}
-  .doctor-chip.is-selected .doctor-chip-main{color:var(--green-dark);}
-  .doctor-chip.inactive{background:var(--bg);border-color:var(--line);color:var(--muted);}
-  .doctor-chip.inactive .doctor-chip-main{cursor:default;}
-  .doctor-chip.inactive .doctor-chip-main:hover{background:none;}
-  .doctor-chip button{
-    appearance:none;border:none;background:none;cursor:pointer;font-size:12px;font-weight:700;
-    padding:3px 7px;border-radius:999px;color:inherit;line-height:1;
+  .doctor-bubble-avatar-btn:hover{transform:scale(1.05);}
+  .doctor-bubble.is-selected .doctor-bubble-avatar-btn{border-color:var(--green);}
+  .avatar-lg{width:52px;height:52px;font-size:16px;}
+  .doctor-bubble-more{
+    position:absolute;top:-3px;right:-3px;width:20px;height:20px;border-radius:50%;
+    background:var(--surface);border:1px solid var(--line);color:var(--muted);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:800;
+    box-shadow:var(--shadow-xs);line-height:1;padding:0;
   }
-  .doctor-chip button:hover{background:rgba(0,0,0,0.07);}
-  .doctor-chip-empty{font-size:13px;color:var(--muted);}
+  .doctor-bubble-more:hover{background:var(--bg);color:var(--ink-soft);}
+  .doctor-bubble-name{
+    font-size:11.5px;font-weight:600;color:var(--ink-soft);text-align:center;line-height:1.25;cursor:pointer;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .doctor-bubble.is-selected .doctor-bubble-name{color:var(--green-dark);font-weight:700;}
+  .doctor-bubble.inactive .doctor-bubble-avatar-btn{opacity:.4;cursor:default;}
+  .doctor-bubble.inactive .doctor-bubble-name{color:var(--muted-2);cursor:default;}
+  .doctor-bubble-add .doctor-bubble-avatar-btn{
+    border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);width:52px;height:52px;
+  }
+  .doctor-bubble-add .doctor-bubble-avatar-btn:hover{border-color:var(--green);color:var(--green-dark);}
+  .doctor-bubble-add .doctor-bubble-avatar-btn svg{width:20px;height:20px;}
+  .doctor-mini-menu{
+    display:none;position:absolute;top:24px;right:-8px;z-index:30;min-width:116px;
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);
+    box-shadow:0 14px 32px -10px rgba(15,23,32,0.22);padding:5px;flex-direction:column;gap:1px;
+  }
+  .doctor-mini-menu.open{display:flex;}
+  .doctor-mini-menu button{
+    background:none;border:none;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:600;
+    color:var(--ink-soft);padding:7px 9px;border-radius:7px;text-align:left;width:100%;
+  }
+  .doctor-mini-menu button:hover{background:var(--bg);}
+  .doctor-mini-menu button.is-danger{color:var(--red);}
+  .doctor-strip-empty{font-size:13px;color:var(--muted);padding:10px 2px;}
   .avatar-sm{width:18px;height:18px;font-size:8.5px;}
   .board-filter-indicator{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -2955,31 +2988,46 @@
     if (!el) return;
     var active = currentDoctors.filter(function(d) { return d.active; });
     var inactive = currentDoctors.filter(function(d) { return !d.active; });
-    var chipsHtml = active.map(function(d) {
+    var activeHtml = active.map(function(d) {
       var isSelected = selectedDoctorFilter === d.name;
-      return '<span class="doctor-chip' + (isSelected ? ' is-selected' : '') + '" data-name="' + escapeHtml(d.name) + '">' +
-        '<span class="doctor-chip-main" data-doctor-filter="' + escapeHtml(d.name) + '">' + avatarHtml(d.name, 'avatar-sm') +
-          '<span class="doctor-chip-name">' + escapeHtml(d.name) + '</span></span>' +
-        '<button type="button" class="doctor-rename-btn" data-name="' + escapeHtml(d.name) + '" title="Rename">✎</button>' +
-        '<button type="button" class="doctor-remove-btn" data-name="' + escapeHtml(d.name) + '" title="Remove">×</button>' +
-      '</span>';
-    }).join('') + inactive.map(function(d) {
-      return '<span class="doctor-chip inactive" data-name="' + escapeHtml(d.name) + '">' +
-        '<span class="doctor-chip-main">' + avatarHtml(d.name, 'avatar-sm') +
-          '<span class="doctor-chip-name">' + escapeHtml(d.name) + ' (removed)</span></span>' +
-        '<button type="button" class="doctor-reactivate-btn" data-name="' + escapeHtml(d.name) + '" title="Add back">↺</button>' +
-      '</span>';
+      var shortLabel = String(d.name).replace(/^dr\.?\s+/i, '');
+      return '<div class="doctor-bubble' + (isSelected ? ' is-selected' : '') + '" data-name="' + escapeHtml(d.name) + '">' +
+        '<div class="doctor-bubble-avatar-wrap">' +
+          '<button type="button" class="doctor-bubble-avatar-btn" data-doctor-filter="' + escapeHtml(d.name) + '" title="' + escapeHtml(d.name) + '">' + avatarHtml(d.name, 'avatar-lg') + '</button>' +
+          '<button type="button" class="doctor-bubble-more" data-name="' + escapeHtml(d.name) + '" title="Manage">⋯</button>' +
+          '<div class="doctor-mini-menu" data-name="' + escapeHtml(d.name) + '">' +
+            '<button type="button" class="doctor-rename-btn" data-name="' + escapeHtml(d.name) + '">Rename</button>' +
+            '<button type="button" class="doctor-remove-btn is-danger" data-name="' + escapeHtml(d.name) + '">Remove</button>' +
+          '</div>' +
+        '</div>' +
+        '<span class="doctor-bubble-name" data-doctor-filter="' + escapeHtml(d.name) + '" title="' + escapeHtml(d.name) + '">' + escapeHtml(shortLabel) + '</span>' +
+      '</div>';
     }).join('');
+    var inactiveHtml = inactive.map(function(d) {
+      var shortLabelInactive = String(d.name).replace(/^dr\.?\s+/i, '');
+      return '<div class="doctor-bubble inactive" data-name="' + escapeHtml(d.name) + '">' +
+        '<div class="doctor-bubble-avatar-wrap">' +
+          '<button type="button" class="doctor-bubble-avatar-btn" disabled title="' + escapeHtml(d.name) + ' (removed)">' + avatarHtml(d.name, 'avatar-lg') + '</button>' +
+          '<button type="button" class="doctor-bubble-more doctor-reactivate-btn" data-name="' + escapeHtml(d.name) + '" title="Add back">↺</button>' +
+        '</div>' +
+        '<span class="doctor-bubble-name" title="' + escapeHtml(d.name) + ' (removed)">' + escapeHtml(shortLabelInactive) + '</span>' +
+      '</div>';
+    }).join('');
+    var addHtml =
+      '<div class="doctor-bubble doctor-bubble-add">' +
+        '<div class="doctor-bubble-avatar-wrap">' +
+          '<button type="button" class="doctor-bubble-avatar-btn" id="doctor-add-bubble" title="Add a doctor">' +
+            '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<span class="doctor-bubble-name">Add</span>' +
+      '</div>';
     el.innerHTML =
       '<div class="settings-box">' +
-        '<h3>Doctors at this clinic</h3>' +
-        '<p>Add every doctor who sees patients here — tap a doctor’s name any time to jump straight to their cases on the Board.</p>' +
-        '<div class="settings-box-row">' +
-          '<input id="doctor-add-input" type="text" placeholder="e.g. Dr. Shilpa Yadav" autocomplete="off" />' +
-          '<button id="doctor-add-btn" class="btn btn-primary" type="button">+ Add doctor</button>' +
-        '</div>' +
-        '<div id="doctor-settings-status" class="modal-status"></div>' +
-        '<div class="doctor-chip-list">' + (chipsHtml || '<span class="doctor-chip-empty">No doctors added yet — add one above.</span>') + '</div>' +
+        '<h3>Doctors</h3>' +
+        '<p class="doctor-strip-sub">Tap a doctor to see their cases on the Board.</p>' +
+        '<div id="doctor-settings-status" class="modal-status" style="margin:0 0 4px;"></div>' +
+        '<div class="doctor-strip">' + (activeHtml || inactiveHtml ? activeHtml + inactiveHtml : '<span class="doctor-strip-empty">No doctors added yet.</span>') + addHtml + '</div>' +
       '</div>';
   }
 
@@ -3000,9 +3048,10 @@
     return messages[err] || 'Something went wrong. Please try again.';
   }
 
-  function submitAddDoctor() {
-    var input = document.getElementById('doctor-add-input');
-    var name = (input.value || '').trim();
+  function promptAddDoctor() {
+    var name = window.prompt('Add a doctor to this clinic:');
+    if (name === null) return; // cancelled
+    name = name.trim();
     if (!name) { doctorSettingsStatus('Please enter a doctor’s name.', true); return; }
     doctorSettingsStatus('Adding…', false);
     apiCall('addDoctor', { name: name }).then(function(res) {
@@ -3045,21 +3094,39 @@
   }
 
   document.getElementById('app-doctors-settings').addEventListener('click', function(e) {
-    if (e.target.closest('#doctor-add-btn')) { submitAddDoctor(); return; }
-    var renameBtn = e.target.closest('.doctor-rename-btn');
-    if (renameBtn) { submitRenameDoctor(renameBtn.dataset.name); return; }
-    var removeBtn = e.target.closest('.doctor-remove-btn');
-    if (removeBtn) { submitRemoveDoctor(removeBtn.dataset.name); return; }
+    if (e.target.closest('#doctor-add-bubble')) { promptAddDoctor(); return; }
     var reactivateBtn = e.target.closest('.doctor-reactivate-btn');
     if (reactivateBtn) { submitReactivateDoctor(reactivateBtn.dataset.name); return; }
-    var filterTarget = e.target.closest('.doctor-chip-main');
+    var moreBtn = e.target.closest('.doctor-bubble-more');
+    if (moreBtn) {
+      var menu = moreBtn.parentElement.querySelector('.doctor-mini-menu');
+      var wasOpen = !!(menu && menu.classList.contains('open'));
+      document.querySelectorAll('.doctor-mini-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      if (menu && !wasOpen) menu.classList.add('open');
+      return;
+    }
+    var renameBtn = e.target.closest('.doctor-rename-btn');
+    if (renameBtn) {
+      document.querySelectorAll('.doctor-mini-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      submitRenameDoctor(renameBtn.dataset.name);
+      return;
+    }
+    var removeBtn = e.target.closest('.doctor-remove-btn');
+    if (removeBtn) {
+      document.querySelectorAll('.doctor-mini-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      submitRemoveDoctor(removeBtn.dataset.name);
+      return;
+    }
+    var filterTarget = e.target.closest('[data-doctor-filter]');
     if (filterTarget && filterTarget.dataset.doctorFilter) {
       setDoctorFilter(filterTarget.dataset.doctorFilter === selectedDoctorFilter ? null : filterTarget.dataset.doctorFilter);
       return;
     }
   });
-  document.getElementById('app-doctors-settings').addEventListener('keydown', function(e) {
-    if (e.target && e.target.id === 'doctor-add-input' && e.key === 'Enter') { e.preventDefault(); submitAddDoctor(); }
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.doctor-bubble-avatar-wrap')) {
+      document.querySelectorAll('.doctor-mini-menu.open').forEach(function(m) { m.classList.remove('open'); });
+    }
   });
 
   /** Ensures `value` exists as an option on a doctor dropdown (adding a
