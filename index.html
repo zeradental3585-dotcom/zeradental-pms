@@ -345,8 +345,11 @@
   .cta-final p{color:var(--muted);max-width:480px;margin:0 auto 30px;font-size:16px;line-height:1.6;}
 
   #g_id_signin_container{display:flex;justify-content:center;margin-top:6px;min-height:44px;}
-  #login-status{margin-top:16px;font-size:14.5px;color:var(--muted);min-height:20px;}
+  #login-status{margin-top:16px;font-size:14.5px;color:var(--muted);min-height:20px;display:flex;align-items:center;gap:8px;}
   #login-status.is-error{color:var(--red);}
+  #login-status.is-busy{color:var(--navy);font-weight:600;}
+  .status-spinner{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--green);animation:spin .7s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
   .reg-form{
     display:none;max-width:360px;margin:22px auto 0;text-align:left;
@@ -521,6 +524,8 @@
   @media (max-width:420px){.modal-actions{flex-wrap:wrap;}.modal-actions .btn{flex:1;min-width:140px;justify-content:center;}}
   .modal-status{font-size:13.5px;margin:2px 0 10px;min-height:18px;color:var(--muted);}
   .modal-status.is-error{color:var(--red);}
+  .modal-status.is-success{color:var(--green-dark);font-weight:600;animation:statusPop .25s ease;}
+  @keyframes statusPop{from{opacity:0;transform:translateY(-2px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   .ap-uhid-preview{
     display:flex;align-items:center;gap:8px;background:var(--blue-soft);
     border:1px solid rgba(37,99,235,0.18);border-radius:var(--r-md);
@@ -604,8 +609,9 @@
       border-bottom:none;margin-bottom:0;
     }
     .bottom-nav-tab.active{color:var(--green-dark);}
-    .bn-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
-    .bn-icon svg{width:22px;height:22px;}
+    .bn-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:9px;transition:background .18s cubic-bezier(.34,1.56,.64,1),transform .18s cubic-bezier(.34,1.56,.64,1);}
+    .bn-icon svg{width:22px;height:22px;transition:stroke .15s ease;}
+    .bottom-nav-tab.active .bn-icon{background:var(--green-soft);transform:scale(1.1);}
     .bottom-nav-tab.active .bn-icon svg{stroke:var(--green-dark);}
     .bn-label{font-size:10.5px;font-weight:700;letter-spacing:0.01em;}
     .bn-badge{
@@ -1722,10 +1728,14 @@
     }
   }
 
-  function setLoginStatus(msg, isError) {
+  function setLoginStatus(msg, isError, busy) {
     var el = document.getElementById('login-status');
-    el.textContent = msg || '';
-    el.className = isError ? 'is-error' : '';
+    if (busy) {
+      el.innerHTML = '<span class="status-spinner" aria-hidden="true"></span><span>' + escapeHtml(msg || '') + '</span>';
+    } else {
+      el.textContent = msg || '';
+    }
+    el.className = isError ? 'is-error' : (busy ? 'is-busy' : '');
   }
 
   // True once signed in by either method — Google idToken or an
@@ -1773,7 +1783,7 @@
 
   function handleCredentialResponse(response) {
     zeraIdToken = response.credential;
-    setLoginStatus('Signing you in…');
+    setLoginStatus('Signing you in…', false, true);
     document.getElementById('register-form').style.display = 'none';
     apiCall('login', { idToken: zeraIdToken })
       .then(handleLoginResult)
@@ -2062,7 +2072,9 @@
     var username = document.getElementById('pl-username').value.trim();
     var password = document.getElementById('pl-password').value;
     if (!username || !password) { setLoginStatus('Please enter your username and password.', true); return; }
-    setLoginStatus('Signing you in…');
+    var plBtn = document.getElementById('pl-submit');
+    plBtn.disabled = true;
+    setLoginStatus('Signing you in…', false, true);
     apiCall('passwordLogin', { username: username, password: password }).then(function(res) {
       if (!res || !res.ok) {
         if (res && res.error === 'suspended') {
@@ -2078,6 +2090,8 @@
       showDashboard(res);
     }).catch(function() {
       setLoginStatus('Something went wrong. Please try again.', true);
+    }).finally(function() {
+      plBtn.disabled = false;
     });
   });
   document.getElementById('pl-password').addEventListener('keydown', function(e) {
@@ -2982,10 +2996,13 @@
     var whatsapp = document.getElementById('reg-whatsapp').value.trim();
     if (!clinicName) { setLoginStatus('Please enter your clinic name.', true); return; }
     if (!zeraIdToken) { setLoginStatus('Please sign in again.', true); return; }
-    setLoginStatus('Creating your dashboard…');
+    var regBtn = document.getElementById('reg-submit');
+    regBtn.disabled = true;
+    setLoginStatus('Creating your dashboard…', false, true);
     apiCall('register', { idToken: zeraIdToken, clinicName: clinicName, whatsapp: whatsapp })
       .then(handleLoginResult)
-      .catch(function() { setLoginStatus('Something went wrong. Please try again.', true); });
+      .catch(function() { setLoginStatus('Something went wrong. Please try again.', true); })
+      .finally(function() { regBtn.disabled = false; });
   });
 
   document.getElementById('app-signout').addEventListener('click', function() {
@@ -3363,7 +3380,7 @@
     applyOptimisticPatch();
     document.getElementById('cd-name').textContent = payload.patientName || '(unnamed)';
     statusEl.textContent = 'Saved.';
-    statusEl.className = 'modal-status';
+    statusEl.className = 'modal-status is-success';
 
     apiCall('updateCase', payload).then(function(res) {
       if (!res || !res.ok) {
