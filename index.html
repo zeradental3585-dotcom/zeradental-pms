@@ -521,6 +521,13 @@
   @media (max-width:420px){.modal-actions{flex-wrap:wrap;}.modal-actions .btn{flex:1;min-width:140px;justify-content:center;}}
   .modal-status{font-size:13.5px;margin:2px 0 10px;min-height:18px;color:var(--muted);}
   .modal-status.is-error{color:var(--red);}
+  .ap-uhid-preview{
+    display:flex;align-items:center;gap:8px;background:var(--blue-soft);
+    border:1px solid rgba(37,99,235,0.18);border-radius:var(--r-md);
+    padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--blue-dark);font-weight:600;
+  }
+  .ap-uhid-preview .uhid-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+  .ap-uhid-preview strong{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;letter-spacing:.3px;}
 
   /* ===== Stats bar ===== */
   .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:30px;}
@@ -1411,6 +1418,11 @@
     <input type="hidden" id="ap-mode" value="add" />
     <input type="hidden" id="ap-enquiry-row" value="" />
 
+    <div class="ap-uhid-preview" id="ap-uhid-preview-wrap" style="display:none;">
+      <span class="uhid-dot"></span>
+      <span>This patient will be registered as <strong id="ap-uhid-preview">—</strong></span>
+    </div>
+
     <div class="modal-field">
       <label for="ap-treatment-type">Treatment type *</label>
       <select id="ap-treatment-type"></select>
@@ -1429,8 +1441,8 @@
 
     <div class="modal-row">
       <div class="modal-field">
-        <label for="ap-age">Age</label>
-        <input id="ap-age" type="number" min="0" />
+        <label for="ap-dob">Date of birth *</label>
+        <input id="ap-dob" type="date" />
       </div>
       <div class="modal-field">
         <label for="ap-sex">Sex</label>
@@ -1441,6 +1453,22 @@
           <option value="Other">Other</option>
         </select>
       </div>
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label for="ap-age">Age</label>
+        <input id="ap-age" type="number" min="0" />
+      </div>
+      <div class="modal-field">
+        <label for="ap-aadhaar-last4">Aadhaar (last 4 digits only)</label>
+        <input id="ap-aadhaar-last4" type="text" inputmode="numeric" maxlength="4" placeholder="e.g. 4821" />
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label for="ap-chief-complaint">Chief complaint *</label>
+      <input id="ap-chief-complaint" type="text" placeholder="e.g. Pain in lower left molar for 3 days" />
     </div>
 
     <div class="modal-field">
@@ -2990,6 +3018,21 @@
     statusEl.textContent = '';
     statusEl.className = 'modal-status';
     document.getElementById('add-patient-modal').classList.add('open');
+
+    // Show the UHID this patient will get the moment the form opens, before
+    // anything is even typed — requested so front-desk staff can see/write
+    // it down immediately rather than only after saving. Best-effort: if the
+    // call fails (older backend, offline, etc.) the banner just stays hidden.
+    var uhidWrap = document.getElementById('ap-uhid-preview-wrap');
+    uhidWrap.style.display = 'none';
+    if (isSignedIn()) {
+      apiCall('peekNextPatientId', { idToken: zeraIdToken }).then(function(res) {
+        if (res && res.ok && res.nextPatientId && document.getElementById('ap-mode').value === mode) {
+          document.getElementById('ap-uhid-preview').textContent = res.nextPatientId;
+          uhidWrap.style.display = 'flex';
+        }
+      }).catch(function() {});
+    }
   }
 
   function closeAddPatientModal() {
@@ -2997,7 +3040,7 @@
   }
 
   function resetAddPatientForm() {
-    ['ap-name', 'ap-phone', 'ap-age', 'ap-site', 'ap-implant-system', 'ap-quoted', 'ap-next-action', 'ap-notes'].forEach(function(id) {
+    ['ap-name', 'ap-phone', 'ap-age', 'ap-dob', 'ap-aadhaar-last4', 'ap-chief-complaint', 'ap-site', 'ap-implant-system', 'ap-quoted', 'ap-next-action', 'ap-notes'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     document.getElementById('ap-sex').value = '';
@@ -3007,7 +3050,26 @@
     document.getElementById('ap-graft').checked = false;
     document.getElementById('ap-consent').checked = false;
     document.getElementById('ap-assigned-doctor').value = '';
+    document.getElementById('ap-uhid-preview-wrap').style.display = 'none';
   }
+
+  // Convenience only — DOB stays the source of truth NABH/the backend cares
+  // about; this just saves staff from typing age separately when they've
+  // already picked a birth date.
+  document.getElementById('ap-dob').addEventListener('change', function() {
+    var val = this.value;
+    if (!val) return;
+    var dob = new Date(val + 'T00:00:00');
+    if (isNaN(dob.getTime())) return;
+    var today = new Date();
+    var age = today.getFullYear() - dob.getFullYear();
+    var m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    if (age >= 0 && age < 130) document.getElementById('ap-age').value = age;
+  });
+  document.getElementById('ap-aadhaar-last4').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+  });
 
   function addCaseErrorMessage(err) {
     var messages = {
@@ -3016,6 +3078,9 @@
       invalid_stage: 'Please choose a stage.',
       invalid_treatment_type: 'Please choose a treatment type.',
       consent_required: 'Patient consent is required before saving.',
+      chief_complaint_required: 'Please enter the patient’s chief complaint.',
+      dob_required: 'Please enter the patient’s date of birth.',
+      invalid_aadhaar_last4: 'Aadhaar should be just the last 4 digits (numbers only).',
       not_registered: 'Please sign in again.',
       suspended: 'This account is on hold — WhatsApp us to restore access.',
       auth_failed: 'Please sign in again.',
@@ -3044,9 +3109,15 @@
     var phone = document.getElementById('ap-phone').value.trim();
     var stage = document.getElementById('ap-stage').value;
     var consent = document.getElementById('ap-consent').checked;
+    var dob = document.getElementById('ap-dob').value;
+    var chiefComplaint = document.getElementById('ap-chief-complaint').value.trim();
+    var aadhaarLast4 = document.getElementById('ap-aadhaar-last4').value.trim();
 
     if (!name) { statusEl.textContent = 'Please enter the patient’s name.'; statusEl.className = 'modal-status is-error'; return; }
     if (!phone) { statusEl.textContent = 'Please enter a phone number.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!dob) { statusEl.textContent = 'Please enter the patient’s date of birth.'; statusEl.className = 'modal-status is-error'; return; }
+    if (!chiefComplaint) { statusEl.textContent = 'Please enter the patient’s chief complaint.'; statusEl.className = 'modal-status is-error'; return; }
+    if (aadhaarLast4 && !/^\d{4}$/.test(aadhaarLast4)) { statusEl.textContent = 'Aadhaar should be just the last 4 digits (numbers only).'; statusEl.className = 'modal-status is-error'; return; }
     if (!consent) { statusEl.textContent = 'Patient consent is required before saving.'; statusEl.className = 'modal-status is-error'; return; }
     if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
 
@@ -3059,6 +3130,9 @@
       phone: phone,
       age: document.getElementById('ap-age').value,
       sex: document.getElementById('ap-sex').value,
+      dob: dob,
+      chiefComplaint: chiefComplaint,
+      aadhaarLast4: aadhaarLast4,
       treatmentType: document.getElementById('ap-treatment-type').value,
       caseType: document.getElementById('ap-case-type').value,
       site: document.getElementById('ap-site').value,
