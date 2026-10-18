@@ -2246,6 +2246,7 @@
   var currentPatientId = null; // the PatientID behind that case, for delete/archive
   var todayProgressLastCleared = null; // previous cleared-today count, to detect the moment it reaches 100%
   var todayProgressCelebrated = false; // confetti fires once per session, not on every re-render
+  var statsFirstRenderDone_ = false; // the hero stat numbers count up from 0 only on the very first paint this session, never on a later refresh
   // Treatment types + their stage journeys, straight from the server (see
   // Code.gs CASE_TYPES) so the dropdowns below never drift from what the
   // backend actually validates. Falls back to a bare Implant entry before
@@ -2782,17 +2783,51 @@
       { num: currentBoard.length, label: 'Active cases', icon: STAT_ICON_CASES_, tab: 'board' },
       { num: currentEnquiries.length, label: 'New enquiries', icon: STAT_ICON_TRAY_, tab: 'enquiries' }
     ];
+    var isFirstStatsRender = !statsFirstRenderDone_;
     document.getElementById('app-stats').innerHTML = tiles.map(function(t) {
       var iconHtml = t.iconText
         ? ('<div class="stat-icon stat-icon-text">' + t.iconText + '</div>')
         : ('<div class="stat-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + t.icon + '</svg></div>');
+      var numHtml = isFirstStatsRender
+        ? ('<div class="stat-num" data-count-target="' + t.num + '">0</div>')
+        : ('<div class="stat-num">' + t.num + '</div>');
       return '<div class="stat-tile' + (t.attn ? ' attn' : '') + '" data-tab="' + t.tab + '" role="button" tabindex="0">' +
         iconHtml +
-        '<div class="stat-num">' + t.num + '</div>' +
+        numHtml +
         '<div class="stat-label">' + escapeHtml(t.label) + '</div>' +
       '</div>';
     }).join('');
+    if (isFirstStatsRender) {
+      statsFirstRenderDone_ = true;
+      animateStatNumbers_();
+    }
     renderAttnPanel();
+  }
+
+  // Counts each just-rendered stat-num up from 0 to its real value --
+  // first-paint only (see isFirstStatsRender above), eased so it settles
+  // rather than ticking linearly. ~700ms, matches the hero card's other
+  // motion timings elsewhere in this file.
+  function animateStatNumbers_() {
+    var els = document.querySelectorAll('#app-stats .stat-num[data-count-target]');
+    els.forEach(function(el) {
+      var target = parseInt(el.getAttribute('data-count-target'), 10) || 0;
+      if (!target) { el.textContent = '0'; return; }
+      var duration = 700;
+      var start = null;
+      function step(ts) {
+        if (start === null) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        el.textContent = Math.round(target * eased);
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          el.textContent = target;
+        }
+      }
+      requestAnimationFrame(step);
+    });
   }
   document.getElementById('app-stats').addEventListener('click', function(e) {
     var tile = e.target.closest('.stat-tile');
