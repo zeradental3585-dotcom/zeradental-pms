@@ -695,6 +695,15 @@
     .stat-delta{font-size:9.5px;padding:1px 5px;margin-left:4px;}
     .stat-tile.cyclic::after{top:9px;right:10px;font-size:10px;}
   }
+  .stat-tile:hover{box-shadow:var(--shadow-sm);border-color:var(--line);transform:translateY(-2px);}
+  .stat-tile .stat-num{font-size:25px;font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%;}
+  .stat-tile .stat-num.stat-num-wrapped{white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word;line-height:1.15;}
+  .stat-tile .stat-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:600;}
+  /* Responsive override comes AFTER the base rule above on purpose -- with
+     equal selector specificity, source order decides, and this must win on
+     narrow phones (previously this block sat before the base rule, so the
+     base rule's later position silently clobbered it on every phone, which
+     is what caused the Income tile's figure to render clipped to "<U+20B9>1..."). */
   @media (max-width:420px){
     .stat-tile{padding:12px 10px;}
     .stat-tile .stat-num{font-size:clamp(15px,5.6vw,21px);}
@@ -702,9 +711,6 @@
     .stat-icon svg{width:12px;height:12px;}
     .stat-icon-text{font-size:11px;}
   }
-  .stat-tile:hover{box-shadow:var(--shadow-sm);border-color:var(--line);transform:translateY(-2px);}
-  .stat-tile .stat-num{font-size:25px;font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%;}
-  .stat-tile .stat-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:600;}
   .stat-tile.attn .stat-num{color:var(--red);}
   /* Stat tiles sit on the dark hero gradient now -- restyle as frosted
      glass chips instead of white cards with shadows. */
@@ -1135,6 +1141,7 @@
   .patients-search-bar,.tab-search-bar{margin-bottom:16px;position:relative;}
   .patients-search-bar input,.tab-search-bar input{
     width:100%;padding:12.5px 16px 12.5px 42px;border-radius:999px;border:1px solid var(--line-soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     font-size:14.5px;font-family:inherit;color:var(--navy);background-color:var(--surface);
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23919aa3' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='8.7' cy='8.7' r='5.7'/%3E%3Cpath d='M17 17l-3.8-3.8'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:15px center;background-size:16px 16px;
@@ -1146,32 +1153,6 @@
     outline:none;border-color:var(--green);background-color:#fff;
     box-shadow:0 0 0 4px var(--green-ring),var(--shadow-sm);
   }
-  .patients-filter-bar{display:flex;gap:10px;margin-bottom:16px;}
-  .patients-filter-bar .patients-search-bar{flex:1;margin-bottom:0;}
-  .patients-doctor-filter-wrap{position:relative;flex-shrink:0;}
-  .patients-doctor-filter-btn{
-    appearance:none;height:100%;padding:0 17px;border-radius:999px;border:1px solid var(--line-soft);
-    font-size:13.5px;font-weight:700;font-family:inherit;color:var(--ink-soft);
-    background:linear-gradient(180deg,#ffffff 0%,#f7f9fa 100%);
-    box-shadow:var(--shadow-xs),inset 0 1px 0 rgba(255,255,255,0.85);
-    cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
-    transition:border-color .15s ease,box-shadow .2s ease,transform .12s ease;
-  }
-  .patients-doctor-filter-btn:hover{border-color:var(--green);box-shadow:var(--shadow-card-hover);}
-  .patients-doctor-filter-btn:active{transform:scale(.96);}
-  .patients-doctor-filter-btn.is-active{border-color:var(--green);color:var(--green-dark);background:var(--green-soft);}
-  .pdf-count{background:var(--green);color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:1px 6px;}
-  .patients-doctor-filter-menu{
-    display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:30;min-width:200px;max-height:280px;overflow-y:auto;
-    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);
-    box-shadow:0 14px 32px -10px rgba(15,23,32,0.22);padding:8px;
-  }
-  .patients-doctor-filter-menu.open{display:block;}
-  .pdf-option{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);}
-  .pdf-option:hover{background:var(--bg);}
-  .pdf-option input{margin:0;}
-  .pdf-clear{width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--line-soft);margin-top:4px;padding:8px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;}
-  .pdf-clear:hover{color:var(--red);}
   .review-row{
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);
     padding:18px 22px;margin-bottom:12px;box-shadow:var(--shadow-xs);position:relative;overflow:hidden;
@@ -1834,16 +1815,9 @@
     </div>
     <div id="tab-patients" class="tab-panel">
       <div id="app-doctors-settings"></div>
-      <div class="patients-filter-bar">
-        <div class="patients-search-bar">
-          <input type="text" id="patients-search-input" placeholder="Search by patient name, doctor, mobile, UHID or locality…" autocomplete="off" />
-        </div>
-        <div class="patients-doctor-filter-wrap">
-          <button type="button" id="patients-doctor-filter-btn" class="patients-doctor-filter-btn">
-            <span>Doctors</span><span id="patients-doctor-filter-count" class="pdf-count" style="display:none;"></span>
-          </button>
-          <div id="patients-doctor-filter-menu" class="patients-doctor-filter-menu"></div>
-        </div>
+      <div id="patients-doctor-filter-indicator" class="board-filter-indicator" style="display:none;"></div>
+      <div class="tab-filter-row">
+        <div class="tab-search-bar"><input type="text" id="patients-search-input" placeholder="Search by patient name, doctor, mobile, UHID or locality…" autocomplete="off" /></div>
         <button type="button" id="patients-sort-btn" class="tab-sort-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15V5M6 15l-2.5-2.5M6 15l2.5-2.5M14 5v10M14 5l2.5 2.5M14 5l-2.5 2.5"/></svg><span>Sort</span></button>
       </div>
       <div id="app-patients"></div>
@@ -2784,7 +2758,6 @@
     renderBoard(currentBoard);
     renderPatients(currentPatients);
     renderDoctorsSettings();
-    renderPatientsDoctorFilterMenu();
     populateDoctorSelects();
     renderEnquiries(currentEnquiries);
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
@@ -3464,14 +3437,22 @@
   // of being clipped or ellipsized -- re-measures the CSS-authored size
   // fresh each time so it adapts if the viewport/breakpoint changes.
   function fitStatNumFont_(el) {
+    el.classList.remove('stat-num-wrapped');
     el.style.fontSize = '';
     var base = parseFloat(getComputedStyle(el).fontSize);
-    var floor = base * 0.6;
+    var floor = Math.max(11, base * 0.45);
     var guard = 0;
-    while (el.scrollWidth > el.clientWidth && base > floor && guard < 14) {
+    while (el.scrollWidth > el.clientWidth && base > floor && guard < 20) {
       base -= 1;
       el.style.fontSize = base + 'px';
       guard++;
+    }
+    // Last resort: even the smallest legible size doesn't fit -- wrap the
+    // figure onto two lines rather than ellipsizing it. A clipped rupee
+    // amount reads as a different (wrong) number, which is worse than a
+    // slightly taller tile.
+    if (el.scrollWidth > el.clientWidth) {
+      el.classList.add('stat-num-wrapped');
     }
   }
   function animateStatNumberEl_(el, target, duration, isCurrency) {
@@ -4584,6 +4565,7 @@
   }
   function renderPatients(patients) {
     updatePatientsSortRow();
+    updatePatientsDoctorFilterIndicator_();
     var el = document.getElementById('app-patients');
     if (!patients || patients.length === 0) {
       el.innerHTML = '<div class="board-empty">' +
@@ -4656,49 +4638,22 @@
     });
   });
 
-  // --- Patients tab doctor filter (multi-select) -----------------------
-  function renderPatientsDoctorFilterMenu() {
-    var menu = document.getElementById('patients-doctor-filter-menu');
-    var btn = document.getElementById('patients-doctor-filter-btn');
-    var countEl = document.getElementById('patients-doctor-filter-count');
-    var active = currentDoctors.filter(function(d) { return d.active; });
-    menu.innerHTML = (active.length
-      ? active.map(function(d) {
-          var checked = patientsDoctorFilter.indexOf(d.name) !== -1;
-          return '<label class="pdf-option"><input type="checkbox" data-doctor="' + escapeHtml(d.name) + '" ' + (checked ? 'checked' : '') + ' />' + escapeHtml(d.name) + '</label>';
-        }).join('')
-      : '<div class="doctor-strip-empty">No doctors added yet.</div>') +
-      (patientsDoctorFilter.length ? '<button type="button" class="pdf-clear">Clear filter</button>' : '');
-    countEl.textContent = patientsDoctorFilter.length;
-    countEl.style.display = patientsDoctorFilter.length ? 'inline-block' : 'none';
-    btn.classList.toggle('is-active', patientsDoctorFilter.length > 0);
+  // --- Patients tab doctor filter (multi-select, driven by tapping avatars
+  //     in the Doctors strip above -- see toggleBubbleDoctorFilter_) -------
+  function updatePatientsDoctorFilterIndicator_() {
+    var el = document.getElementById('patients-doctor-filter-indicator');
+    if (!el) return;
+    if (!patientsDoctorFilter.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = '';
+    el.innerHTML = '<span class="bfi-who">' + patientsDoctorFilter.map(function(n) { return avatarHtml(n, 'avatar-sm'); }).join('') +
+      '<span>Filtering by <strong>' + escapeHtml(patientsDoctorFilter.join(', ')) + '</strong></span></span>' +
+      '<button type="button" class="board-filter-clear" id="patients-doctor-filter-clear-btn" title="Clear filter">✕</button>';
   }
-  renderPatientsDoctorFilterMenu();
-  document.getElementById('patients-doctor-filter-btn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    document.getElementById('patients-doctor-filter-menu').classList.toggle('open');
-  });
-  document.getElementById('patients-doctor-filter-menu').addEventListener('click', function(e) {
-    e.stopPropagation();
-    var cb = e.target.closest('input[data-doctor]');
-    if (cb) {
-      var name = cb.dataset.doctor;
-      var idx = patientsDoctorFilter.indexOf(name);
-      if (cb.checked && idx === -1) patientsDoctorFilter.push(name);
-      if (!cb.checked && idx !== -1) patientsDoctorFilter.splice(idx, 1);
-      renderPatientsDoctorFilterMenu();
-      renderPatients(currentPatients);
-      return;
-    }
-    if (e.target.closest('.pdf-clear')) {
-      patientsDoctorFilter = [];
-      renderPatientsDoctorFilterMenu();
-      renderPatients(currentPatients);
-    }
-  });
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('.patients-doctor-filter-wrap')) {
-      document.getElementById('patients-doctor-filter-menu').classList.remove('open');
+    if (e.target.closest('#patients-doctor-filter-clear-btn')) {
+      patientsDoctorFilter = [];
+      renderDoctorsSettings();
+      renderPatients(currentPatients);
     }
   });
 
@@ -4709,7 +4664,7 @@
     var active = currentDoctors.filter(function(d) { return d.active; });
     var inactive = currentDoctors.filter(function(d) { return !d.active; });
     var activeHtml = active.map(function(d) {
-      var isSelected = selectedDoctorFilter === d.name;
+      var isSelected = patientsDoctorFilter.indexOf(d.name) !== -1;
       var shortLabel = String(d.name).replace(/^dr\.?\s+/i, '');
       return '<div class="doctor-bubble' + (isSelected ? ' is-selected' : '') + '" data-name="' + escapeHtml(d.name) + '">' +
         '<div class="doctor-bubble-avatar-wrap">' +
@@ -4838,10 +4793,18 @@
     }
     var filterTarget = e.target.closest('[data-doctor-filter]');
     if (filterTarget && filterTarget.dataset.doctorFilter) {
-      setDoctorFilter(filterTarget.dataset.doctorFilter === selectedDoctorFilter ? null : filterTarget.dataset.doctorFilter);
+      toggleBubbleDoctorFilter_(filterTarget.dataset.doctorFilter);
       return;
     }
   });
+  // Toggles one doctor in/out of the Patients-tab filter (multi-select, OR
+  // across whoever's picked) and re-renders the strip + list in place.
+  function toggleBubbleDoctorFilter_(name) {
+    var idx = patientsDoctorFilter.indexOf(name);
+    if (idx === -1) patientsDoctorFilter.push(name); else patientsDoctorFilter.splice(idx, 1);
+    renderDoctorsSettings();
+    renderPatients(currentPatients);
+  }
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.doctor-bubble-avatar-wrap')) {
       document.querySelectorAll('.doctor-mini-menu.open').forEach(function(m) { m.classList.remove('open'); });
