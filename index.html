@@ -2419,6 +2419,10 @@
     } else if (res.status === 'suspended') {
       setLoginStatus(res.clinicName + '’s subscription is on hold — WhatsApp us to restore access.', true);
     } else if (res.status === 'active') {
+      if (res.sessionToken) {
+        zeraSessionToken = res.sessionToken;
+        try { localStorage.setItem('zeraSessionToken', zeraSessionToken); } catch (e) {}
+      }
       showDashboard(res);
     } else {
       setLoginStatus('Something went wrong. Please try again.', true);
@@ -2727,9 +2731,13 @@
     if (e.key === 'Enter') document.getElementById('pl-submit').click();
   });
 
-  // Silently restores a password-login session from a saved token, so a
-  // client doesn't have to sign in again on every visit — unlike Google's
-  // idToken, which only ever lives in a JS variable for this page load.
+  // Silently restores a saved session — from either Google Sign-In or
+  // agency-managed username/password, both of which now issue the same
+  // 30-day Zera session token on login — so nobody has to sign in again
+  // every time they open the app on a device. Each successful restore
+  // also re-saves the fresh token the backend returns, sliding the
+  // 30-day window forward — so a device in regular use effectively
+  // never gets signed out.
   function restoreSavedSession() {
     var saved = null;
     try { saved = localStorage.getItem('zeraSessionToken'); } catch (e) { saved = null; }
@@ -2737,6 +2745,10 @@
     zeraSessionToken = saved;
     apiCall('login', {}).then(function(res) {
       if (res && res.ok && res.status === 'active') {
+        if (res.sessionToken) {
+          zeraSessionToken = res.sessionToken;
+          try { localStorage.setItem('zeraSessionToken', zeraSessionToken); } catch (e) {}
+        }
         showDashboard(res);
       } else {
         zeraSessionToken = null;
