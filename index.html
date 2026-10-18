@@ -542,6 +542,25 @@
   }
   .ap-uhid-preview .uhid-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;}
   .ap-uhid-preview strong{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;letter-spacing:.3px;}
+  .ap-phone-dup-warning{
+    display:none;background:var(--amber-bg);border:1px solid rgba(217,119,6,0.3);border-radius:var(--r-md);
+    padding:12px 14px;margin-bottom:16px;font-size:13.5px;color:#92400e;
+  }
+  .ap-phone-dup-warning.show{display:block;animation:statusPop .2s ease;}
+  .ap-phone-dup-text{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;}
+  .ap-phone-dup-text .dup-icon{flex-shrink:0;font-size:15px;line-height:1.3;}
+  .ap-phone-dup-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .ap-phone-dup-actions button{
+    appearance:none;border-radius:8px;font-size:12.5px;font-weight:700;padding:7px 12px;cursor:pointer;
+    font-family:inherit;transition:background .15s ease,border-color .15s ease;
+  }
+  .ap-dup-view-btn{background:#fff;border:1px solid rgba(217,119,6,0.4);color:#92400e;}
+  .ap-dup-view-btn:hover{border-color:var(--amber);}
+  .ap-dup-continue-btn{background:var(--amber);border:1px solid var(--amber);color:#fff;}
+  .ap-dup-continue-btn:hover{background:#b45309;}
+  .ap-phone-dup-ack{display:none;align-items:center;gap:7px;background:var(--green-soft,#ecfdf5);border:1px solid rgba(4,120,87,0.25);
+    border-radius:var(--r-md);padding:9px 14px;margin-bottom:16px;font-size:13px;color:var(--green-dark);font-weight:600;}
+  .ap-phone-dup-ack.show{display:flex;}
 
   /* ===== Stats bar ===== */
   .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
@@ -890,6 +909,13 @@
     box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
   }
   .patients-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
+  .tab-search-bar{margin-bottom:16px;}
+  .tab-search-bar input{
+    width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);
+    font-size:14.5px;font-family:inherit;background:var(--surface);color:var(--navy);
+    box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .tab-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
   .patients-filter-bar{display:flex;gap:10px;margin-bottom:16px;}
   .patients-filter-bar .patients-search-bar{flex:1;margin-bottom:0;}
   .patients-doctor-filter-wrap{position:relative;flex-shrink:0;}
@@ -1397,6 +1423,7 @@
           <input type="date" id="range-from" /> <span>to</span> <input type="date" id="range-to" />
         </div>
       </div>
+      <div class="tab-search-bar"><input type="text" id="today-search-input" placeholder="Search by patient name or phone…" autocomplete="off" /></div>
       <div class="today-grid">
         <div class="today-col">
           <div class="today-col-title">Appointments</div>
@@ -1411,6 +1438,7 @@
     </div>
     <div id="tab-board" class="tab-panel">
       <div id="board-filter-indicator" class="board-filter-indicator" style="display:none;"></div>
+      <div class="tab-search-bar"><input type="text" id="board-search-input" placeholder="Search by name, doctor, mobile or UHID…" autocomplete="off" /></div>
       <div id="board-sort-row" class="review-sort tab-sort-row"></div>
       <div id="app-board"></div>
     </div>
@@ -1431,10 +1459,12 @@
       <div id="app-patients"></div>
     </div>
     <div id="tab-enquiries" class="tab-panel">
+      <div class="tab-search-bar"><input type="text" id="enquiries-search-input" placeholder="Search by name, phone or city…" autocomplete="off" /></div>
       <div id="enquiries-sort-row" class="review-sort tab-sort-row"></div>
       <div id="app-enquiries"></div>
     </div>
     <div id="tab-reviews" class="tab-panel">
+      <div class="tab-search-bar"><input type="text" id="reviews-search-input" placeholder="Search by name or phone…" autocomplete="off" /></div>
       <div id="app-reviews"></div>
     </div>
     <div id="tab-insights" class="tab-panel">
@@ -1709,6 +1739,21 @@
       </div>
     </div>
 
+    <div class="ap-phone-dup-warning" id="ap-phone-dup-warning">
+      <div class="ap-phone-dup-text">
+        <span class="dup-icon">⚠️</span>
+        <span id="ap-phone-dup-text">This number is already registered.</span>
+      </div>
+      <div class="ap-phone-dup-actions">
+        <button type="button" class="ap-dup-view-btn" id="ap-dup-view-btn">View existing patient</button>
+        <button type="button" class="ap-dup-continue-btn" id="ap-dup-continue-btn">This is a different patient — continue</button>
+      </div>
+    </div>
+    <div class="ap-phone-dup-ack" id="ap-phone-dup-ack">
+      <span>✓</span>
+      <span>Registering as a separate patient who shares this number.</span>
+    </div>
+
     <div class="modal-row">
       <div class="modal-field">
         <label for="ap-email">Email</label>
@@ -1933,14 +1978,18 @@
   var currentReviewLink = '';
   var currentReviewLinkShort = '';
   var selectedDoctorFilter = null; // Board tab: doctor name to filter by, or null for everyone
-  var reviewsSortMode = 'oldest'; // Reviews tab sort: 'oldest' | 'newest' | 'name'
-  var REVIEW_SORT_LABELS_ = { oldest: 'Oldest first', newest: 'Newest first', name: 'Name A–Z' };
-  var boardSortMode = 'overdue'; // Board tab sort: 'overdue' | 'name' | 'doctor'
-  var BOARD_SORT_LABELS_ = { overdue: 'Most overdue first', name: 'Name A–Z', doctor: 'By doctor' };
-  var patientsSortMode = 'recent'; // Patients tab sort: 'recent' | 'name' | 'doctor'
-  var PATIENTS_SORT_LABELS_ = { recent: 'Recently added', name: 'Name A–Z', doctor: 'By doctor' };
-  var enquiriesSortMode = 'newest'; // Enquiries tab sort: 'newest' | 'oldest' | 'name'
-  var ENQUIRIES_SORT_LABELS_ = { newest: 'Newest first', oldest: 'Oldest first', name: 'Name A–Z' };
+  var boardSearchQuery = ''; // Board tab search box: matches name, phone, doctor, UHID, case ID
+  var enquiriesSearchQuery = ''; // Enquiries tab search box: matches name, phone, city
+  var reviewsSearchQuery = ''; // Reviews tab search box: matches name, phone
+  var todaySearchQuery = ''; // Today tab search box: matches name, phone (appointments + payments)
+  var reviewsSortMode = 'oldest'; // Reviews tab sort: 'oldest' | 'newest' | 'name' | 'name_desc'
+  var REVIEW_SORT_LABELS_ = { oldest: 'Oldest first', newest: 'Newest first', name: 'Name A–Z', name_desc: 'Name Z–A' };
+  var boardSortMode = 'overdue'; // Board tab sort: 'overdue' | 'name' | 'name_desc' | 'doctor' | 'uhid' | 'registered_new' | 'registered_old'
+  var BOARD_SORT_LABELS_ = { overdue: 'Most overdue first', name: 'Name A–Z', name_desc: 'Name Z–A', doctor: 'By doctor', uhid: 'UHID', registered_new: 'Registered (newest)', registered_old: 'Registered (oldest)' };
+  var patientsSortMode = 'recent'; // Patients tab sort: 'recent' | 'name' | 'name_desc' | 'doctor' | 'uhid'
+  var PATIENTS_SORT_LABELS_ = { recent: 'Recently added', name: 'Name A–Z', name_desc: 'Name Z–A', doctor: 'By doctor', uhid: 'UHID' };
+  var enquiriesSortMode = 'newest'; // Enquiries tab sort: 'newest' | 'oldest' | 'name' | 'name_desc'
+  var ENQUIRIES_SORT_LABELS_ = { newest: 'Newest first', oldest: 'Oldest first', name: 'Name A–Z', name_desc: 'Name Z–A' };
   var currentCaseId = null; // case detail modal currently open on this CaseID
   var currentPatientId = null; // the PatientID behind that case, for delete/archive
   // Treatment types + their stage journeys, straight from the server (see
@@ -2737,11 +2786,19 @@
     var apptEl = document.getElementById('today-appointments');
     var matches = currentAppointments.filter(function(a) { return a.dateISO && a.dateISO >= bounds.from && a.dateISO <= bounds.to; });
     setTabCount('today', matches.length);
+    // The search box narrows what's SHOWN, but the "Today" tab-count badge
+    // and the income total/count both stay true to the full date range --
+    // searching shouldn't make the dentist think fewer appointments or less
+    // money actually happened today, only fewer rows are currently visible.
+    var q = todaySearchQuery.trim().toLowerCase();
+    var apptDisplay = q ? matches.filter(function(a) {
+      return String(a.patientName || '').toLowerCase().indexOf(q) !== -1 || String(a.phone || '').toLowerCase().indexOf(q) !== -1;
+    }) : matches;
 
-    if (matches.length === 0) {
-      apptEl.innerHTML = '<div class="board-empty">No appointments in this range.</div>';
+    if (apptDisplay.length === 0) {
+      apptEl.innerHTML = '<div class="board-empty">' + (q ? ('No appointments match “' + escapeHtml(todaySearchQuery) + '”.') : 'No appointments in this range.') + '</div>';
     } else {
-      apptEl.innerHTML = matches.map(function(a) {
+      apptEl.innerHTML = apptDisplay.map(function(a) {
         var statusCls = a.status === 'Completed' ? 'done' : (a.status === 'Cancelled' ? 'cancelled' : '');
         return '<div class="today-appt-row" data-case-id="' + escapeHtml(a.caseId) + '">' +
           '<div class="ta-main">' +
@@ -2765,11 +2822,14 @@
       '<div class="income-total">₹' + total.toLocaleString('en-IN') + '</div>' +
       '<div class="income-sub">' + payMatches.length + ' payment(s) in this range</div>';
 
+    var payDisplay = q ? payMatches.filter(function(p) {
+      return String(p.patientName || '').toLowerCase().indexOf(q) !== -1 || String(p.phone || '').toLowerCase().indexOf(q) !== -1;
+    }) : payMatches;
     var payEl = document.getElementById('today-payments');
-    if (payMatches.length === 0) {
-      payEl.innerHTML = '<div class="board-empty">No payments in this range.</div>';
+    if (payDisplay.length === 0) {
+      payEl.innerHTML = '<div class="board-empty">' + (q ? ('No payments match “' + escapeHtml(todaySearchQuery) + '”.') : 'No payments in this range.') + '</div>';
     } else {
-      payEl.innerHTML = payMatches.map(function(p) {
+      payEl.innerHTML = payDisplay.map(function(p) {
         return '<div class="detail-list-row"><span>' + escapeHtml(p.date) + ' — ' + escapeHtml(p.patientName || '') +
           '</span><span>₹' + escapeHtml(p.amount) + ' (' + escapeHtml(p.mode || '') + ')</span></div>';
       }).join('');
@@ -2787,6 +2847,10 @@
   });
   document.getElementById('range-from').addEventListener('change', renderToday);
   document.getElementById('range-to').addEventListener('change', renderToday);
+  document.getElementById('today-search-input').addEventListener('input', function(e) {
+    todaySearchQuery = e.target.value;
+    renderToday();
+  });
 
   document.getElementById('today-appointments').addEventListener('click', function(e) {
     var remindBtn = e.target.closest('.btn-remind');
@@ -3068,26 +3132,60 @@
   function updateBoardSortRow() {
     var el = document.getElementById('board-sort-row');
     if (!el) return;
-    el.innerHTML = ['overdue', 'name', 'doctor'].map(function(key) {
+    el.innerHTML = ['overdue', 'name', 'name_desc', 'doctor', 'uhid', 'registered_new', 'registered_old'].map(function(key) {
       return '<button type="button" class="review-sort-btn' + (boardSortMode === key ? ' active' : '') + '" data-board-sort="' + key + '">' + BOARD_SORT_LABELS_[key] + '</button>';
     }).join('');
+  }
+  // Board rows don't carry a registration date of their own (only the
+  // linked patient does) -- looked up from currentPatients by UHID, same
+  // join already used for the UHID tag shown on every board row.
+  function boardMatchesSearch_(r, q) {
+    if (!q) return true;
+    var uhid = r.patientId || caseIdToPatientId[r.caseId] || '';
+    if (String(r.patientName || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(r.phone || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(uhid).toLowerCase().indexOf(q) !== -1) return true;
+    if (String(r.assignedTo || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(r.caseId || '').toLowerCase().indexOf(q) !== -1) return true;
+    return false;
+  }
+  function boardRegisteredISO_(r) {
+    var uhid = r.patientId || caseIdToPatientId[r.caseId];
+    var patient = currentPatients.filter(function(p) { return String(p.patientId) === String(uhid); })[0];
+    return patient ? patientCreatedISO_(patient) : null;
   }
   function renderBoard(rows) {
     updateBoardFilterIndicator();
     updateBoardSortRow();
     var el = document.getElementById('app-board');
-    var filtered = selectedDoctorFilter ? (rows || []).filter(function(r) { return r.assignedTo === selectedDoctorFilter; }) : (rows || []);
+    var q = boardSearchQuery.trim().toLowerCase();
+    var filtered = (rows || []).filter(function(r) {
+      if (selectedDoctorFilter && r.assignedTo !== selectedDoctorFilter) return false;
+      return boardMatchesSearch_(r, q);
+    });
     if (!filtered || filtered.length === 0) {
-      el.innerHTML = '<div class="board-empty">' + (selectedDoctorFilter
-        ? ('No active cases for ' + escapeHtml(selectedDoctorFilter) + ' right now.')
-        : 'No active cases right now.') + '</div>';
+      el.innerHTML = '<div class="board-empty">' + (q
+        ? ('No cases match “' + escapeHtml(boardSearchQuery) + '”.')
+        : (selectedDoctorFilter
+          ? ('No active cases for ' + escapeHtml(selectedDoctorFilter) + ' right now.')
+          : 'No active cases right now.')) + '</div>';
       return;
     }
     var sorted = filtered.slice();
     if (boardSortMode === 'name') {
       sorted.sort(function(a, b) { return String(a.patientName || '').localeCompare(String(b.patientName || '')); });
+    } else if (boardSortMode === 'name_desc') {
+      sorted.sort(function(a, b) { return String(b.patientName || '').localeCompare(String(a.patientName || '')); });
     } else if (boardSortMode === 'doctor') {
       sorted.sort(function(a, b) { return String(a.assignedTo || '').localeCompare(String(b.assignedTo || '')) || ((Number(b.daysOverdue) || -9999) - (Number(a.daysOverdue) || -9999)); });
+    } else if (boardSortMode === 'uhid') {
+      sorted.sort(function(a, b) { return String(a.patientId || caseIdToPatientId[a.caseId] || '').localeCompare(String(b.patientId || caseIdToPatientId[b.caseId] || '')); });
+    } else if (boardSortMode === 'registered_new' || boardSortMode === 'registered_old') {
+      sorted.sort(function(a, b) {
+        var da = boardRegisteredISO_(a), db = boardRegisteredISO_(b);
+        var ta = da ? new Date(da).getTime() : 0, tb = db ? new Date(db).getTime() : 0;
+        return boardSortMode === 'registered_new' ? (tb - ta) : (ta - tb);
+      });
     } else {
       sorted.sort(function(a, b) { return (Number(b.daysOverdue) || -9999) - (Number(a.daysOverdue) || -9999); });
     }
@@ -3128,6 +3226,10 @@
     boardSortMode = btn.dataset.boardSort;
     renderBoard(currentBoard);
   });
+  document.getElementById('board-search-input').addEventListener('input', function(e) {
+    boardSearchQuery = e.target.value;
+    renderBoard(currentBoard);
+  });
 
   // --- Patients tab ---------------------------------------------------------
   // Matches the search box against patient name, phone/alt phone, UHID, and
@@ -3159,7 +3261,7 @@
   function updatePatientsSortRow() {
     var el = document.getElementById('patients-sort-row');
     if (!el) return;
-    el.innerHTML = ['recent', 'name', 'doctor'].map(function(key) {
+    el.innerHTML = ['recent', 'name', 'name_desc', 'doctor', 'uhid'].map(function(key) {
       return '<button type="button" class="review-sort-btn' + (patientsSortMode === key ? ' active' : '') + '" data-patients-sort="' + key + '">' + PATIENTS_SORT_LABELS_[key] + '</button>';
     }).join('');
   }
@@ -3179,8 +3281,12 @@
     var sorted = filtered.slice();
     if (patientsSortMode === 'name') {
       sorted.sort(function(a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+    } else if (patientsSortMode === 'name_desc') {
+      sorted.sort(function(a, b) { return String(b.name || '').localeCompare(String(a.name || '')); });
     } else if (patientsSortMode === 'doctor') {
       sorted.sort(function(a, b) { return String(patientDoctorName_(a)).localeCompare(String(patientDoctorName_(b))); });
+    } else if (patientsSortMode === 'uhid') {
+      sorted.sort(function(a, b) { return String(a.patientId || '').localeCompare(String(b.patientId || '')); });
     } else {
       sorted.sort(function(a, b) {
         var da = parseDisplayDate_(a.createdOn), db = parseDisplayDate_(b.createdOn);
@@ -3483,9 +3589,16 @@
   function updateEnquiriesSortRow() {
     var el = document.getElementById('enquiries-sort-row');
     if (!el) return;
-    el.innerHTML = ['newest', 'oldest', 'name'].map(function(key) {
+    el.innerHTML = ['newest', 'oldest', 'name', 'name_desc'].map(function(key) {
       return '<button type="button" class="review-sort-btn' + (enquiriesSortMode === key ? ' active' : '') + '" data-enquiries-sort="' + key + '">' + ENQUIRIES_SORT_LABELS_[key] + '</button>';
     }).join('');
+  }
+  function enquiryMatchesSearch_(e, q) {
+    if (!q) return true;
+    if (String(e.name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(e.phone || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(e.city || '').toLowerCase().indexOf(q) !== -1) return true;
+    return false;
   }
   function renderEnquiries(enquiries) {
     updateEnquiriesSortRow();
@@ -3494,9 +3607,17 @@
       el.innerHTML = '<div class="board-empty">No new enquiries — leads from your website contact form will show up here.</div>';
       return;
     }
-    var sorted = enquiries.slice();
+    var q = enquiriesSearchQuery.trim().toLowerCase();
+    var filtered = enquiries.filter(function(e) { return enquiryMatchesSearch_(e, q); });
+    if (filtered.length === 0) {
+      el.innerHTML = '<div class="board-empty">No enquiries match “' + escapeHtml(enquiriesSearchQuery) + '”.</div>';
+      return;
+    }
+    var sorted = filtered.slice();
     if (enquiriesSortMode === 'name') {
       sorted.sort(function(a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+    } else if (enquiriesSortMode === 'name_desc') {
+      sorted.sort(function(a, b) { return String(b.name || '').localeCompare(String(a.name || '')); });
     } else if (enquiriesSortMode === 'oldest') {
       sorted.sort(function(a, b) { return (Number(a.rowIndex) || 0) - (Number(b.rowIndex) || 0); });
     } else {
@@ -3534,6 +3655,10 @@
     enquiriesSortMode = btn.dataset.enquiriesSort;
     renderEnquiries(currentEnquiries);
   });
+  document.getElementById('enquiries-search-input').addEventListener('input', function(e) {
+    enquiriesSearchQuery = e.target.value;
+    renderEnquiries(currentEnquiries);
+  });
 
   // --- Reviews tab: one-click 5-star WhatsApp requests ----------------------
   // The Google review link itself is configured by Zera on the backend per
@@ -3558,9 +3683,18 @@
         '</div>' +
       '</div>';
 
-    var sorted = (candidates || []).slice();
+    var q = reviewsSearchQuery.trim().toLowerCase();
+    var searched = (candidates || []).filter(function(c) {
+      if (!q) return true;
+      if (String(c.name || '').toLowerCase().indexOf(q) !== -1) return true;
+      if (String(c.phone || '').toLowerCase().indexOf(q) !== -1) return true;
+      return false;
+    });
+    var sorted = searched.slice();
     if (reviewsSortMode === 'name') {
       sorted.sort(function(a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+    } else if (reviewsSortMode === 'name_desc') {
+      sorted.sort(function(a, b) { return String(b.name || '').localeCompare(String(a.name || '')); });
     } else if (reviewsSortMode === 'newest') {
       sorted.sort(function(a, b) { return (Number(a.daysSince) || 0) - (Number(b.daysSince) || 0); });
     } else {
@@ -3574,14 +3708,18 @@
           '<div class="review-empty-sub">Review requests are being switched on for your clinic — there’s nothing you need to do, this will light up on its own.</div>' +
         '</div>';
     } else if (!sorted || sorted.length === 0) {
-      listHtml =
-        '<div class="board-empty review-empty">' +
-          '<div class="review-empty-title">All caught up</div>' +
-          '<div class="review-empty-sub">No review requests waiting right now — new patients show up here the moment they’re added.</div>' +
-        '</div>';
+      listHtml = q
+        ? ('<div class="board-empty review-empty">' +
+            '<div class="review-empty-title">No matches</div>' +
+            '<div class="review-empty-sub">No one waiting for a review matches “' + escapeHtml(reviewsSearchQuery) + '”.</div>' +
+          '</div>')
+        : ('<div class="board-empty review-empty">' +
+            '<div class="review-empty-title">All caught up</div>' +
+            '<div class="review-empty-sub">No review requests waiting right now — new patients show up here the moment they’re added.</div>' +
+          '</div>');
     } else {
       listHtml = '<div class="review-list-head"><span class="review-count-badge">' + sorted.length + ' waiting</span>' +
-        '<div class="review-sort">' + ['oldest', 'newest', 'name'].map(function(key) {
+        '<div class="review-sort">' + ['oldest', 'newest', 'name', 'name_desc'].map(function(key) {
           return '<button type="button" class="review-sort-btn' + (reviewsSortMode === key ? ' active' : '') + '" data-sort="' + key + '">' + REVIEW_SORT_LABELS_[key] + '</button>';
         }).join('') + '</div></div>' +
         sorted.map(function(c) {
@@ -3609,6 +3747,10 @@
     el.innerHTML = heroHtml + listHtml;
   }
 
+  document.getElementById('reviews-search-input').addEventListener('input', function(e) {
+    reviewsSearchQuery = e.target.value;
+    renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
+  });
   document.getElementById('app-reviews').addEventListener('click', function(e) {
     var sortBtn = e.target.closest('.review-sort-btn');
     if (sortBtn) {
@@ -3742,6 +3884,10 @@
     document.getElementById('ap-next-date').disabled = false;
     document.getElementById('ap-next-date').value = isoOf(new Date(Date.now() + 90 * 86400000));
     document.getElementById('ap-uhid-preview-wrap').style.display = 'none';
+    apPhoneDupMatch = null;
+    apPhoneDupAcknowledged = false;
+    document.getElementById('ap-phone-dup-warning').classList.remove('show');
+    document.getElementById('ap-phone-dup-ack').classList.remove('show');
   }
   document.getElementById('ap-no-next-date').addEventListener('change', function() {
     var dateInput = document.getElementById('ap-next-date');
@@ -3768,6 +3914,62 @@
   });
   document.getElementById('cd-aadhaar-input').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+  });
+
+  // Duplicate-phone-number check for the Add-patient form -- avoids the
+  // kind of accidental duplicate patient this app has hit before. Purely
+  // client-side (currentPatients is already loaded in memory and never
+  // contains archived patients), so this never needs an extra API call.
+  var apPhoneDupMatch = null;
+  var apPhoneDupAcknowledged = false;
+
+  function checkApPhoneDup() {
+    var phone = document.getElementById('ap-phone').value.trim();
+    var digits = phone.replace(/\D/g, '').slice(-10);
+    var warnEl = document.getElementById('ap-phone-dup-warning');
+    var ackEl = document.getElementById('ap-phone-dup-ack');
+    apPhoneDupAcknowledged = false;
+    ackEl.classList.remove('show');
+    if (digits.length < 10 || !Array.isArray(currentPatients)) {
+      apPhoneDupMatch = null;
+      warnEl.classList.remove('show');
+      return;
+    }
+    var match = currentPatients.filter(function(p) {
+      return String(p.phone || '').replace(/\D/g, '').slice(-10) === digits;
+    })[0];
+    apPhoneDupMatch = match || null;
+    if (match) {
+      document.getElementById('ap-phone-dup-text').innerHTML =
+        'This number is already registered to <strong>' + escapeHtml(match.name) + '</strong> (UHID: ' + escapeHtml(match.patientId) + '). If this is a different patient (e.g. a family member sharing this number), you can continue.';
+      warnEl.classList.add('show');
+    } else {
+      warnEl.classList.remove('show');
+    }
+  }
+  document.getElementById('ap-phone').addEventListener('input', checkApPhoneDup);
+  document.getElementById('ap-phone').addEventListener('blur', checkApPhoneDup);
+
+  document.getElementById('ap-dup-continue-btn').addEventListener('click', function() {
+    apPhoneDupAcknowledged = true;
+    document.getElementById('ap-phone-dup-warning').classList.remove('show');
+    document.getElementById('ap-phone-dup-ack').classList.add('show');
+  });
+  document.getElementById('ap-dup-view-btn').addEventListener('click', function() {
+    if (!apPhoneDupMatch) return;
+    var existingCase = (currentAllCases || []).filter(function(c) { return String(c.patientId) === String(apPhoneDupMatch.patientId); })[0];
+    closeAddPatientModal();
+    if (existingCase) {
+      openCaseDetail(existingCase);
+    } else {
+      // Patient has no case on file yet (shouldn't normally happen) -- at
+      // least switch to the Patients tab and prefill the search so staff
+      // can find them.
+      var patientsTabBtn = document.querySelector('.app-tab[data-tab="patients"]');
+      if (patientsTabBtn) patientsTabBtn.click();
+      var searchInput = document.getElementById('patients-search-input');
+      if (searchInput) { searchInput.value = apPhoneDupMatch.name; searchInput.dispatchEvent(new Event('input')); }
+    }
   });
 
   function addCaseErrorMessage(err) {
@@ -3820,6 +4022,7 @@
     if (!chiefComplaint) { statusEl.textContent = 'Please enter the patient’s chief complaint.'; statusEl.className = 'modal-status is-error'; return; }
     if (aadhaarLast4 && !/^\d{4}$/.test(aadhaarLast4)) { statusEl.textContent = 'Aadhaar should be just the last 4 digits (numbers only).'; statusEl.className = 'modal-status is-error'; return; }
     if (!consent) { statusEl.textContent = 'Patient consent is required before saving.'; statusEl.className = 'modal-status is-error'; return; }
+    if (apPhoneDupMatch && !apPhoneDupAcknowledged) { statusEl.textContent = 'This number is already registered — click "This is a different patient" above to continue, or change the number.'; statusEl.className = 'modal-status is-error'; return; }
     if (!isSignedIn()) { statusEl.textContent = 'Please sign in again.'; statusEl.className = 'modal-status is-error'; return; }
 
     submitBtn.disabled = true;
