@@ -448,6 +448,8 @@
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:44px 24px;
     text-align:center;color:var(--muted);font-size:15px;
   }
+  .empty-state-title{font-size:15.5px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .empty-state-sub{font-size:13.5px;color:var(--muted);max-width:420px;margin:0 auto;line-height:1.5;}
 
   /* ===== Avatar (initials chip used across list rows) ===== */
   .row-identity{display:flex;align-items:center;gap:13px;min-width:0;}
@@ -1140,6 +1142,12 @@
   }
   .detail-list-row:last-child{border-bottom:none;}
   .detail-empty{font-size:13px;color:var(--muted);padding:6px 0;}
+  .skeleton-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line-soft);}
+  .skeleton-row:last-child{border-bottom:none;}
+  .skeleton-bar{display:inline-block;height:12px;border-radius:4px;
+    background:linear-gradient(90deg,var(--line-soft) 25%,var(--line) 37%,var(--line-soft) 63%);
+    background-size:400% 100%;animation:skeletonPulse 1.4s ease infinite;}
+  @keyframes skeletonPulse{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
   .inline-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:flex-end;}
   .inline-form .modal-field{margin-bottom:0;flex:1;min-width:110px;}
   .inline-form .btn{padding:9px 16px;font-size:13.5px;flex-shrink:0;min-height:38px;}
@@ -3616,11 +3624,18 @@
       return boardMatchesSearch_(r, q);
     });
     if (!filtered || filtered.length === 0) {
-      el.innerHTML = '<div class="board-empty">' + (q
-        ? ('No cases match “' + escapeHtml(boardSearchQuery) + '”.')
-        : (selectedDoctorFilter
-          ? ('No active cases for ' + escapeHtml(selectedDoctorFilter) + ' right now.')
-          : 'No active cases right now.')) + '</div>';
+      if ((!rows || rows.length === 0) && !q && !selectedDoctorFilter) {
+        el.innerHTML = '<div class="board-empty">' +
+          '<div class="empty-state-title">No active cases yet</div>' +
+          '<div class="empty-state-sub">Every patient and case you add will show up here as a running board, sorted by what needs attention first.</div>' +
+        '</div>';
+      } else {
+        el.innerHTML = '<div class="board-empty">' + (q
+          ? ('No cases match “' + escapeHtml(boardSearchQuery) + '”.')
+          : (selectedDoctorFilter
+            ? ('No active cases for ' + escapeHtml(selectedDoctorFilter) + ' right now.')
+            : 'No active cases right now.')) + '</div>';
+      }
       return;
     }
     var sorted = filtered.slice();
@@ -3725,7 +3740,10 @@
     updatePatientsSortRow();
     var el = document.getElementById('app-patients');
     if (!patients || patients.length === 0) {
-      el.innerHTML = '<div class="board-empty">No patients yet — use "+ Add patient" to create the first one.</div>';
+      el.innerHTML = '<div class="board-empty">' +
+        '<div class="empty-state-title">No patients yet</div>' +
+        '<div class="empty-state-sub">Every patient you register — walk-in or converted from an enquiry — will show up here, searchable by name, phone or UHID. Use “+ Add patient” to create the first one.</div>' +
+      '</div>';
       return;
     }
     var q = patientsSearchQuery.trim().toLowerCase();
@@ -4063,7 +4081,10 @@
     updateEnquiriesSortRow();
     var el = document.getElementById('app-enquiries');
     if (!enquiries || enquiries.length === 0) {
-      el.innerHTML = '<div class="board-empty">No new enquiries — leads from your website contact form will show up here.</div>';
+      el.innerHTML = '<div class="board-empty">' +
+        '<div class="empty-state-title">No enquiries yet</div>' +
+        '<div class="empty-state-sub">Leads from your website’s contact form land here automatically — nothing to set up on your end.</div>' +
+      '</div>';
       return;
     }
     var q = enquiriesSearchQuery.trim().toLowerCase();
@@ -4605,8 +4626,8 @@
 
     document.getElementById('cd-save-status').textContent = '';
     document.getElementById('cd-save-status').className = 'modal-status';
-    document.getElementById('cd-appointments-list').innerHTML = '<div class="detail-empty">Loading…</div>';
-    document.getElementById('cd-payments-list').innerHTML = '<div class="detail-empty">Loading…</div>';
+    document.getElementById('cd-appointments-list').innerHTML = skeletonRowsHtml_();
+    document.getElementById('cd-payments-list').innerHTML = skeletonRowsHtml_();
     document.getElementById('cd-balance').textContent = '';
     document.getElementById('case-detail-modal').classList.add('open');
 
@@ -4650,6 +4671,16 @@
       archiveStatusEl.className = 'modal-status is-error';
     });
   });
+
+  // Two shimmer rows shaped like a real .detail-list-row, shown while
+  // the case-detail modal's appointments/payments calls are in flight
+  // (they fetch separately from the rest of the modal, which renders
+  // instantly). Widths are varied so it doesn't look like a literal
+  // repeated template.
+  function skeletonRowsHtml_() {
+    return '<div class="skeleton-row"><span class="skeleton-bar" style="width:58%"></span><span class="skeleton-bar" style="width:20%"></span></div>' +
+      '<div class="skeleton-row"><span class="skeleton-bar" style="width:44%"></span><span class="skeleton-bar" style="width:20%"></span></div>';
+  }
 
   function renderAppointments(appts) {
     var el = document.getElementById('cd-appointments-list');
