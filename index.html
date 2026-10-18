@@ -1469,6 +1469,42 @@
   @keyframes appSplashDot{0%,80%,100%{opacity:.35;transform:translateY(0);}40%{opacity:1;transform:translateY(-3px);}}
   @keyframes appSplashIn{from{opacity:0;transform:translateY(6px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   @media (prefers-reduced-motion:reduce){.app-splash-inner{animation:none;}.app-splash-dots span{animation:none;}}
+  /* === Mini brand lockup used inside the "by Zera Dental" attribution
+     link in all three header/footer spots — badge + two-tone wordmark
+     instead of plain text, reusing the canonical tooth-mark SVG. === */
+  .logo-dental-link .mini-lockup-badge{
+    width:13px;height:13px;border-radius:4px;flex-shrink:0;
+    background:linear-gradient(155deg,#13314f 0%,#0B1F33 100%);
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .logo-dental-link .mini-lockup-badge svg{display:block;}
+  .logo-dental-link .mini-lockup-word{color:var(--navy);font-weight:700;letter-spacing:-0.01em;}
+  .logo-dental-link .mini-lockup-word em{font-style:normal;color:var(--green-dark);}
+  .logo-dental-link:hover .mini-lockup-word{text-decoration:underline;}
+
+  /* === Full brand credibility badge in the marketing hero: badge +
+     "ZeraDental" wordmark + "A Zera Technologies Brand" tag, light-
+     background colors matching the original master lockup. === */
+  .hero-brand-badge-row{
+    display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;
+    padding:6px 14px 6px 6px;border-radius:999px;background:var(--surface);
+    border:1px solid var(--line-soft);box-shadow:var(--shadow-xs);
+  }
+  .hero-brand-badge-icon{
+    width:24px;height:24px;border-radius:7px;flex-shrink:0;
+    background:linear-gradient(155deg,#13314f 0%,#0B1F33 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hero-brand-badge-icon svg{display:block;}
+  .hero-brand-badge-word{font-size:13px;font-weight:800;letter-spacing:-0.01em;color:var(--navy);}
+  .hero-brand-badge-word em{font-style:normal;color:var(--green-dark);}
+  .hero-brand-badge-divider{color:var(--line);font-weight:400;}
+  .hero-brand-badge-tag{color:var(--muted);font-weight:700;letter-spacing:0.08em;font-size:10px;text-transform:uppercase;}
+  @media (max-width:480px){
+    .hero-brand-badge-row{margin-bottom:12px;padding:5px 12px 5px 5px;gap:7px;}
+    .hero-brand-badge-tag{display:none;}
+    .hero-brand-badge-divider{display:none;}
+  }
 </style>
 </head>
 <body>
@@ -1505,7 +1541,7 @@
     <span class="logo-badge"><svg viewBox="0 0 36 36" width="19" height="19" fill="none" stroke="#A7EBDA" stroke-width="1.125" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span>
     <span class="logo-text-col">
       <a href="/" class="logo-title-link" aria-label="Zera PMS home">Zera PMS</a>
-      <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link">by Zera Dental</a>
+      <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental"><span class="mini-lockup-badge"><svg viewBox="0 0 36 36" width="9" height="9" fill="none" stroke="#A7EBDA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="mini-lockup-word">Zera<em>Dental</em></span></a>
     </span>
   </div>
   <div class="header-actions">
@@ -1529,6 +1565,7 @@
   <section id="login" class="hero">
     <div class="hero-split">
       <div class="hero-copy">
+        <div class="hero-brand-badge-row"><span class="hero-brand-badge-icon"><svg viewBox="0 0 36 36" width="13" height="13" fill="none" stroke="#A7EBDA" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="hero-brand-badge-word">Zera<em>Dental</em></span><span class="hero-brand-badge-divider">&middot;</span><span class="hero-brand-badge-tag">A Zera Technologies Brand</span></div>
         <span class="pill"><span class="dot"></span> Built for dental clinics across India</span>
         <h1>No case<br><span class="accent">goes quiet.</span></h1>
         <p class="lede">
@@ -1658,7 +1695,7 @@
       <span class="logo-badge"><svg viewBox="0 0 36 36" width="19" height="19" fill="none" stroke="#A7EBDA" stroke-width="1.125" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span>
       <span class="logo-text-col">
         <span class="logo-title-link" style="cursor:default;">Zera PMS</span>
-        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link">by Zera Dental</a>
+        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental"><span class="mini-lockup-badge"><svg viewBox="0 0 36 36" width="9" height="9" fill="none" stroke="#A7EBDA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="mini-lockup-word">Zera<em>Dental</em></span></a>
       </span>
     </div>
     <div class="foot-links">
@@ -1680,7 +1717,7 @@
       <span class="logo-badge"><svg viewBox="0 0 36 36" width="19" height="19" fill="none" stroke="#A7EBDA" stroke-width="1.125" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span>
       <span class="logo-text-col">
         <a href="#" class="logo-title-link">Zera PMS</a>
-        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link">by Zera Dental</a>
+        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental"><span class="mini-lockup-badge"><svg viewBox="0 0 36 36" width="9" height="9" fill="none" stroke="#A7EBDA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="mini-lockup-word">Zera<em>Dental</em></span></a>
       </span>
     </div>
     <div class="app-user">
