@@ -1505,6 +1505,26 @@
     .hero-brand-badge-tag{display:none;}
     .hero-brand-badge-divider{display:none;}
   }
+  /* === Custom pull-to-refresh (signed-in dashboard only). Replaces the
+     browser's native pull-to-refresh, which does a full page reload, with
+     an in-app gesture that just re-fetches data. See the JS block below
+     for why this exists and why it's deliberately not overscroll-behavior
+     based. === */
+  #pull-refresh-indicator{
+    position:fixed;top:0;left:50%;width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(155deg,#13314f 0%,#0B1F33 100%);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow-lg),0 0 0 1px rgba(167,235,218,0.12) inset;
+    z-index:9500;pointer-events:none;opacity:0;
+    transform:translateX(-50%) translateY(-60px) scale(0.85);
+  }
+  #pull-refresh-indicator .pr-icon{width:18px;height:18px;display:none;}
+  #pull-refresh-indicator .pr-arrow{display:block;transition:transform 150ms ease;}
+  #pull-refresh-indicator.pr-armed .pr-arrow{transform:rotate(180deg);}
+  #pull-refresh-indicator.pr-spinning .pr-arrow{display:none;}
+  #pull-refresh-indicator.pr-spinning .pr-spinner{display:block;animation:spin .8s linear infinite;}
+  #pull-refresh-indicator.pr-done .pr-spinner{display:none;animation:none;}
+  #pull-refresh-indicator.pr-done .pr-check{display:block;}
 </style>
 </head>
 <body>
@@ -3012,6 +3032,136 @@
 
   initClinicBranding();
   restoreSavedSession().then(hideSplash_).catch(hideSplash_);
+
+  // ---- Custom pull-to-refresh (signed-in dashboard only) -----------------
+  // See the CSS comment above #pull-refresh-indicator for the why. This
+  // only arms when: the signed-in app view is showing, the touch starts at
+  // scrollTop 0, and the touch isn't inside an open modal or sort sheet
+  // (those keep their own normal internal scrolling untouched).
+  var PULL_THRESHOLD_ = 64;
+  var PULL_MAX_ = 110;
+  var pullStartY_ = null;
+  var pullActive_ = false;
+  var pullArmed_ = false;
+  var pullRefreshing_ = false;
+
+  function pullScrollTop_() {
+    return (document.scrollingElement || document.documentElement).scrollTop;
+  }
+
+  function pullIndicatorEl_() {
+    var el = document.getElementById('pull-refresh-indicator');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'pull-refresh-indicator';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML =
+        '<svg class="pr-icon pr-arrow" viewBox="0 0 20 20" fill="none" stroke="#A7EBDA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v11M5.5 11l4.5 4.5L14.5 11"/></svg>' +
+        '<svg class="pr-icon pr-spinner" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="rgba(167,235,218,0.25)" stroke-width="2.4"/><path d="M17.5 10a7.5 7.5 0 00-7.5-7.5" stroke="#A7EBDA" stroke-width="2.4" stroke-linecap="round"/></svg>' +
+        '<svg class="pr-icon pr-check" viewBox="0 0 20 20" fill="none" stroke="#A7EBDA" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function pullResetIndicator_() {
+    var el = document.getElementById('pull-refresh-indicator');
+    if (!el) return;
+    el.style.transition = 'opacity 180ms ease, transform 180ms ease';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(-60px) scale(0.85)';
+    el.classList.remove('pr-armed', 'pr-spinning', 'pr-done');
+  }
+
+  function pullTouchStart_(e) {
+    if (pullRefreshing_) return;
+    var appView = document.getElementById('app-view');
+    if (!appView || getComputedStyle(appView).display === 'none') return;
+    if (e.target.closest && e.target.closest('.modal-overlay.open, .sort-sheet-overlay.open')) return;
+    if (pullScrollTop_() > 0) return;
+    pullStartY_ = e.touches[0].clientY;
+    pullActive_ = false;
+    pullArmed_ = false;
+  }
+
+  function pullTouchMove_(e) {
+    if (pullStartY_ === null || pullRefreshing_) return;
+    if (pullScrollTop_() > 0) {
+      // Turned out to be a normal scroll, not a pull from the very top --
+      // bail out cleanly and let the page scroll as usual.
+      pullStartY_ = null;
+      if (pullActive_) { pullActive_ = false; pullResetIndicator_(); }
+      return;
+    }
+    var dy = e.touches[0].clientY - pullStartY_;
+    if (dy <= 0) {
+      if (pullActive_) { pullActive_ = false; pullResetIndicator_(); }
+      return;
+    }
+    pullActive_ = true;
+    e.preventDefault();
+    var dist = Math.min(PULL_MAX_, dy * 0.5);
+    var progress = Math.min(1, dist / PULL_THRESHOLD_);
+    pullArmed_ = progress >= 1;
+    var el = pullIndicatorEl_();
+    el.style.transition = 'none';
+    el.style.opacity = String(progress);
+    el.style.transform = 'translateX(-50%) translateY(' + (dist - 46) + 'px) scale(' + (0.85 + 0.15 * progress) + ')';
+    el.classList.toggle('pr-armed', pullArmed_);
+    el.classList.remove('pr-spinning', 'pr-done');
+  }
+
+  function pullTouchEnd_() {
+    if (pullStartY_ === null) return;
+    var wasArmed = pullArmed_;
+    var wasActive = pullActive_;
+    pullStartY_ = null;
+    pullActive_ = false;
+    pullArmed_ = false;
+    if (!wasActive) return;
+    if (wasArmed) {
+      pullTriggerRefresh_();
+    } else {
+      pullResetIndicator_();
+    }
+  }
+
+  // Re-fetches the dashboard the exact same way a returning signed-in user
+  // already gets it on boot (restoreSavedSession's apiCall('login', {})) and
+  // re-renders through the existing applyDashboardData() pipeline -- no new
+  // backend action, no full page reload, no splash.
+  function pullTriggerRefresh_() {
+    pullRefreshing_ = true;
+    var el = pullIndicatorEl_();
+    el.style.transition = 'opacity 180ms ease, transform 180ms ease';
+    el.style.opacity = '1';
+    el.style.transform = 'translateX(-50%) translateY(10px) scale(1)';
+    el.classList.remove('pr-armed', 'pr-done');
+    el.classList.add('pr-spinning');
+    apiCall('login', {}).then(function(res) {
+      if (res && res.ok && res.status === 'active') {
+        applyDashboardData(res);
+        if (res.sessionToken) {
+          zeraSessionToken = res.sessionToken;
+          try { localStorage.setItem('zeraSessionToken', zeraSessionToken); } catch (e) {}
+        }
+        el.classList.remove('pr-spinning');
+        el.classList.add('pr-done');
+        setTimeout(pullResetIndicator_, 550);
+      } else {
+        pullResetIndicator_();
+      }
+    }).catch(function() {
+      pullResetIndicator_();
+    }).then(function() {
+      pullRefreshing_ = false;
+    });
+  }
+
+  document.addEventListener('touchstart', pullTouchStart_, { passive: true });
+  document.addEventListener('touchmove', pullTouchMove_, { passive: false });
+  document.addEventListener('touchend', pullTouchEnd_, { passive: true });
+  document.addEventListener('touchcancel', pullTouchEnd_, { passive: true });
 
   function showMarketing() {
     document.getElementById('app-view').style.display = 'none';
