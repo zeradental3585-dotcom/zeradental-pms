@@ -2722,7 +2722,7 @@
     var quoteEl = document.getElementById('greeting-quote');
     if (!lineEl || !quoteEl) return;
     var firstActiveDoctor = currentDoctors.filter(function(d) { return d.active; })[0];
-    var doctorFirstName = firstActiveDoctor ? String(firstActiveDoctor.name).trim().split(/\s+/)[0] : '';
+    var doctorFirstName = firstActiveDoctor ? String(firstActiveDoctor.name).trim().replace(/^dr\.?\s+/i, '').split(/\s+/)[0] : '';
     var greetName = doctorFirstName ? (', Dr. ' + doctorFirstName) : '';
     lineEl.textContent = greetingPrefix_() + greetName + ' \ud83d\udc4b';
     quoteEl.textContent = '\u201c' + pickSessionQuote_() + '\u201d';
