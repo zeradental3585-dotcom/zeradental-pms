@@ -648,6 +648,37 @@
   .stat-icon svg{width:15px;height:15px;}
   .stat-icon-text{font-weight:800;font-size:13px;}
   .stat-tile.attn .stat-icon{background:var(--red-bg);color:var(--red);}
+  /* ===== Cyclic hero tiles (tap to switch Today / 7 days / 30 days) === */
+  .stat-tile.cyclic{position:relative;}
+  .stat-tile.cyclic::after{
+    content:'\21bb';position:absolute;top:12px;right:13px;font-size:12px;opacity:0.32;
+    color:inherit;pointer-events:none;
+  }
+  .dash-hero .stat-tile.cyclic::after{opacity:0.5;}
+  .stat-tile.switching{animation:statPulse .32s ease;}
+  @keyframes statPulse{0%{transform:scale(1);}40%{transform:scale(0.96);}100%{transform:scale(1);}}
+  .stat-periods{display:flex;gap:4px;margin-top:9px;}
+  .stat-period-dot-btn{appearance:none;border:none;background:none;padding:6px 3px;cursor:pointer;display:flex;align-items:center;}
+  .stat-period-dot{display:block;width:16px;height:4px;border-radius:999px;background:var(--line-soft);transition:background .15s ease,width .15s ease;}
+  .stat-period-dot-btn.active .stat-period-dot{background:var(--green-dark);width:22px;}
+  .dash-hero .stat-period-dot{background:rgba(255,255,255,0.22);}
+  .dash-hero .stat-period-dot-btn.active .stat-period-dot{background:#fff;}
+  .stat-delta{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:999px;vertical-align:middle;}
+  .stat-delta.up{background:rgba(16,185,129,0.16);color:var(--green-dark);}
+  .dash-hero .stat-delta.up{background:rgba(16,185,129,0.25);color:#6ee7b7;}
+  .stat-delta.down{background:rgba(220,38,38,0.12);color:var(--red);}
+  .dash-hero .stat-delta.down{background:rgba(248,113,113,0.22);color:#fca5a5;}
+  .stat-delta.new{background:rgba(37,99,235,0.14);color:#2563eb;}
+  .dash-hero .stat-delta.new{background:rgba(96,165,250,0.22);color:#93c5fd;}
+  .stat-delta.flat{background:var(--bg);color:var(--muted);}
+  .dash-hero .stat-delta.flat{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);}
+  @media (max-width:420px){
+    .stat-periods{margin-top:6px;}
+    .stat-period-dot{width:13px;height:3px;}
+    .stat-period-dot-btn.active .stat-period-dot{width:18px;}
+    .stat-delta{font-size:9.5px;padding:1px 5px;margin-left:4px;}
+    .stat-tile.cyclic::after{top:9px;right:10px;font-size:10px;}
+  }
   @media (max-width:420px){
     .stat-tile{padding:13px 14px;}
     .stat-tile .stat-num{font-size:21px;}
@@ -2844,29 +2875,145 @@
   var STAT_ICON_TRAY_ = '<path d="M3 11.2l1.4-6.3A1 1 0 0 1 5.4 4h9.2a1 1 0 0 1 1 .9L17 11.2"/><path d="M3 11.2h4a1 1 0 0 1 .9.55l.5 1a1 1 0 0 0 .9.55h1.4a1 1 0 0 0 .9-.55l.5-1a1 1 0 0 1 .9-.55h4v3.8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3.8z"/>';
 
   var attnPanelOpen = false; // "Needs attention" strip -- collapsed by default
+
+  // --- Hero stat tiles: Active cases (static) + two cyclic tiles --------
+  // Tile 1 (Active cases) behaves exactly like the old static tiles did:
+  // tap jumps to the tab that explains the number. Tiles 2 and 3 instead
+  // cycle Today -> 7 days -> 30 days on tap (or jump straight to a period
+  // via the small dot row), since that's the whole point of them -- the
+  // tab jump isn't lost, it's just one tap away via the Patients/Today
+  // tabs in the row right below, same as always.
+  var statsPatientsPeriod_ = 'today'; // 'today' | '7d' | '30d'
+  var statsIncomePeriod_ = 'today';
+  var STAT_PERIOD_LABELS_ = { today: 'Today', '7d': 'Last 7 days', '30d': 'Last 30 days' };
+
+  function daysAgoISO_(n) {
+    var d = new Date();
+    d.setDate(d.getDate() - n);
+    return isoOf(d);
+  }
+  function periodBounds_(period) {
+    var t = todayISO();
+    if (period === '7d') return { from: daysAgoISO_(6), to: t, prevFrom: daysAgoISO_(13), prevTo: daysAgoISO_(7) };
+    if (period === '30d') return { from: daysAgoISO_(29), to: t, prevFrom: daysAgoISO_(59), prevTo: daysAgoISO_(30) };
+    return { from: t, to: t, prevFrom: daysAgoISO_(1), prevTo: daysAgoISO_(1) }; // 'today'
+  }
+  function countPatientsInRange_(fromISO, toISO) {
+    var n = 0;
+    currentPatients.forEach(function(p) {
+      var iso = patientCreatedISO_(p);
+      if (iso && iso >= fromISO && iso <= toISO) n++;
+    });
+    return n;
+  }
+  function sumPaymentsInRange_(fromISO, toISO) {
+    var total = 0;
+    currentPayments.forEach(function(p) {
+      if (p.dateISO && p.dateISO >= fromISO && p.dateISO <= toISO) total += (Number(p.amount) || 0);
+    });
+    return total;
+  }
+  function formatShortDate_(iso) {
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+  // A small up/down/new badge comparing the current period to the
+  // immediately-preceding period of the same length -- e.g. this week vs
+  // last week. Silent (no badge) when there's no previous-period baseline
+  // to compare against, since a %% against zero is just noise, not signal.
+  function deltaBadgeHtml_(current, previous) {
+    if (previous <= 0) return current > 0 ? '<span class="stat-delta new">New</span>' : '';
+    var pct = Math.round(((current - previous) / previous) * 100);
+    if (pct === 0) return '<span class="stat-delta flat">No change</span>';
+    var cls = pct > 0 ? 'up' : 'down';
+    var arrow = pct > 0 ? '\u25b2' : '\u25bc';
+    return '<span class="stat-delta ' + cls + '">' + arrow + ' ' + Math.abs(pct) + '%</span>';
+  }
+  function patientsStatForPeriod_(period) {
+    var b = periodBounds_(period);
+    var count = countPatientsInRange_(b.from, b.to);
+    var labels = { today: 'New patients today', '7d': 'New patients (7 days)', '30d': 'New patients (30 days)' };
+    // No delta badge on 'today' -- one day vs the day before is too noisy
+    // for a typical clinic's daily volume to mean anything, and it would
+    // visually clash with the 'New patients today' label itself.
+    var deltaHtml = '';
+    if (period !== 'today') {
+      var prevCount = countPatientsInRange_(b.prevFrom, b.prevTo);
+      deltaHtml = deltaBadgeHtml_(count, prevCount);
+    }
+    return { value: count, label: labels[period], deltaHtml: deltaHtml };
+  }
+  // 'Today' falls back to the most recent day with any payment logged at
+  // all, labelled with that day's date, rather than showing a misleading
+  // zero before today's first payment comes in.
+  function incomeStatForPeriod_(period) {
+    var b = periodBounds_(period);
+    if (period === 'today') {
+      var todayAmt = sumPaymentsInRange_(b.from, b.to);
+      if (todayAmt > 0) {
+        // Same reasoning as patients: no delta badge on 'today'.
+        return { value: todayAmt, label: 'Income today', deltaHtml: '' };
+      }
+      var byDate = {};
+      currentPayments.forEach(function(p) {
+        if (!p.dateISO) return;
+        byDate[p.dateISO] = (byDate[p.dateISO] || 0) + (Number(p.amount) || 0);
+      });
+      var dates = Object.keys(byDate).filter(function(d) { return byDate[d] > 0; }).sort();
+      if (!dates.length) return { value: 0, label: 'Income today', deltaHtml: '' };
+      var lastDate = dates[dates.length - 1];
+      return { value: byDate[lastDate], label: 'Income \u00b7 ' + formatShortDate_(lastDate), deltaHtml: '' };
+    }
+    var amount = sumPaymentsInRange_(b.from, b.to);
+    var prevAmount = sumPaymentsInRange_(b.prevFrom, b.prevTo);
+    var labels = { '7d': 'Income (7 days)', '30d': 'Income (30 days)' };
+    return { value: amount, label: labels[period], deltaHtml: deltaBadgeHtml_(amount, prevAmount) };
+  }
+  function periodDotsHtml_(activePeriod, metric) {
+    var periods = ['today', '7d', '30d'];
+    return '<div class="stat-periods">' + periods.map(function(p) {
+      return '<button class="stat-period-dot-btn' + (p === activePeriod ? ' active' : '') + '" type="button" ' +
+        'data-metric="' + metric + '" data-period="' + p + '" aria-label="' + STAT_PERIOD_LABELS_[p] + '">' +
+        '<span class="stat-period-dot"></span></button>';
+    }).join('') + '</div>';
+  }
+  function tileHtml_(opts) {
+    var iconHtml = '<div class="stat-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + opts.icon + '</svg></div>';
+    var numHtml = opts.isFirst
+      ? ('<div class="stat-num" data-count-target="' + opts.num + '">0</div>')
+      : ('<div class="stat-num">' + opts.num + '</div>');
+    return '<div class="stat-tile" data-tab="' + opts.tab + '" role="button" tabindex="0">' +
+      iconHtml + numHtml +
+      '<div class="stat-label">' + escapeHtml(opts.label) + '</div>' +
+    '</div>';
+  }
+  function cyclicTileHtml_(opts) {
+    var iconHtml = opts.iconText
+      ? ('<div class="stat-icon stat-icon-text">' + escapeHtml(opts.iconText) + '</div>')
+      : ('<div class="stat-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + opts.icon + '</svg></div>');
+    var currencyAttr = opts.isCurrency ? ' data-currency="1"' : '';
+    var displayNum = opts.isCurrency ? ('\u20b9' + Number(opts.num || 0).toLocaleString('en-IN')) : String(opts.num);
+    var numHtml = opts.isFirst
+      ? ('<div class="stat-num" data-count-target="' + opts.num + '" data-raw-value="0"' + currencyAttr + '>' + (opts.isCurrency ? '\u20b90' : '0') + '</div>')
+      : ('<div class="stat-num" data-raw-value="' + opts.num + '"' + currencyAttr + '>' + displayNum + '</div>');
+    return '<div class="stat-tile cyclic" data-metric="' + opts.metric + '" role="button" tabindex="0" aria-label="Tap to switch time period">' +
+      iconHtml + numHtml +
+      '<div class="stat-label">' + escapeHtml(opts.label) + (opts.deltaHtml || '') + '</div>' +
+      periodDotsHtml_(opts.period, opts.metric) +
+    '</div>';
+  }
   function renderStats() {
-    // Every tile carries a data-tab so clicking it jumps straight to the
-    // tab that explains the number, instead of leaving the dentist to go
-    // hunt for it — 'click a number, see the thing behind it'.
-    var tiles = [
-      { num: currentPatients.length, label: 'Total patients', icon: STAT_ICON_PATIENTS_, tab: 'patients' },
-      { num: currentBoard.length, label: 'Active cases', icon: STAT_ICON_CASES_, tab: 'board' },
-      { num: currentEnquiries.length, label: 'New enquiries', icon: STAT_ICON_TRAY_, tab: 'enquiries' }
-    ];
     var isFirstStatsRender = !statsFirstRenderDone_;
-    document.getElementById('app-stats').innerHTML = tiles.map(function(t) {
-      var iconHtml = t.iconText
-        ? ('<div class="stat-icon stat-icon-text">' + t.iconText + '</div>')
-        : ('<div class="stat-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + t.icon + '</svg></div>');
-      var numHtml = isFirstStatsRender
-        ? ('<div class="stat-num" data-count-target="' + t.num + '">0</div>')
-        : ('<div class="stat-num">' + t.num + '</div>');
-      return '<div class="stat-tile' + (t.attn ? ' attn' : '') + '" data-tab="' + t.tab + '" role="button" tabindex="0">' +
-        iconHtml +
-        numHtml +
-        '<div class="stat-label">' + escapeHtml(t.label) + '</div>' +
-      '</div>';
-    }).join('');
+    var patientsStat = patientsStatForPeriod_(statsPatientsPeriod_);
+    var incomeStat = incomeStatForPeriod_(statsIncomePeriod_);
+    var html =
+      tileHtml_({ num: currentBoard.length, label: 'Active cases', icon: STAT_ICON_CASES_, tab: 'board', isFirst: isFirstStatsRender }) +
+      cyclicTileHtml_({ metric: 'patients', num: patientsStat.value, label: patientsStat.label, deltaHtml: patientsStat.deltaHtml,
+        icon: STAT_ICON_PATIENTS_, period: statsPatientsPeriod_, isFirst: isFirstStatsRender }) +
+      cyclicTileHtml_({ metric: 'income', num: incomeStat.value, label: incomeStat.label, deltaHtml: incomeStat.deltaHtml,
+        iconText: '\u20b9', period: statsIncomePeriod_, isFirst: isFirstStatsRender, isCurrency: true });
+    document.getElementById('app-stats').innerHTML = html;
     if (isFirstStatsRender) {
       statsFirstRenderDone_ = true;
       animateStatNumbers_();
@@ -2874,32 +3021,90 @@
     renderAttnPanel();
   }
 
+  // Animates one .stat-num element from whatever it's currently showing
+  // (data-raw-value) to a new target, eased so it settles rather than
+  // ticking linearly. Shared by first-paint (animateStatNumbers_, from 0)
+  // and period-switch (updateStatPeriodDisplay_, from the prior value) --
+  // counting between real values on switch reads as livelier than a
+  // reset-to-zero-and-recount would.
+  function animateStatNumberEl_(el, target, duration, isCurrency) {
+    var startVal = Number(el.getAttribute('data-raw-value')) || 0;
+    var start = null;
+    function step(ts) {
+      if (start === null) start = ts;
+      var progress = Math.min((ts - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      var val = Math.round(startVal + (target - startVal) * eased);
+      el.textContent = isCurrency ? ('\u20b9' + val.toLocaleString('en-IN')) : String(val);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = isCurrency ? ('\u20b9' + target.toLocaleString('en-IN')) : String(target);
+        el.setAttribute('data-raw-value', target);
+      }
+    }
+    requestAnimationFrame(step);
+  }
   // Counts each just-rendered stat-num up from 0 to its real value --
-  // first-paint only (see isFirstStatsRender above), eased so it settles
-  // rather than ticking linearly. ~700ms, matches the hero card's other
-  // motion timings elsewhere in this file.
+  // first-paint only, eased so it settles rather than ticking linearly.
+  // ~700ms, matches the hero card's other motion timings elsewhere in
+  // this file.
   function animateStatNumbers_() {
     var els = document.querySelectorAll('#app-stats .stat-num[data-count-target]');
     els.forEach(function(el) {
       var target = parseInt(el.getAttribute('data-count-target'), 10) || 0;
-      if (!target) { el.textContent = '0'; return; }
-      var duration = 700;
-      var start = null;
-      function step(ts) {
-        if (start === null) start = ts;
-        var progress = Math.min((ts - start) / duration, 1);
-        var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        el.textContent = Math.round(target * eased);
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else {
-          el.textContent = target;
-        }
-      }
-      requestAnimationFrame(step);
+      var isCurrency = el.hasAttribute('data-currency');
+      if (!target) { el.textContent = isCurrency ? '\u20b90' : '0'; el.setAttribute('data-raw-value', '0'); return; }
+      animateStatNumberEl_(el, target, 700, isCurrency);
     });
   }
+  // Updates just one cyclic tile's number/label/dots in place (no full
+  // re-render of all three tiles) -- quicker, and lets the count animate
+  // from its old value instead of flashing.
+  function updateStatPeriodDisplay_(metric) {
+    var period = metric === 'patients' ? statsPatientsPeriod_ : statsIncomePeriod_;
+    var stat = metric === 'patients' ? patientsStatForPeriod_(period) : incomeStatForPeriod_(period);
+    var tile = document.querySelector('.stat-tile.cyclic[data-metric="' + metric + '"]');
+    if (!tile) return;
+    var numEl = tile.querySelector('.stat-num');
+    var labelEl = tile.querySelector('.stat-label');
+    tile.classList.add('switching');
+    setTimeout(function() { tile.classList.remove('switching'); }, 320);
+    animateStatNumberEl_(numEl, stat.value, 420, metric === 'income');
+    labelEl.innerHTML = escapeHtml(stat.label) + (stat.deltaHtml || '');
+    tile.querySelectorAll('.stat-period-dot-btn').forEach(function(dot) {
+      dot.classList.toggle('active', dot.dataset.period === period);
+    });
+  }
+  function cycleStatPeriod_(metric) {
+    var order = ['today', '7d', '30d'];
+    if (metric === 'patients') {
+      statsPatientsPeriod_ = order[(order.indexOf(statsPatientsPeriod_) + 1) % order.length];
+    } else if (metric === 'income') {
+      statsIncomePeriod_ = order[(order.indexOf(statsIncomePeriod_) + 1) % order.length];
+    } else {
+      return;
+    }
+    updateStatPeriodDisplay_(metric);
+  }
+  function setStatPeriod_(metric, period) {
+    if (metric === 'patients') statsPatientsPeriod_ = period;
+    else if (metric === 'income') statsIncomePeriod_ = period;
+    else return;
+    updateStatPeriodDisplay_(metric);
+  }
   document.getElementById('app-stats').addEventListener('click', function(e) {
+    var dotBtn = e.target.closest('.stat-period-dot-btn');
+    if (dotBtn) {
+      e.stopPropagation();
+      setStatPeriod_(dotBtn.dataset.metric, dotBtn.dataset.period);
+      return;
+    }
+    var cyclicTile = e.target.closest('.stat-tile.cyclic');
+    if (cyclicTile) {
+      cycleStatPeriod_(cyclicTile.dataset.metric);
+      return;
+    }
     var tile = e.target.closest('.stat-tile');
     if (!tile || !tile.dataset.tab) return;
     var tabBtn = document.querySelector('.app-tab[data-tab="' + tile.dataset.tab + '"]');
