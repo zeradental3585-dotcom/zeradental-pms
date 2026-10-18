@@ -1262,10 +1262,9 @@
        it visually obvious there's more to scroll to. */
     .range-pills{
       max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-      scroll-snap-type:x proximity;
     }
     .range-pills::-webkit-scrollbar{display:none;}
-    .range-pill{white-space:nowrap;padding:7px 12px;font-size:13px;flex-shrink:0;scroll-snap-align:start;}
+    .range-pill{white-space:nowrap;padding:7px 12px;font-size:13px;flex-shrink:0;}
   }
 
   /* ===== Today tab: two-column layout ===== */
@@ -3338,9 +3337,15 @@
       // Same reasoning as the income tile: fall back to the most recent
       // day with any patient activity logged at all, labelled with that
       // day's date, rather than showing a misleading zero before today's
-      // first patient has turned up.
+      // first patient has turned up. Restricted to dates up to and including
+      // today -- the activity map also includes appointments that are
+      // merely booked/scheduled for a future date, which aren't "activity"
+      // that has actually happened yet and must never be picked here (this
+      // is what previously showed a date like "19 Oct" while today was
+      // still the 18th).
+      var todayISO_ = todayISO();
       var byDate = buildPatientActivityByDate_();
-      var dates = Object.keys(byDate).filter(function(d) { return Object.keys(byDate[d]).length > 0; }).sort();
+      var dates = Object.keys(byDate).filter(function(d) { return d <= todayISO_ && Object.keys(byDate[d]).length > 0; }).sort();
       if (!dates.length) return { value: 0, label: labels.today, deltaHtml: '' };
       var lastDate = dates[dates.length - 1];
       return { value: Object.keys(byDate[lastDate]).length, label: 'Patients \u00b7 ' + formatShortDate_(lastDate), deltaHtml: '' };
@@ -3360,12 +3365,13 @@
         // Same reasoning as patients: no delta badge on 'today'.
         return { value: todayAmt, label: 'Income today', deltaHtml: '' };
       }
+      var todayISO_ = todayISO();
       var byDate = {};
       currentPayments.forEach(function(p) {
         if (!p.dateISO) return;
         byDate[p.dateISO] = (byDate[p.dateISO] || 0) + (Number(p.amount) || 0);
       });
-      var dates = Object.keys(byDate).filter(function(d) { return byDate[d] > 0; }).sort();
+      var dates = Object.keys(byDate).filter(function(d) { return d <= todayISO_ && byDate[d] > 0; }).sort();
       if (!dates.length) return { value: 0, label: 'Income today', deltaHtml: '' };
       var lastDate = dates[dates.length - 1];
       return { value: byDate[lastDate], label: 'Income \u00b7 ' + formatShortDate_(lastDate), deltaHtml: '' };
