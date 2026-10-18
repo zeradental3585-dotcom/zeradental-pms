@@ -141,11 +141,11 @@
     box-shadow:0 4px 10px -3px rgba(11,31,51,0.55),inset 0 1px 0 rgba(255,255,255,0.10);
   }
   .logo-badge svg{display:block;}
-  .logo-text-col{display:flex;flex-direction:column;line-height:1.3;}
+  .logo-text-col{display:flex;flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:6px;line-height:1.3;}
   .logo-title-link{font-weight:800;font-size:18px;letter-spacing:-0.02em;color:inherit;text-decoration:none;cursor:pointer;}
   .logo-dental-link{
-    color:var(--muted);font-weight:600;font-size:11.5px;letter-spacing:0.01em;text-decoration:none;
-    display:inline-flex;align-items:center;gap:3px;width:fit-content;transition:color .15s ease;
+    color:var(--muted);font-weight:600;font-size:12px;letter-spacing:0.01em;text-decoration:none;
+    white-space:nowrap;transition:color .15s ease;
   }
   .logo-dental-link:hover{color:var(--green-dark);text-decoration:underline;}
   .header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;}
@@ -435,6 +435,9 @@
   .app-main-head > div:first-child{flex:1;min-width:0;}
   .app-main h1{font-size:27px;margin:0 0 6px;letter-spacing:-0.02em;color:var(--navy);}
   .app-sub{color:var(--muted);font-size:14.5px;margin:0;}
+  .app-greeting{display:flex;flex-direction:column;gap:3px;}
+  .greeting-line{font-weight:700;font-size:14.5px;}
+  .greeting-quote{font-size:12.5px;font-style:italic;opacity:.85;}
   /* A dentist signed in here lives inside #app-view all day and never sees
      the marketing page's big <footer> — this is the only branding mark
      that view gets. Kept deliberately small and muted so it never competes
@@ -1082,12 +1085,15 @@
   .tab-filter-row{display:flex;gap:10px;margin-bottom:16px;}
   .tab-filter-row .tab-search-bar{flex:1;min-width:0;margin-bottom:0;}
   .tab-sort-btn{
-    appearance:none;height:100%;padding:0 16px;border-radius:999px;border:1px solid var(--line);
-    font-size:13.5px;font-weight:700;font-family:inherit;background:var(--surface);color:var(--ink-soft);
-    box-shadow:var(--shadow-xs);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
-    flex-shrink:0;transition:border-color .15s ease,color .15s ease,background .15s ease;
+    appearance:none;height:100%;padding:0 17px;border-radius:999px;border:1px solid var(--line-soft);
+    font-size:13.5px;font-weight:700;font-family:inherit;color:var(--ink-soft);
+    background:linear-gradient(180deg,#ffffff 0%,#f7f9fa 100%);
+    box-shadow:var(--shadow-xs),inset 0 1px 0 rgba(255,255,255,0.85);
+    cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
+    flex-shrink:0;transition:border-color .15s ease,color .15s ease,box-shadow .2s ease,transform .12s ease;
   }
-  .tab-sort-btn:hover{border-color:var(--green);}
+  .tab-sort-btn:hover{border-color:var(--green);box-shadow:var(--shadow-card-hover);}
+  .tab-sort-btn:active{transform:scale(.96);}
   .tab-sort-btn svg{width:15px;height:15px;flex-shrink:0;}
   @media (max-width:420px){.tab-sort-btn{padding:0 12px;font-size:13px;}}
 
@@ -1100,50 +1106,59 @@
   .sort-sheet-overlay.open{display:flex;animation:fadeIn .15s ease;}
   .sort-sheet{
     background:var(--surface);width:100%;max-width:440px;border-radius:var(--r-xl) var(--r-xl) 0 0;
-    padding:10px 8px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -24px 54px -18px rgba(6,10,15,0.4);
+    padding:10px 8px calc(16px + env(safe-area-inset-bottom));
+    box-shadow:0 -30px 60px -16px rgba(6,10,15,0.45),0 -1px 0 rgba(255,255,255,0.5) inset;
     max-height:72vh;overflow-y:auto;animation:sheetUp .22s cubic-bezier(.22,.9,.3,1.05);
   }
   @keyframes sheetUp{from{transform:translateY(18px);opacity:0;}to{transform:translateY(0);opacity:1;}}
   .sort-sheet-handle{width:36px;height:4px;border-radius:999px;background:var(--line);margin:4px auto 14px;}
-  .sort-sheet-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted-2);padding:0 14px 8px;}
+  .sort-sheet-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-2);padding:0 14px 10px;}
   .sort-sheet-options{display:flex;flex-direction:column;padding:0 4px;}
   .sort-sheet-option{
     display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
     background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;
     padding:13px 12px;border-radius:var(--r-md);font-size:14.5px;font-weight:600;color:var(--ink-soft);
-    transition:background .12s ease;
+    transition:background .15s ease,box-shadow .15s ease;
   }
   .sort-sheet-option:hover{background:var(--bg);}
-  .sort-sheet-option.active{color:var(--green-dark);font-weight:700;background:var(--green-soft);}
+  .sort-sheet-option.active{
+    color:var(--green-dark);font-weight:700;
+    background:linear-gradient(135deg,var(--green-soft) 0%,#eafaf3 100%);
+    box-shadow:inset 0 0 0 1px rgba(5,150,105,0.16);
+  }
   .sort-sheet-check{width:17px;height:17px;color:var(--green-dark);flex-shrink:0;}
   @media (min-width:700px){
     .sort-sheet-overlay{align-items:center;}
     .sort-sheet{border-radius:var(--r-xl);max-height:80vh;}
   }
 
-  .patients-search-bar{margin-bottom:16px;}
-  .patients-search-bar input{
-    width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);
-    font-size:14.5px;font-family:inherit;background:var(--surface);color:var(--navy);
-    box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
+  .patients-search-bar,.tab-search-bar{margin-bottom:16px;position:relative;}
+  .patients-search-bar input,.tab-search-bar input{
+    width:100%;padding:12.5px 16px 12.5px 42px;border-radius:999px;border:1px solid var(--line-soft);
+    font-size:14.5px;font-family:inherit;color:var(--navy);background-color:var(--surface);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23919aa3' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='8.7' cy='8.7' r='5.7'/%3E%3Cpath d='M17 17l-3.8-3.8'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:15px center;background-size:16px 16px;
+    box-shadow:var(--shadow-xs),inset 0 1px 0 rgba(255,255,255,0.7);
+    transition:border-color .15s ease,box-shadow .2s ease,background-color .15s ease;
   }
-  .patients-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
-  .tab-search-bar{margin-bottom:16px;}
-  .tab-search-bar input{
-    width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);
-    font-size:14.5px;font-family:inherit;background:var(--surface);color:var(--navy);
-    box-shadow:var(--shadow-xs);transition:border-color .15s ease,box-shadow .15s ease;
+  .patients-search-bar input:hover,.tab-search-bar input:hover{border-color:var(--line);}
+  .patients-search-bar input:focus,.tab-search-bar input:focus{
+    outline:none;border-color:var(--green);background-color:#fff;
+    box-shadow:0 0 0 4px var(--green-ring),var(--shadow-sm);
   }
-  .tab-search-bar input:focus{outline:none;border-color:var(--green);box-shadow:var(--focus-ring);}
   .patients-filter-bar{display:flex;gap:10px;margin-bottom:16px;}
   .patients-filter-bar .patients-search-bar{flex:1;margin-bottom:0;}
   .patients-doctor-filter-wrap{position:relative;flex-shrink:0;}
   .patients-doctor-filter-btn{
-    appearance:none;height:100%;padding:0 16px;border-radius:999px;border:1px solid var(--line);
-    font-size:13.5px;font-weight:700;font-family:inherit;background:var(--surface);color:var(--ink-soft);
-    box-shadow:var(--shadow-xs);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
+    appearance:none;height:100%;padding:0 17px;border-radius:999px;border:1px solid var(--line-soft);
+    font-size:13.5px;font-weight:700;font-family:inherit;color:var(--ink-soft);
+    background:linear-gradient(180deg,#ffffff 0%,#f7f9fa 100%);
+    box-shadow:var(--shadow-xs),inset 0 1px 0 rgba(255,255,255,0.85);
+    cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
+    transition:border-color .15s ease,box-shadow .2s ease,transform .12s ease;
   }
-  .patients-doctor-filter-btn:hover{border-color:var(--green);}
+  .patients-doctor-filter-btn:hover{border-color:var(--green);box-shadow:var(--shadow-card-hover);}
+  .patients-doctor-filter-btn:active{transform:scale(.96);}
   .patients-doctor-filter-btn.is-active{border-color:var(--green);color:var(--green-dark);background:var(--green-soft);}
   .pdf-count{background:var(--green);color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:1px 6px;}
   .patients-doctor-filter-menu{
@@ -1359,6 +1374,14 @@
   }
   .insights-growth-caption{font-size:12px;color:var(--muted);margin:-4px 2px 2px;}
   .insights-growth-svg{width:100%;height:84px;display:block;}
+  .growth-dot-hit{cursor:pointer;}
+  .growth-tooltip{
+    position:fixed;transform:translate(-50%,calc(-100% - 10px));background:var(--navy);color:#fff;
+    font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;box-shadow:var(--shadow-md);
+    pointer-events:none;opacity:0;transition:opacity .15s ease;z-index:2000;white-space:nowrap;
+  }
+  .growth-tooltip.visible{opacity:1;}
+  .growth-tooltip::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--navy);}
   .insights-growth-labels{display:flex;justify-content:space-between;padding:0 10px;margin-top:2px;}
   .insights-growth-labels span{font-size:11px;color:var(--muted);}
   .insights-stage-list{margin-bottom:20px;}
@@ -1469,19 +1492,6 @@
   @keyframes appSplashDot{0%,80%,100%{opacity:.35;transform:translateY(0);}40%{opacity:1;transform:translateY(-3px);}}
   @keyframes appSplashIn{from{opacity:0;transform:translateY(6px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   @media (prefers-reduced-motion:reduce){.app-splash-inner{animation:none;}.app-splash-dots span{animation:none;}}
-  /* === Mini brand lockup used inside the "by Zera Dental" attribution
-     link in all three header/footer spots — badge + two-tone wordmark
-     instead of plain text, reusing the canonical tooth-mark SVG. === */
-  .logo-dental-link .mini-lockup-badge{
-    width:13px;height:13px;border-radius:4px;flex-shrink:0;
-    background:linear-gradient(155deg,#13314f 0%,#0B1F33 100%);
-    display:inline-flex;align-items:center;justify-content:center;
-  }
-  .logo-dental-link .mini-lockup-badge svg{display:block;}
-  .logo-dental-link .mini-lockup-word{color:var(--navy);font-weight:700;letter-spacing:-0.01em;}
-  .logo-dental-link .mini-lockup-word em{font-style:normal;color:var(--green-dark);}
-  .logo-dental-link:hover .mini-lockup-word{text-decoration:underline;}
-
   /* === Full brand credibility badge in the marketing hero: badge +
      "ZeraDental" wordmark + "A Zera Technologies Brand" tag, light-
      background colors matching the original master lockup. === */
@@ -1561,7 +1571,7 @@
     <span class="logo-badge"><svg viewBox="0 0 36 36" width="19" height="19" fill="none" stroke="#A7EBDA" stroke-width="1.125" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span>
     <span class="logo-text-col">
       <a href="/" class="logo-title-link" aria-label="Zera PMS home">Zera PMS</a>
-      <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental"><span class="mini-lockup-badge"><svg viewBox="0 0 36 36" width="9" height="9" fill="none" stroke="#A7EBDA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="mini-lockup-word">Zera<em>Dental</em></span></a>
+      <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental">by Zera Dental</a>
     </span>
   </div>
   <div class="header-actions">
@@ -1715,7 +1725,7 @@
       <span class="logo-badge"><svg viewBox="0 0 36 36" width="19" height="19" fill="none" stroke="#A7EBDA" stroke-width="1.125" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span>
       <span class="logo-text-col">
         <span class="logo-title-link" style="cursor:default;">Zera PMS</span>
-        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental"><span class="mini-lockup-badge"><svg viewBox="0 0 36 36" width="9" height="9" fill="none" stroke="#A7EBDA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="mini-lockup-word">Zera<em>Dental</em></span></a>
+        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental">by Zera Dental</a>
       </span>
     </div>
     <div class="foot-links">
@@ -1737,7 +1747,7 @@
       <span class="logo-badge"><svg viewBox="0 0 36 36" width="19" height="19" fill="none" stroke="#A7EBDA" stroke-width="1.125" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span>
       <span class="logo-text-col">
         <a href="#" class="logo-title-link">Zera PMS</a>
-        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental"><span class="mini-lockup-badge"><svg viewBox="0 0 36 36" width="9" height="9" fill="none" stroke="#A7EBDA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.9 8.55c-1.65 0-2.75 1.275-2.75 3.15 0 1.5.375 2.475.675 3.75.225.975.3 1.725.375 2.925.075 1.275.3 2.325.675 3 .3.525.75.825 1.2.825.675 0 1.05-.525 1.275-1.5.225-.9.3-1.95.525-2.775.15-.675.45-1.125.825-1.125s.675.45.825 1.125c.225.825.3 1.875.525 2.775.225.975.6 1.5 1.275 1.5.45 0 .9-.3 1.2-.825.375-.675.6-1.725.675-3 .075-1.2.15-1.95.375-2.925.3-1.275.675-2.25.675-3.75 0-1.875-1.05-3.15-2.7-3.15-1.05 0-1.725.375-2.85.375s-1.8-.375-2.85-.375Z"/></svg></span><span class="mini-lockup-word">Zera<em>Dental</em></span></a>
+        <a href="https://zeradental.in/" target="_blank" rel="noopener noreferrer" class="logo-dental-link" aria-label="by Zera Dental">by Zera Dental</a>
       </span>
     </div>
     <div class="app-user">
@@ -1751,7 +1761,10 @@
       <div class="app-main-head">
         <div>
           <h1 id="app-clinic-title">Dashboard</h1>
-          <p class="app-sub">Every patient, case, enquiry and payment — all in one place.</p>
+          <p class="app-sub app-greeting" id="app-greeting">
+            <span class="greeting-line" id="greeting-line">Welcome back</span>
+            <span class="greeting-quote" id="greeting-quote"></span>
+          </p>
         </div>
         <div class="app-main-actions">
           <div class="more-menu-wrap">
@@ -2641,6 +2654,80 @@
     }
   }
 
+  // --- Hero greeting: time-of-day + the clinic's lead doctor, plus a
+  // rotating motivating quote -- replaces the old static "Every patient,
+  // case, enquiry and payment..." tagline with something that actually
+  // changes and feels personal. The quote is picked once per session
+  // (boot time, in showDashboard) so it doesn't flicker on every save;
+  // the greeting line itself re-renders on every dashboard refresh so
+  // the time-of-day and doctor name always stay current. -------------------
+  var HERO_QUOTES_ = [
+    'Small, steady care adds up to a lifetime of healthy smiles.',
+    'Every patient who walks in today is trusting you with something personal.',
+    'A calm, well-run clinic is its own kind of healing.',
+    'The best appointment is the one a nervous patient forgets to be nervous about.',
+    'Consistency is the quiet ingredient behind every great practice.',
+    'One good visit builds trust that outlasts a hundred ads.',
+    'Great care is just attention, repeated with patience.',
+    'Today\u2019s small fixes are tomorrow\u2019s confident smiles.',
+    'A clinic that listens well treats better.',
+    'Progress, not perfection \u2014 one patient at a time.',
+    'The details patients never notice are the ones that keep them coming back.',
+    'Kindness is free and it shows up in every chart note.',
+    'Excellence is a habit built one appointment at a time.',
+    'Your calm is contagious \u2014 patients feel it the moment they sit down.',
+    'The clinics people recommend are the ones that made them feel safe.',
+    'Every chair you fill with care is a relationship, not just a visit.',
+    'A tidy board today means a lighter day tomorrow.',
+    'Patients remember how you made them feel more than what you did.',
+    'Discipline in the small things builds trust in the big things.',
+    'A clear treatment plan is a form of respect.',
+    'The work is slow and personal \u2014 that\u2019s exactly why it matters.',
+    'Showing up fully for one patient is never wasted effort.',
+    'Great practices are built visit by visit, not overnight.',
+    'A gentle hand and a clear plan \u2014 that\u2019s the whole job, really.',
+    'Today is another chance to be the reason someone smiles with confidence.',
+    'The quiet, careful work is usually the work that matters most.',
+    'Every follow-up call is a small promise kept.',
+    'Patients don\u2019t remember perfect \u2014 they remember cared for.',
+    'A well-run day starts with a clear board and a clear head.',
+    'The best marketing is a patient who felt genuinely looked after.',
+    'Steady hands, steady heart, steady practice.',
+    'One honest conversation builds more trust than any brochure.',
+    'The little things \u2014 a follow-up text, a remembered name \u2014 are the big things.',
+    'Care, repeated daily, becomes a reputation.',
+    'Today\u2019s patients are tomorrow\u2019s referrals \u2014 treat every visit like the first.',
+    'A clinic runs on care; everything else is just logistics.'
+  ];
+  var heroQuoteForSession_ = null;
+  function pickSessionQuote_() {
+    if (!heroQuoteForSession_) {
+      heroQuoteForSession_ = HERO_QUOTES_[Math.floor(Math.random() * HERO_QUOTES_.length)];
+    }
+    return heroQuoteForSession_;
+  }
+  function greetingPrefix_() {
+    var h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    if (h < 21) return 'Good evening';
+    return 'Working late';
+  }
+  // "The main dentist" has no dedicated flag in the data model, so this
+  // reuses the exact same convention already standing project-wide for
+  // every other doctor default (add-patient form, etc.): the first
+  // active doctor in the clinic's roster, never hardcoded.
+  function renderHeroGreeting_() {
+    var lineEl = document.getElementById('greeting-line');
+    var quoteEl = document.getElementById('greeting-quote');
+    if (!lineEl || !quoteEl) return;
+    var firstActiveDoctor = currentDoctors.filter(function(d) { return d.active; })[0];
+    var doctorFirstName = firstActiveDoctor ? String(firstActiveDoctor.name).trim().split(/\s+/)[0] : '';
+    var greetName = doctorFirstName ? (', Dr. ' + doctorFirstName) : '';
+    lineEl.textContent = greetingPrefix_() + greetName + ' \ud83d\udc4b';
+    quoteEl.textContent = '\u201c' + pickSessionQuote_() + '\u201d';
+  }
+
   function showDashboard(res) {
     document.getElementById('marketing-view').style.display = 'none';
     document.getElementById('app-view').style.display = 'block';
@@ -2703,6 +2790,7 @@
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
     renderToday();
     renderStats();
+    renderHeroGreeting_();
     renderTodayProgress_();
     renderInsights();
     setTabCount('board', currentBoard.length);
@@ -3210,13 +3298,35 @@
     if (period === '30d') return { from: daysAgoISO_(29), to: t, prevFrom: daysAgoISO_(59), prevTo: daysAgoISO_(30) };
     return { from: t, to: t, prevFrom: daysAgoISO_(1), prevTo: daysAgoISO_(1) }; // 'today'
   }
-  function countPatientsInRange_(fromISO, toISO) {
-    var n = 0;
-    currentPatients.forEach(function(p) {
-      var iso = patientCreatedISO_(p);
-      if (iso && iso >= fromISO && iso <= toISO) n++;
+  // "Patients" here means anyone who actually turned up that day -- a
+  // non-cancelled appointment or a logged payment -- not just newly-
+  // registered patients, so a returning patient's visit counts the same
+  // as a new one's. Built from the same appointments/payments data
+  // already loaded for every other tab, so this needs no new backend call.
+  function buildPatientActivityByDate_() {
+    var byDate = {};
+    currentAppointments.forEach(function(a) {
+      if (!a.dateISO || a.status === 'Cancelled') return;
+      var uhid = a.patientId || caseIdToPatientId[a.caseId];
+      if (!uhid) return;
+      (byDate[a.dateISO] = byDate[a.dateISO] || {})[uhid] = true;
     });
-    return n;
+    currentPayments.forEach(function(p) {
+      if (!p.dateISO) return;
+      var uhid = p.patientId || caseIdToPatientId[p.caseId];
+      if (!uhid) return;
+      (byDate[p.dateISO] = byDate[p.dateISO] || {})[uhid] = true;
+    });
+    return byDate;
+  }
+  function countPatientsInRange_(fromISO, toISO) {
+    var byDate = buildPatientActivityByDate_();
+    var seen = {};
+    Object.keys(byDate).forEach(function(d) {
+      if (d < fromISO || d > toISO) return;
+      Object.keys(byDate[d]).forEach(function(uhid) { seen[uhid] = true; });
+    });
+    return Object.keys(seen).length;
   }
   function sumPaymentsInRange_(fromISO, toISO) {
     var total = 0;
@@ -3244,17 +3354,27 @@
   }
   function patientsStatForPeriod_(period) {
     var b = periodBounds_(period);
-    var count = countPatientsInRange_(b.from, b.to);
-    var labels = { today: 'New patients today', '7d': 'New patients (7 days)', '30d': 'New patients (30 days)' };
-    // No delta badge on 'today' -- one day vs the day before is too noisy
-    // for a typical clinic's daily volume to mean anything, and it would
-    // visually clash with the 'New patients today' label itself.
-    var deltaHtml = '';
-    if (period !== 'today') {
-      var prevCount = countPatientsInRange_(b.prevFrom, b.prevTo);
-      deltaHtml = deltaBadgeHtml_(count, prevCount);
+    var labels = { today: 'Patients today', '7d': 'Patients (7 days)', '30d': 'Patients (30 days)' };
+    if (period === 'today') {
+      var todayCount = countPatientsInRange_(b.from, b.to);
+      if (todayCount > 0) {
+        // No delta badge on 'today' -- one day vs the day before is too
+        // noisy for a typical clinic's daily volume to mean anything.
+        return { value: todayCount, label: labels.today, deltaHtml: '' };
+      }
+      // Same reasoning as the income tile: fall back to the most recent
+      // day with any patient activity logged at all, labelled with that
+      // day's date, rather than showing a misleading zero before today's
+      // first patient has turned up.
+      var byDate = buildPatientActivityByDate_();
+      var dates = Object.keys(byDate).filter(function(d) { return Object.keys(byDate[d]).length > 0; }).sort();
+      if (!dates.length) return { value: 0, label: labels.today, deltaHtml: '' };
+      var lastDate = dates[dates.length - 1];
+      return { value: Object.keys(byDate[lastDate]).length, label: 'Patients \u00b7 ' + formatShortDate_(lastDate), deltaHtml: '' };
     }
-    return { value: count, label: labels[period], deltaHtml: deltaHtml };
+    var count = countPatientsInRange_(b.from, b.to);
+    var prevCount = countPatientsInRange_(b.prevFrom, b.prevTo);
+    return { value: count, label: labels[period], deltaHtml: deltaBadgeHtml_(count, prevCount) };
   }
   // 'Today' falls back to the most recent day with any payment logged at
   // all, labelled with that day's date, rather than showing a misleading
@@ -3655,6 +3775,20 @@
   // filtered by the Insights range pill -- a trend is inherently a
   // lifetime view, so it stays stable and comparable no matter which
   // range the rest of the tab is scoped to.
+  function smoothPathD_(points) {
+    if (points.length < 2) return '';
+    var d = 'M' + points[0].x.toFixed(2) + ',' + points[0].y.toFixed(2);
+    for (var i = 0; i < points.length - 1; i++) {
+      var p0 = points[i === 0 ? 0 : i - 1];
+      var p1 = points[i];
+      var p2 = points[i + 1];
+      var p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+      var c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+      var c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+      d += ' C' + c1x.toFixed(2) + ',' + c1y.toFixed(2) + ' ' + c2x.toFixed(2) + ',' + c2y.toFixed(2) + ' ' + p2.x.toFixed(2) + ',' + p2.y.toFixed(2);
+    }
+    return d;
+  }
   function buildGrowthChartHtml_() {
     var now = new Date();
     var months = [];
@@ -3684,20 +3818,31 @@
       var y = padTop + (chartH - padTop - padBottom) * (1 - c / maxCount);
       return { x: x, y: y, c: c };
     });
-    var pathD = points.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
-    var areaD = pathD + ' L' + points[points.length - 1].x.toFixed(1) + ',' + (chartH - padBottom).toFixed(1) +
-      ' L' + points[0].x.toFixed(1) + ',' + (chartH - padBottom).toFixed(1) + ' Z';
-    var dots = points.map(function(p) {
-      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="#047857" stroke="#fff" stroke-width="1.5"/>' +
-        '<title>' + escapeHtml(p.c + (p.c === 1 ? ' patient' : ' patients')) + '</title>';
+    // A smooth Catmull-Rom-to-Bezier curve reads as a far more "proper",
+    // premium chart than the old straight-segment polyline, especially
+    // once it draws itself in (see animateGrowthLine_).
+    var pathD = smoothPathD_(points);
+    var areaD = pathD + ' L' + points[points.length - 1].x.toFixed(2) + ',' + (chartH - padBottom).toFixed(2) +
+      ' L' + points[0].x.toFixed(2) + ',' + (chartH - padBottom).toFixed(2) + ' Z';
+    // Two circles per point: a near-invisible, much larger one purely as
+    // a real tap/click target (mobile fingers can't reliably hit a 3px
+    // dot in a viewBox this gets stretched over), and the small visible
+    // dot on top of it (pointer-events:none so it never steals the tap).
+    // Tapping/clicking either shows a real tooltip via showGrowthTooltip_
+    // -- unlike the old browser-native <title>, this actually works on
+    // touch, which is how this app is used almost all of the time.
+    var dots = points.map(function(p, i) {
+      return '<circle class="growth-dot-hit" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="9" fill="transparent" ' +
+        'data-month="' + escapeHtml(months[i].label) + '" data-count="' + p.c + '"></circle>' +
+        '<circle class="growth-dot" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="#047857" stroke="#fff" stroke-width="1.5" style="pointer-events:none;"></circle>';
     }).join('');
-    var svg = '<svg class="insights-growth-svg" viewBox="0 0 ' + w + ' ' + chartH + '" preserveAspectRatio="none" role="img" aria-label="New patients per month, last 6 months">' +
+    var svg = '<svg class="insights-growth-svg" viewBox="0 0 ' + w + ' ' + chartH + '" preserveAspectRatio="none" role="img" aria-label="New patients per month, last 6 months. Tap a point for the exact count.">' +
       '<defs><linearGradient id="growthFillGrad" x1="0" y1="0" x2="0" y2="1">' +
         '<stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>' +
         '<stop offset="100%" stop-color="#10b981" stop-opacity="0"/>' +
       '</linearGradient></defs>' +
       '<path d="' + areaD + '" fill="url(#growthFillGrad)" stroke="none"/>' +
-      '<path d="' + pathD + '" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path class="growth-line-path" d="' + pathD + '" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
       dots +
     '</svg>';
     var labelsRow = '<div class="insights-growth-labels">' + months.map(function(mo) {
@@ -3729,7 +3874,7 @@
           '<div class="insights-stage-name">' + escapeHtml(row.stage) + '</div>' +
           '<div class="insights-stage-count">' + row.count + '</div>' +
         '</div>' +
-        '<div class="insights-stage-bar"><div class="insights-stage-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="insights-stage-bar"><div class="insights-stage-bar-fill" data-target="' + pct + '" style="width:0%"></div></div>' +
       '</div>';
     }).join('');
   }
@@ -3785,6 +3930,52 @@
       '<div class="insights-stage-list">' + buildStageFunnelHtml_() + '</div>';
 
     el.innerHTML = totalHtml + growthHtml + funnelHtml + doctorHtml;
+    animateGrowthLine_();
+    animateStageBars_();
+  }
+
+  // Draws the growth line in rather than having it just appear -- a
+  // small touch that makes the chart feel "proper"/alive rather than a
+  // flat static image. Re-runs on every renderInsights (range switch,
+  // tab revisit) since this section is seen far less often than the
+  // hero, so repeating it each time reads as a feature, not noise.
+  function animateGrowthLine_() {
+    var path = document.querySelector('#app-insights .growth-line-path');
+    if (!path || typeof path.getTotalLength !== 'function') return;
+    try {
+      var len = path.getTotalLength();
+      path.style.transition = 'none';
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = len;
+      path.getBoundingClientRect(); // force reflow before the transition below
+      path.style.transition = 'stroke-dashoffset 900ms cubic-bezier(.22,.9,.3,1)';
+      path.style.strokeDashoffset = '0';
+    } catch (e) {}
+  }
+  function animateStageBars_() {
+    document.querySelectorAll('#app-insights .insights-stage-bar-fill[data-target]').forEach(function(el) {
+      var target = el.dataset.target;
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { el.style.width = target + '%'; });
+      });
+    });
+  }
+  function showGrowthTooltip_(target) {
+    var tip = document.getElementById('growth-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'growth-tooltip';
+      tip.className = 'growth-tooltip';
+      document.body.appendChild(tip);
+    }
+    var month = target.dataset.month, count = target.dataset.count;
+    tip.textContent = month + ': ' + count + (count === '1' ? ' new patient' : ' new patients');
+    var rect = target.getBoundingClientRect();
+    tip.style.left = (rect.left + rect.width / 2) + 'px';
+    tip.style.top = rect.top + 'px';
+    tip.classList.add('visible');
+    clearTimeout(window.__growthTipTimer);
+    window.__growthTipTimer = setTimeout(function() { tip.classList.remove('visible'); }, 2200);
   }
 
   function updateRangeFade_(wrapId) {
@@ -3816,6 +4007,8 @@
   document.getElementById('insights-range-to').addEventListener('change', renderInsights);
 
   document.getElementById('app-insights').addEventListener('click', function(e) {
+    var growthDot = e.target.closest('.growth-dot-hit');
+    if (growthDot) { showGrowthTooltip_(growthDot); return; }
     var patientItem = e.target.closest('.insights-patient-item');
     if (patientItem && patientItem.classList.contains('is-clickable')) {
       var caseId = patientItem.dataset.caseId;
@@ -4552,7 +4745,6 @@
     el.innerHTML =
       '<div class="settings-box">' +
         '<h3>Doctors</h3>' +
-        '<p class="doctor-strip-sub">Tap a doctor to see their cases on the Board.</p>' +
         '<div id="doctor-settings-status" class="modal-status" style="margin:0 0 4px;"></div>' +
         '<div class="doctor-strip">' + (activeHtml || inactiveHtml ? activeHtml + inactiveHtml : '<span class="doctor-strip-empty">No doctors added yet.</span>') + addHtml + '</div>' +
       '</div>';
