@@ -1268,6 +1268,29 @@
   }
   .insights-empty{font-size:13px;color:var(--muted);padding:4px 2px;}
 
+  /* Growth trend (inline SVG sparkline/area, no chart library) and the
+     stage funnel -- distinct class names from .insights-doctor-* on
+     purpose: those rows are click-to-expand, these are plain, static
+     summaries, and sharing a class would make the click-delegation
+     handler (which matches on .closest('.insights-doctor-row')) treat a
+     stage row as a doctor row by mistake. */
+  .insights-growth-card{
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-lg);
+    padding:14px 10px 6px;margin-bottom:20px;box-shadow:var(--shadow-xs);
+  }
+  .insights-growth-caption{font-size:12px;color:var(--muted);margin:-4px 2px 2px;}
+  .insights-growth-svg{width:100%;height:84px;display:block;}
+  .insights-growth-labels{display:flex;justify-content:space-between;padding:0 10px;margin-top:2px;}
+  .insights-growth-labels span{font-size:11px;color:var(--muted);}
+  .insights-stage-list{margin-bottom:20px;}
+  .insights-stage-row{padding:10px 2px;border-top:1px solid var(--line);}
+  .insights-stage-row:first-child{border-top:none;}
+  .insights-stage-row-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;}
+  .insights-stage-name{font-weight:700;font-size:14px;color:var(--navy);}
+  .insights-stage-count{font-weight:800;font-size:14.5px;color:var(--green-dark);flex-shrink:0;}
+  .insights-stage-bar{background:var(--bg);border-radius:999px;height:7px;overflow:hidden;}
+  .insights-stage-bar-fill{background:var(--green);height:100%;border-radius:999px;transition:width .3s ease;}
+
   /* ===== Log visit: patient search ===== */
   .search-results{
     display:none;margin-top:6px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;max-height:220px;overflow-y:auto;
@@ -2981,6 +3004,90 @@
       '</div>';
     }).join('') + '</div>';
   }
+  // Last 6 calendar months (including this month to date) of new-patient
+  // registrations, as a small inline-SVG line+area chart. Deliberately NOT
+  // filtered by the Insights range pill -- a trend is inherently a
+  // lifetime view, so it stays stable and comparable no matter which
+  // range the rest of the tab is scoped to.
+  function buildGrowthChartHtml_() {
+    var now = new Date();
+    var months = [];
+    for (var i = 5; i >= 0; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleString('en-US', { month: 'short' }) });
+    }
+    var counts = months.map(function(mo) {
+      return currentPatients.filter(function(p) {
+        var iso = patientCreatedISO_(p);
+        if (!iso) return false;
+        var dt = new Date(iso);
+        return dt.getFullYear() === mo.y && dt.getMonth() === mo.m;
+      }).length;
+    });
+    var maxCount = Math.max.apply(null, counts.concat([1]));
+    // Numbers/line only in the SVG -- no <text> here. preserveAspectRatio
+    // "none" lets the chart stretch to fill the card at any width, which
+    // is fine for a line/area fill but would visibly distort real text,
+    // so the month labels are a normal HTML row underneath instead (see
+    // the .insights-growth-labels markup below), sized by CSS like any
+    // other text on the page.
+    var w = 300, chartH = 60, padX = 10, padTop = 6, padBottom = 6;
+    var stepX = (w - padX * 2) / (months.length - 1);
+    var points = counts.map(function(c, i) {
+      var x = padX + stepX * i;
+      var y = padTop + (chartH - padTop - padBottom) * (1 - c / maxCount);
+      return { x: x, y: y, c: c };
+    });
+    var pathD = points.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+    var areaD = pathD + ' L' + points[points.length - 1].x.toFixed(1) + ',' + (chartH - padBottom).toFixed(1) +
+      ' L' + points[0].x.toFixed(1) + ',' + (chartH - padBottom).toFixed(1) + ' Z';
+    var dots = points.map(function(p) {
+      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="#047857" stroke="#fff" stroke-width="1.5"/>' +
+        '<title>' + escapeHtml(p.c + (p.c === 1 ? ' patient' : ' patients')) + '</title>';
+    }).join('');
+    var svg = '<svg class="insights-growth-svg" viewBox="0 0 ' + w + ' ' + chartH + '" preserveAspectRatio="none" role="img" aria-label="New patients per month, last 6 months">' +
+      '<defs><linearGradient id="growthFillGrad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>' +
+        '<stop offset="100%" stop-color="#10b981" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      '<path d="' + areaD + '" fill="url(#growthFillGrad)" stroke="none"/>' +
+      '<path d="' + pathD + '" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      dots +
+    '</svg>';
+    var labelsRow = '<div class="insights-growth-labels">' + months.map(function(mo) {
+      return '<span>' + escapeHtml(mo.label) + '</span>';
+    }).join('') + '</div>';
+    return svg + labelsRow;
+  }
+
+  // Active (board) cases grouped by current stage, most-populous first --
+  // a quick "where is everything stuck" read a dentist or front-desk staff
+  // can take in at a glance. Always the live board snapshot, independent
+  // of the Insights range pill (a funnel is a "right now" view, not a
+  // date-ranged one).
+  function buildStageFunnelHtml_() {
+    var counts = {};
+    currentBoard.forEach(function(c) {
+      var stage = c.stage || 'Unspecified';
+      counts[stage] = (counts[stage] || 0) + 1;
+    });
+    var rows = Object.keys(counts).map(function(stage) {
+      return { stage: stage, count: counts[stage] };
+    }).sort(function(a, b) { return b.count - a.count; });
+    if (!rows.length) return '<div class="insights-empty">No active cases right now.</div>';
+    var maxCount = rows[0].count;
+    return rows.map(function(row) {
+      var pct = maxCount ? Math.round((row.count / maxCount) * 100) : 0;
+      return '<div class="insights-stage-row">' +
+        '<div class="insights-stage-row-head">' +
+          '<div class="insights-stage-name">' + escapeHtml(row.stage) + '</div>' +
+          '<div class="insights-stage-count">' + row.count + '</div>' +
+        '</div>' +
+        '<div class="insights-stage-bar"><div class="insights-stage-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>';
+    }).join('');
+  }
+
   function renderInsights() {
     var el = document.getElementById('app-insights');
     if (!el) return;
@@ -3023,7 +3130,15 @@
         '</div>';
       }).join(''));
 
-    el.innerHTML = totalHtml + doctorHtml;
+    var growthHtml = '<div class="insights-section-title">Patient growth</div>' +
+      '<div class="insights-growth-card">' + buildGrowthChartHtml_() +
+        '<div class="insights-growth-caption">New patients per month, last 6 months</div>' +
+      '</div>';
+
+    var funnelHtml = '<div class="insights-section-title">Active cases by stage</div>' +
+      '<div class="insights-stage-list">' + buildStageFunnelHtml_() + '</div>';
+
+    el.innerHTML = totalHtml + growthHtml + funnelHtml + doctorHtml;
   }
 
   function updateRangeFade_(wrapId) {
