@@ -82,6 +82,11 @@
     --dark-line:rgba(255,255,255,0.10);
     --dark-muted:#9aa1ab;
 
+    /* Dashboard hero gradient */
+    --hero-1:#063b2c;
+    --hero-2:#0a1f1c;
+    --hero-3:#0b0d12;
+
     /* Radius scale */
     --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;--r-2xl:26px;
 
@@ -562,6 +567,41 @@
     border-radius:var(--r-md);padding:9px 14px;margin-bottom:16px;font-size:13px;color:var(--green-dark);font-weight:600;}
   .ap-phone-dup-ack.show{display:flex;}
 
+  /* ===== Dashboard hero =====
+     Replaces four separately-boxed blocks (title/subtitle, three white stat
+     cards, an amber pill) with one flowing gradient card -- less visual
+     clutter, and the first screen a dentist sees reads as one considered
+     piece of design instead of a stack of generic admin widgets. */
+  .dash-hero{
+    position:relative;overflow:hidden;color:#fff;
+    background:linear-gradient(135deg,var(--hero-1) 0%,var(--hero-2) 45%,var(--hero-3) 100%);
+    border-radius:var(--r-2xl);padding:26px 26px 22px;margin-bottom:22px;
+    box-shadow:0 20px 48px -18px rgba(6,20,15,0.55),0 4px 14px -6px rgba(6,20,15,0.3);
+  }
+  .dash-hero::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(360px 220px at 108% -12%, rgba(16,185,129,0.38), transparent 62%),
+      radial-gradient(300px 220px at -10% 115%, rgba(37,99,235,0.20), transparent 60%);
+  }
+  .dash-hero::after{
+    content:'';position:absolute;inset:0;pointer-events:none;opacity:0.5;
+    background-image:radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size:16px 16px;
+    -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0.9), transparent 78%);
+    mask-image:linear-gradient(180deg, rgba(0,0,0,0.9), transparent 78%);
+  }
+  .dash-hero .app-main-head{position:relative;z-index:1;margin-bottom:0;}
+  .dash-hero h1{color:#fff;}
+  .dash-hero .app-sub{color:rgba(255,255,255,0.62);}
+  .dash-hero .icon-btn.btn-ghost{
+    background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.18);color:#fff;box-shadow:none;
+  }
+  .dash-hero .icon-btn.btn-ghost:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.3);}
+  .dash-hero .stats-row{position:relative;z-index:1;margin-top:20px;margin-bottom:0;}
+  .dash-hero .attn-wrap{position:relative;z-index:1;margin-top:14px;margin-bottom:0;}
+  @media (max-width:600px){.dash-hero{padding:20px 18px 18px;border-radius:var(--r-xl);}}
+
   /* ===== Stats bar ===== */
   .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
   @media (max-width:480px){.stats-row{gap:8px;margin-bottom:10px;}}
@@ -617,6 +657,25 @@
   .stat-tile .stat-num{font-size:25px;font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--navy);}
   .stat-tile .stat-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:600;}
   .stat-tile.attn .stat-num{color:var(--red);}
+  /* Stat tiles sit on the dark hero gradient now -- restyle as frosted
+     glass chips instead of white cards with shadows. */
+  .dash-hero .stat-tile{
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:none;
+  }
+  .dash-hero .stat-tile:hover{background:rgba(255,255,255,0.13);border-color:rgba(255,255,255,0.24);box-shadow:none;}
+  .dash-hero .stat-icon{background:rgba(255,255,255,0.14);color:#fff;}
+  .dash-hero .stat-tile.attn .stat-icon{background:rgba(248,113,113,0.22);color:#fecaca;}
+  .dash-hero .stat-tile .stat-num{color:#fff;}
+  .dash-hero .stat-tile .stat-label{color:rgba(255,255,255,0.68);}
+  .dash-hero .stat-tile.attn .stat-num{color:#fca5a5;}
+  /* Attention strip on the dark hero -- amber reads as a warm highlight
+     against the gradient instead of a pale card. */
+  .dash-hero .attn-toggle{background:rgba(217,119,6,0.22);border-color:rgba(251,191,36,0.4);color:#fde68a;}
+  .dash-hero .attn-toggle:hover{border-color:rgba(251,191,36,0.6);background:rgba(217,119,6,0.3);}
+  .dash-hero .attn-panel{background:rgba(217,119,6,0.14);border-color:rgba(251,191,36,0.32);}
+  .dash-hero .attn-row{color:#fde68a;border-top-color:rgba(251,191,36,0.22);}
+  .dash-hero .attn-row-num{color:#fbbf24;}
 
   /* ===== Header actions =====
      The old 4-button row (Export, Import, Log visit, Add patient) competed
@@ -902,6 +961,51 @@
   }
   .board-filter-clear:hover{background:#fff;}
   .tab-sort-row{margin-bottom:14px;}
+  /* Sort trigger button -- bundles what used to be a whole row of pill
+     buttons (sometimes wrapping onto two lines) into one compact control
+     that opens a bottom sheet with every option. */
+  .tab-filter-row{display:flex;gap:10px;margin-bottom:16px;}
+  .tab-filter-row .tab-search-bar{flex:1;min-width:0;margin-bottom:0;}
+  .tab-sort-btn{
+    appearance:none;height:100%;padding:0 16px;border-radius:999px;border:1px solid var(--line);
+    font-size:13.5px;font-weight:700;font-family:inherit;background:var(--surface);color:var(--ink-soft);
+    box-shadow:var(--shadow-xs);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;
+    flex-shrink:0;transition:border-color .15s ease,color .15s ease,background .15s ease;
+  }
+  .tab-sort-btn:hover{border-color:var(--green);}
+  .tab-sort-btn svg{width:15px;height:15px;flex-shrink:0;}
+  @media (max-width:420px){.tab-sort-btn{padding:0 12px;font-size:13px;}}
+
+  /* ===== Sort bottom sheet -- shared by Board/Patients/Enquiries/Reviews ===== */
+  .sort-sheet-overlay{
+    display:none;position:fixed;inset:0;z-index:70;background:rgba(9,13,19,0.45);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+    align-items:flex-end;justify-content:center;
+  }
+  .sort-sheet-overlay.open{display:flex;animation:fadeIn .15s ease;}
+  .sort-sheet{
+    background:var(--surface);width:100%;max-width:440px;border-radius:var(--r-xl) var(--r-xl) 0 0;
+    padding:10px 8px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -24px 54px -18px rgba(6,10,15,0.4);
+    max-height:72vh;overflow-y:auto;animation:sheetUp .22s cubic-bezier(.22,.9,.3,1.05);
+  }
+  @keyframes sheetUp{from{transform:translateY(18px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sort-sheet-handle{width:36px;height:4px;border-radius:999px;background:var(--line);margin:4px auto 14px;}
+  .sort-sheet-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted-2);padding:0 14px 8px;}
+  .sort-sheet-options{display:flex;flex-direction:column;padding:0 4px;}
+  .sort-sheet-option{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+    background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;
+    padding:13px 12px;border-radius:var(--r-md);font-size:14.5px;font-weight:600;color:var(--ink-soft);
+    transition:background .12s ease;
+  }
+  .sort-sheet-option:hover{background:var(--bg);}
+  .sort-sheet-option.active{color:var(--green-dark);font-weight:700;background:var(--green-soft);}
+  .sort-sheet-check{width:17px;height:17px;color:var(--green-dark);flex-shrink:0;}
+  @media (min-width:700px){
+    .sort-sheet-overlay{align-items:center;}
+    .sort-sheet{border-radius:var(--r-xl);max-height:80vh;}
+  }
+
   .patients-search-bar{margin-bottom:16px;}
   .patients-search-bar input{
     width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);
@@ -1021,17 +1125,30 @@
   .range-pill.active{background:var(--green-dark);color:#fff;}
   .range-custom{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);}
   .range-custom input{padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--line);font-family:inherit;font-size:13.5px;}
+  /* Wraps .range-pills so a fade + "more" hint can be layered over the
+     right edge whenever the pill row actually overflows -- the plain
+     overflow-x:auto below let you scroll to "Lifetime"/"Custom" but gave
+     no visual sign that there was anything to scroll to, so it just
+     looked like the row was clipped and those options were gone. */
+  .range-pills-wrap{position:relative;flex:1;min-width:0;}
+  .range-fade{
+    display:none;position:absolute;top:2px;right:2px;bottom:2px;width:34px;pointer-events:none;
+    border-radius:0 999px 999px 0;
+    background:linear-gradient(to right, rgba(255,255,255,0), var(--surface) 65%);
+  }
+  .range-pills-wrap.has-overflow .range-fade{display:block;}
   @media (max-width:480px){
     /* The 5 range pills (Today/This week/This month/Lifetime/Custom) don't
-       fit a phone's width at full size — they were silently clipped at the
-       screen edge with no way to reach "Custom". Same horizontal-scroll
-       pattern already used for .app-tabs, so it's at least reachable, plus
-       a touch more breathing room from smaller pills. */
+       fit a phone's width at full size — a horizontal scroll (same pattern
+       already used for .app-tabs) makes every option reachable, and the
+       fade above + a touch more breathing room from smaller pills makes
+       it visually obvious there's more to scroll to. */
     .range-pills{
       max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+      scroll-snap-type:x proximity;
     }
     .range-pills::-webkit-scrollbar{display:none;}
-    .range-pill{white-space:nowrap;padding:7px 12px;font-size:13px;flex-shrink:0;}
+    .range-pill{white-space:nowrap;padding:7px 12px;font-size:13px;flex-shrink:0;scroll-snap-align:start;}
   }
 
   /* ===== Today tab: two-column layout ===== */
@@ -1378,29 +1495,30 @@
     </div>
   </div>
   <div class="app-main wrap">
-    <div class="app-main-head">
-      <div>
-        <h1 id="app-clinic-title">Dashboard</h1>
-        <p class="app-sub">Every patient, case, enquiry and payment — all in one place.</p>
-      </div>
-      <div class="app-main-actions">
-        <div class="more-menu-wrap">
-          <button id="more-menu-btn" class="btn btn-ghost icon-btn" type="button" aria-haspopup="true" aria-expanded="false" title="More">
-            <svg viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4.2" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="10" cy="15.8" r="1.7"/></svg>
-          </button>
-          <div id="more-menu" class="more-menu">
-            <button id="export-data-btn" class="more-menu-item" type="button">Export data</button>
-            <button id="import-data-btn" class="more-menu-item" type="button">Import data</button>
-            <input id="import-data-file" type="file" accept=".xlsx" style="display:none;" />
+    <div class="dash-hero">
+      <div class="app-main-head">
+        <div>
+          <h1 id="app-clinic-title">Dashboard</h1>
+          <p class="app-sub">Every patient, case, enquiry and payment — all in one place.</p>
+        </div>
+        <div class="app-main-actions">
+          <div class="more-menu-wrap">
+            <button id="more-menu-btn" class="btn btn-ghost icon-btn" type="button" aria-haspopup="true" aria-expanded="false" title="More">
+              <svg viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4.2" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="10" cy="15.8" r="1.7"/></svg>
+            </button>
+            <div id="more-menu" class="more-menu">
+              <button id="export-data-btn" class="more-menu-item" type="button">Export data</button>
+              <button id="import-data-btn" class="more-menu-item" type="button">Import data</button>
+              <input id="import-data-file" type="file" accept=".xlsx" style="display:none;" />
+            </div>
           </div>
         </div>
       </div>
+      <div id="app-stats" class="stats-row"></div>
+      <div id="app-attn-wrap" class="attn-wrap" style="display:none;"></div>
     </div>
     <div id="export-import-status" class="modal-status" style="margin:0 0 4px;"></div>
     <div id="import-results-list" class="detail-list" style="display:none; margin:0 0 10px; font-size:13px;"></div>
-
-    <div id="app-stats" class="stats-row"></div>
-    <div id="app-attn-wrap" class="attn-wrap" style="display:none;"></div>
 
     <div class="app-tabs">
       <button class="app-tab active" data-tab="today" type="button">Today <span class="tab-count" data-tab-count="today">0</span></button>
@@ -1413,11 +1531,14 @@
 
     <div id="tab-today" class="tab-panel active">
       <div class="range-bar">
-        <div class="range-pills" id="range-pills">
-          <button class="range-pill active" data-range="today" type="button">Today</button>
-          <button class="range-pill" data-range="week" type="button">This week</button>
-          <button class="range-pill" data-range="month" type="button">This month</button>
-          <button class="range-pill" data-range="custom" type="button">Custom</button>
+        <div class="range-pills-wrap" id="range-pills-wrap">
+          <div class="range-pills" id="range-pills">
+            <button class="range-pill active" data-range="today" type="button">Today</button>
+            <button class="range-pill" data-range="week" type="button">This week</button>
+            <button class="range-pill" data-range="month" type="button">This month</button>
+            <button class="range-pill" data-range="custom" type="button">Custom</button>
+          </div>
+          <div class="range-fade" aria-hidden="true"></div>
         </div>
         <div class="range-custom" id="range-custom" style="display:none;">
           <input type="date" id="range-from" /> <span>to</span> <input type="date" id="range-to" />
@@ -1438,8 +1559,10 @@
     </div>
     <div id="tab-board" class="tab-panel">
       <div id="board-filter-indicator" class="board-filter-indicator" style="display:none;"></div>
-      <div class="tab-search-bar"><input type="text" id="board-search-input" placeholder="Search by name, doctor, mobile or UHID…" autocomplete="off" /></div>
-      <div id="board-sort-row" class="review-sort tab-sort-row"></div>
+      <div class="tab-filter-row">
+        <div class="tab-search-bar"><input type="text" id="board-search-input" placeholder="Search by name, doctor, mobile or UHID…" autocomplete="off" /></div>
+        <button type="button" id="board-sort-btn" class="tab-sort-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15V5M6 15l-2.5-2.5M6 15l2.5-2.5M14 5v10M14 5l2.5 2.5M14 5l-2.5 2.5"/></svg><span>Sort</span></button>
+      </div>
       <div id="app-board"></div>
     </div>
     <div id="tab-patients" class="tab-panel">
@@ -1454,27 +1577,35 @@
           </button>
           <div id="patients-doctor-filter-menu" class="patients-doctor-filter-menu"></div>
         </div>
+        <button type="button" id="patients-sort-btn" class="tab-sort-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15V5M6 15l-2.5-2.5M6 15l2.5-2.5M14 5v10M14 5l2.5 2.5M14 5l-2.5 2.5"/></svg><span>Sort</span></button>
       </div>
-      <div id="patients-sort-row" class="review-sort tab-sort-row"></div>
       <div id="app-patients"></div>
     </div>
     <div id="tab-enquiries" class="tab-panel">
-      <div class="tab-search-bar"><input type="text" id="enquiries-search-input" placeholder="Search by name, phone or city…" autocomplete="off" /></div>
-      <div id="enquiries-sort-row" class="review-sort tab-sort-row"></div>
+      <div class="tab-filter-row">
+        <div class="tab-search-bar"><input type="text" id="enquiries-search-input" placeholder="Search by name, phone or city…" autocomplete="off" /></div>
+        <button type="button" id="enquiries-sort-btn" class="tab-sort-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15V5M6 15l-2.5-2.5M6 15l2.5-2.5M14 5v10M14 5l2.5 2.5M14 5l-2.5 2.5"/></svg><span>Sort</span></button>
+      </div>
       <div id="app-enquiries"></div>
     </div>
     <div id="tab-reviews" class="tab-panel">
-      <div class="tab-search-bar"><input type="text" id="reviews-search-input" placeholder="Search by name or phone…" autocomplete="off" /></div>
+      <div class="tab-filter-row">
+        <div class="tab-search-bar"><input type="text" id="reviews-search-input" placeholder="Search by name or phone…" autocomplete="off" /></div>
+        <button type="button" id="reviews-sort-btn" class="tab-sort-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15V5M6 15l-2.5-2.5M6 15l2.5-2.5M14 5v10M14 5l2.5 2.5M14 5l-2.5 2.5"/></svg><span>Sort</span></button>
+      </div>
       <div id="app-reviews"></div>
     </div>
     <div id="tab-insights" class="tab-panel">
       <div class="range-bar">
-        <div class="range-pills" id="insights-range-pills">
-          <button class="range-pill" data-range="today" type="button">Today</button>
-          <button class="range-pill" data-range="week" type="button">This week</button>
-          <button class="range-pill active" data-range="month" type="button">This month</button>
-          <button class="range-pill" data-range="lifetime" type="button">Lifetime</button>
-          <button class="range-pill" data-range="custom" type="button">Custom</button>
+        <div class="range-pills-wrap" id="insights-range-pills-wrap">
+          <div class="range-pills" id="insights-range-pills">
+            <button class="range-pill" data-range="today" type="button">Today</button>
+            <button class="range-pill" data-range="week" type="button">This week</button>
+            <button class="range-pill active" data-range="month" type="button">This month</button>
+            <button class="range-pill" data-range="lifetime" type="button">Lifetime</button>
+            <button class="range-pill" data-range="custom" type="button">Custom</button>
+          </div>
+          <div class="range-fade" aria-hidden="true"></div>
         </div>
         <div class="range-custom" id="insights-range-custom" style="display:none;">
           <input type="date" id="insights-range-from" /> <span>to</span> <input type="date" id="insights-range-to" />
@@ -1946,6 +2077,14 @@
   </div>
 </div>
 
+<div id="sort-sheet-overlay" class="sort-sheet-overlay">
+  <div class="sort-sheet" role="dialog" aria-modal="true" aria-label="Sort options">
+    <div class="sort-sheet-handle"></div>
+    <div class="sort-sheet-title" id="sort-sheet-title">Sort by</div>
+    <div class="sort-sheet-options" id="sort-sheet-options"></div>
+  </div>
+</div>
+
 <div id="wa-compose-modal" class="modal-overlay">
   <div class="modal-card">
     <h2>Send WhatsApp reminder</h2>
@@ -1984,12 +2123,51 @@
   var todaySearchQuery = ''; // Today tab search box: matches name, phone (appointments + payments)
   var reviewsSortMode = 'oldest'; // Reviews tab sort: 'oldest' | 'newest' | 'name' | 'name_desc'
   var REVIEW_SORT_LABELS_ = { oldest: 'Oldest first', newest: 'Newest first', name: 'Name A–Z', name_desc: 'Name Z–A' };
+  var REVIEW_SORT_ORDER_ = ['oldest', 'newest', 'name', 'name_desc'];
   var boardSortMode = 'overdue'; // Board tab sort: 'overdue' | 'name' | 'name_desc' | 'doctor' | 'uhid' | 'registered_new' | 'registered_old'
-  var BOARD_SORT_LABELS_ = { overdue: 'Most overdue first', name: 'Name A–Z', name_desc: 'Name Z–A', doctor: 'By doctor', uhid: 'UHID', registered_new: 'Registered (newest)', registered_old: 'Registered (oldest)' };
+  var BOARD_SORT_LABELS_ = { overdue: 'Most overdue first', name: 'Name A–Z', name_desc: 'Name Z–A', doctor: 'By doctor', uhid_asc: 'UHID (oldest first)', uhid_desc: 'UHID (newest first)', registered_new: 'Registered (newest)', registered_old: 'Registered (oldest)' };
+  var BOARD_SORT_ORDER_ = ['overdue', 'name', 'name_desc', 'doctor', 'uhid_asc', 'uhid_desc', 'registered_new', 'registered_old'];
   var patientsSortMode = 'recent'; // Patients tab sort: 'recent' | 'name' | 'name_desc' | 'doctor' | 'uhid'
-  var PATIENTS_SORT_LABELS_ = { recent: 'Recently added', name: 'Name A–Z', name_desc: 'Name Z–A', doctor: 'By doctor', uhid: 'UHID' };
+  var PATIENTS_SORT_LABELS_ = { recent: 'Recently added', name: 'Name A–Z', name_desc: 'Name Z–A', doctor: 'By doctor', uhid_asc: 'UHID (oldest first)', uhid_desc: 'UHID (newest first)' };
+  var PATIENTS_SORT_ORDER_ = ['recent', 'name', 'name_desc', 'doctor', 'uhid_asc', 'uhid_desc'];
   var enquiriesSortMode = 'newest'; // Enquiries tab sort: 'newest' | 'oldest' | 'name' | 'name_desc'
   var ENQUIRIES_SORT_LABELS_ = { newest: 'Newest first', oldest: 'Oldest first', name: 'Name A–Z', name_desc: 'Name Z–A' };
+  var ENQUIRIES_SORT_ORDER_ = ['newest', 'oldest', 'name', 'name_desc'];
+
+  // Sort bottom sheet -- shared by Board/Patients/Enquiries/Reviews. Opens
+  // with every option for that tab listed (in a fixed, sensible order),
+  // the current choice checked, and calls back with whichever key was
+  // tapped. Replaces what used to be a whole row of pill buttons on each
+  // tab (sometimes wrapping onto two lines) with one compact trigger.
+  var sortSheetCallback_ = null;
+  function openSortSheet(title, labels, order, currentMode, onSelect) {
+    document.getElementById('sort-sheet-title').textContent = title;
+    var optsEl = document.getElementById('sort-sheet-options');
+    optsEl.innerHTML = order.map(function(key) {
+      var active = key === currentMode;
+      return '<button type="button" class="sort-sheet-option' + (active ? ' active' : '') + '" data-key="' + key + '">' +
+        '<span>' + escapeHtml(labels[key]) + '</span>' +
+        (active ? '<svg class="sort-sheet-check" viewBox="0 0 20 20" fill="currentColor"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg>' : '') +
+        '</button>';
+    }).join('');
+    sortSheetCallback_ = onSelect;
+    document.getElementById('sort-sheet-overlay').classList.add('open');
+  }
+  function closeSortSheet() {
+    document.getElementById('sort-sheet-overlay').classList.remove('open');
+    sortSheetCallback_ = null;
+  }
+  document.getElementById('sort-sheet-overlay').addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) closeSortSheet();
+  });
+  document.getElementById('sort-sheet-options').addEventListener('click', function(e) {
+    var btn = e.target.closest('.sort-sheet-option');
+    if (!btn) return;
+    var key = btn.dataset.key;
+    var cb = sortSheetCallback_;
+    closeSortSheet();
+    if (cb) cb(key);
+  });
   var currentCaseId = null; // case detail modal currently open on this CaseID
   var currentPatientId = null; // the PatientID behind that case, for delete/archive
   // Treatment types + their stage journeys, straight from the server (see
@@ -2186,6 +2364,7 @@
     }
     applyDashboardData(res);
     window.scrollTo(0, 0);
+    updateAllRangeFades_();
   }
 
   // Every action that returns board/patients/enquiries calls this so all
@@ -2710,6 +2889,22 @@
     el.innerHTML = totalHtml + doctorHtml;
   }
 
+  function updateRangeFade_(wrapId) {
+    var wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    var pills = wrap.querySelector('.range-pills');
+    if (!pills) return;
+    wrap.classList.toggle('has-overflow', pills.scrollWidth > pills.clientWidth + 2);
+  }
+  function updateAllRangeFades_() {
+    updateRangeFade_('range-pills-wrap');
+    updateRangeFade_('insights-range-pills-wrap');
+  }
+  window.addEventListener('resize', function() {
+    clearTimeout(window.__rangeFadeTimer);
+    window.__rangeFadeTimer = setTimeout(updateAllRangeFades_, 120);
+  });
+
   document.querySelectorAll('#insights-range-pills .range-pill').forEach(function(btn) {
     btn.addEventListener('click', function() {
       document.querySelectorAll('#insights-range-pills .range-pill').forEach(function(b) { b.classList.remove('active'); });
@@ -3047,6 +3242,10 @@
       document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
       document.getElementById('tab-' + name).classList.add('active');
       scrollToActiveTab(name);
+      // Insights' range-pill row is display:none (inside an inactive
+      // tab-panel) until now, so it couldn't be measured for overflow
+      // until this exact moment -- recheck right after it becomes visible.
+      requestAnimationFrame(updateAllRangeFades_);
     });
   });
 
@@ -3178,8 +3377,12 @@
       sorted.sort(function(a, b) { return String(b.patientName || '').localeCompare(String(a.patientName || '')); });
     } else if (boardSortMode === 'doctor') {
       sorted.sort(function(a, b) { return String(a.assignedTo || '').localeCompare(String(b.assignedTo || '')) || ((Number(b.daysOverdue) || -9999) - (Number(a.daysOverdue) || -9999)); });
-    } else if (boardSortMode === 'uhid') {
-      sorted.sort(function(a, b) { return String(a.patientId || caseIdToPatientId[a.caseId] || '').localeCompare(String(b.patientId || caseIdToPatientId[b.caseId] || '')); });
+    } else if (boardSortMode === 'uhid_asc' || boardSortMode === 'uhid_desc') {
+      sorted.sort(function(a, b) {
+        var ua = String(a.patientId || caseIdToPatientId[a.caseId] || '');
+        var ub = String(b.patientId || caseIdToPatientId[b.caseId] || '');
+        return boardSortMode === 'uhid_asc' ? ua.localeCompare(ub) : ub.localeCompare(ua);
+      });
     } else if (boardSortMode === 'registered_new' || boardSortMode === 'registered_old') {
       sorted.sort(function(a, b) {
         var da = boardRegisteredISO_(a), db = boardRegisteredISO_(b);
@@ -3220,11 +3423,11 @@
     var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(caseId); })[0];
     if (ctx) openCaseDetail(ctx);
   });
-  document.getElementById('board-sort-row').addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-board-sort]');
-    if (!btn) return;
-    boardSortMode = btn.dataset.boardSort;
-    renderBoard(currentBoard);
+  document.getElementById('board-sort-btn').addEventListener('click', function() {
+    openSortSheet('Sort cases by', BOARD_SORT_LABELS_, BOARD_SORT_ORDER_, boardSortMode, function(key) {
+      boardSortMode = key;
+      renderBoard(currentBoard);
+    });
   });
   document.getElementById('board-search-input').addEventListener('input', function(e) {
     boardSearchQuery = e.target.value;
@@ -3285,8 +3488,11 @@
       sorted.sort(function(a, b) { return String(b.name || '').localeCompare(String(a.name || '')); });
     } else if (patientsSortMode === 'doctor') {
       sorted.sort(function(a, b) { return String(patientDoctorName_(a)).localeCompare(String(patientDoctorName_(b))); });
-    } else if (patientsSortMode === 'uhid') {
-      sorted.sort(function(a, b) { return String(a.patientId || '').localeCompare(String(b.patientId || '')); });
+    } else if (patientsSortMode === 'uhid_asc' || patientsSortMode === 'uhid_desc') {
+      sorted.sort(function(a, b) {
+        var ua = String(a.patientId || ''), ub = String(b.patientId || '');
+        return patientsSortMode === 'uhid_asc' ? ua.localeCompare(ub) : ub.localeCompare(ua);
+      });
     } else {
       sorted.sort(function(a, b) {
         var da = parseDisplayDate_(a.createdOn), db = parseDisplayDate_(b.createdOn);
@@ -3326,11 +3532,11 @@
     patientsSearchQuery = e.target.value;
     renderPatients(currentPatients);
   });
-  document.getElementById('patients-sort-row').addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-patients-sort]');
-    if (!btn) return;
-    patientsSortMode = btn.dataset.patientsSort;
-    renderPatients(currentPatients);
+  document.getElementById('patients-sort-btn').addEventListener('click', function() {
+    openSortSheet('Sort patients by', PATIENTS_SORT_LABELS_, PATIENTS_SORT_ORDER_, patientsSortMode, function(key) {
+      patientsSortMode = key;
+      renderPatients(currentPatients);
+    });
   });
 
   // --- Patients tab doctor filter (multi-select) -----------------------
@@ -3649,11 +3855,11 @@
       locality: btn.dataset.city
     });
   });
-  document.getElementById('enquiries-sort-row').addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-enquiries-sort]');
-    if (!btn) return;
-    enquiriesSortMode = btn.dataset.enquiriesSort;
-    renderEnquiries(currentEnquiries);
+  document.getElementById('enquiries-sort-btn').addEventListener('click', function() {
+    openSortSheet('Sort enquiries by', ENQUIRIES_SORT_LABELS_, ENQUIRIES_SORT_ORDER_, enquiriesSortMode, function(key) {
+      enquiriesSortMode = key;
+      renderEnquiries(currentEnquiries);
+    });
   });
   document.getElementById('enquiries-search-input').addEventListener('input', function(e) {
     enquiriesSearchQuery = e.target.value;
@@ -3718,10 +3924,7 @@
             '<div class="review-empty-sub">No review requests waiting right now — new patients show up here the moment they’re added.</div>' +
           '</div>');
     } else {
-      listHtml = '<div class="review-list-head"><span class="review-count-badge">' + sorted.length + ' waiting</span>' +
-        '<div class="review-sort">' + ['oldest', 'newest', 'name', 'name_desc'].map(function(key) {
-          return '<button type="button" class="review-sort-btn' + (reviewsSortMode === key ? ' active' : '') + '" data-sort="' + key + '">' + REVIEW_SORT_LABELS_[key] + '</button>';
-        }).join('') + '</div></div>' +
+      listHtml = '<div class="review-list-head"><span class="review-count-badge">' + sorted.length + ' waiting</span></div>' +
         sorted.map(function(c) {
         var days = Number(c.daysSince) || 0;
         var waitLabel = days <= 0 ? 'Added today' : ('Added ' + days + ' day' + (days === 1 ? '' : 's') + ' ago');
@@ -3751,13 +3954,13 @@
     reviewsSearchQuery = e.target.value;
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
   });
-  document.getElementById('app-reviews').addEventListener('click', function(e) {
-    var sortBtn = e.target.closest('.review-sort-btn');
-    if (sortBtn) {
-      reviewsSortMode = sortBtn.dataset.sort;
+  document.getElementById('reviews-sort-btn').addEventListener('click', function() {
+    openSortSheet('Sort reviews by', REVIEW_SORT_LABELS_, REVIEW_SORT_ORDER_, reviewsSortMode, function(key) {
+      reviewsSortMode = key;
       renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
-      return;
-    }
+    });
+  });
+  document.getElementById('app-reviews').addEventListener('click', function(e) {
     var copyMsgBtn = e.target.closest('.review-copy-msg-btn');
     if (copyMsgBtn) {
       var msgPatientId = copyMsgBtn.dataset.patientId;
