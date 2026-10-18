@@ -757,6 +757,23 @@
   }
   .more-menu-item:hover{background:var(--bg);}
 
+  /* ===== Clean up stale enquiries ===== */
+  .text-link-btn{
+    background:none;border:none;color:var(--green-dark);font-family:inherit;font-weight:700;
+    font-size:12.5px;cursor:pointer;text-decoration:underline;padding:0;
+  }
+  .cleanup-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 10px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;}
+  .cleanup-list-actions{display:flex;align-items:center;gap:6px;}
+  .cleanup-list{max-height:280px;overflow-y:auto;border:1px solid var(--line-soft);border-radius:var(--r-md);margin-bottom:16px;}
+  .cleanup-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;}
+  .cleanup-row:last-child{border-bottom:none;}
+  .cleanup-row:hover{background:var(--bg);}
+  .cleanup-row input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;accent-color:var(--green);cursor:pointer;}
+  .cleanup-row-name{font-weight:700;font-size:14px;color:var(--navy);}
+  .cleanup-row-meta{font-size:12.5px;color:var(--muted);margin-top:1px;}
+  .cleanup-row-badge{margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--red-bg);color:var(--red);white-space:nowrap;}
+  .cleanup-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:13.5px;}
+
   /* ===== Floating action button (Log visit / Add patient) ===== */
   .fab-wrap{position:fixed;right:20px;bottom:28px;z-index:41;display:flex;flex-direction:column;align-items:flex-end;gap:12px;}
   @media (max-width:700px){
@@ -1590,6 +1607,7 @@
             <div id="more-menu" class="more-menu">
               <button id="export-data-btn" class="more-menu-item" type="button">Export data</button>
               <button id="import-data-btn" class="more-menu-item" type="button">Import data</button>
+              <button id="cleanup-stale-btn" class="more-menu-item" type="button">Clean up stale enquiries</button>
               <input id="import-data-file" type="file" accept=".xlsx" style="display:none;" />
             </div>
           </div>
@@ -2178,6 +2196,38 @@
     <div class="modal-actions">
       <button id="wa-compose-cancel" class="btn btn-ghost" type="button">Cancel</button>
       <button id="wa-compose-send" class="btn whatsapp-btn" type="button">Open WhatsApp →</button>
+    </div>
+  </div>
+</div>
+
+<div id="cleanup-stale-modal" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Clean up stale enquiries</h2>
+    <p class="modal-sub">Leads stuck in Enquiry with no follow-up, clogging your Board. Moving them to
+      “Dropped” takes them off your active board — nothing is deleted, and you can
+      reopen any of them later by setting their status back to Active from their case page.</p>
+    <div class="modal-field">
+      <label for="cleanup-cutoff-select">Show enquiries overdue by more than</label>
+      <select id="cleanup-cutoff-select">
+        <option value="3">3 days</option>
+        <option value="7" selected>7 days</option>
+        <option value="14">14 days</option>
+        <option value="30">30 days</option>
+      </select>
+    </div>
+    <div class="cleanup-list-head">
+      <span id="cleanup-count-label">0 enquiries found</span>
+      <span class="cleanup-list-actions">
+        <button id="cleanup-select-all" class="text-link-btn" type="button">Select all</button>
+        <span>·</span>
+        <button id="cleanup-select-none" class="text-link-btn" type="button">Select none</button>
+      </span>
+    </div>
+    <div id="cleanup-list" class="cleanup-list"></div>
+    <div id="cleanup-status" class="modal-status"></div>
+    <div class="modal-actions">
+      <button id="cleanup-cancel" class="btn btn-ghost" type="button">Cancel</button>
+      <button id="cleanup-confirm-btn" class="btn btn-danger-ghost" type="button" disabled>Mark 0 as dropped</button>
     </div>
   </div>
 </div>
@@ -5170,6 +5220,119 @@
       if (err && err.message === 'too_many_rows') { exportStatus_('That file has more than 1000 rows — split it into smaller batches.', true); return; }
       if (err && err.message === 'no_sheet') { exportStatus_('Could not find a sheet to read in that file.', true); return; }
       exportStatus_('Could not read that file. Make sure it is an .xlsx export from this dashboard.', true);
+    });
+  });
+
+  // --- Bulk-clean stale Enquiry-stage leads ---------------------------
+  // Reuses the EXISTING bulkSaveCases action (the same one Export/Import
+  // already use for a CSV round-trip) with a tiny, purpose-built UI: no
+  // download/edit/upload needed for the single most common cleanup, just
+  // pick a cutoff and a set of leads, one click.
+  var cleanupSelectedIds_ = {};
+
+  function cleanupStaleCandidates_() {
+    var cutoff = Number(document.getElementById('cleanup-cutoff-select').value) || 0;
+    return currentBoard.filter(function(r) {
+      return r.stage === 'Enquiry' && Number(r.daysOverdue) > cutoff;
+    }).sort(function(a, b) { return (Number(b.daysOverdue) || 0) - (Number(a.daysOverdue) || 0); });
+  }
+
+  function renderCleanupList_() {
+    var candidates = cleanupStaleCandidates_();
+    var listEl = document.getElementById('cleanup-list');
+    var keepIds = {};
+    candidates.forEach(function(r) { keepIds[r.caseId] = true; });
+    // Drop selections for rows that fell out of the current cutoff filter.
+    Object.keys(cleanupSelectedIds_).forEach(function(id) { if (!keepIds[id]) delete cleanupSelectedIds_[id]; });
+
+    if (!candidates.length) {
+      listEl.innerHTML = '<div class="cleanup-empty">No enquiries overdue by that much — nothing to clean up.</div>';
+    } else {
+      listEl.innerHTML = candidates.map(function(r) {
+        var checked = cleanupSelectedIds_[r.caseId] ? ' checked' : '';
+        return '<label class="cleanup-row">' +
+          '<input type="checkbox" data-case-id="' + escapeHtml(r.caseId) + '"' + checked + '>' +
+          '<div><div class="cleanup-row-name">' + escapeHtml(r.patientName || '(unnamed)') + '</div>' +
+          '<div class="cleanup-row-meta">' + escapeHtml(r.phone || '') + '</div></div>' +
+          '<span class="cleanup-row-badge">' + pluralDays_(Number(r.daysOverdue)) + ' overdue</span>' +
+        '</label>';
+      }).join('');
+    }
+    updateCleanupFooter_(candidates.length);
+  }
+
+  function updateCleanupFooter_(total) {
+    var selectedCount = Object.keys(cleanupSelectedIds_).length;
+    document.getElementById('cleanup-count-label').textContent =
+      total + (total === 1 ? ' enquiry found' : ' enquiries found') + (selectedCount ? ', ' + selectedCount + ' selected' : '');
+    var btn = document.getElementById('cleanup-confirm-btn');
+    btn.textContent = 'Mark ' + selectedCount + ' as dropped';
+    btn.disabled = selectedCount === 0;
+  }
+
+  function openCleanupStaleModal() {
+    document.getElementById('cleanup-status').textContent = '';
+    cleanupSelectedIds_ = {};
+    // Default to selecting everything the current cutoff shows -- Satish
+    // can deselect individual leads he actually wants to keep chasing.
+    cleanupStaleCandidates_().forEach(function(r) { cleanupSelectedIds_[r.caseId] = true; });
+    renderCleanupList_();
+    document.getElementById('cleanup-stale-modal').classList.add('open');
+  }
+  function closeCleanupStaleModal() {
+    document.getElementById('cleanup-stale-modal').classList.remove('open');
+  }
+
+  document.getElementById('cleanup-stale-btn').addEventListener('click', function() {
+    if (!isSignedIn()) return;
+    openCleanupStaleModal();
+  });
+  document.getElementById('cleanup-cutoff-select').addEventListener('change', function() {
+    // A fresh cutoff gets a fresh default selection -- re-select everything
+    // it now shows, same starting point as the initial open.
+    cleanupSelectedIds_ = {};
+    cleanupStaleCandidates_().forEach(function(r) { cleanupSelectedIds_[r.caseId] = true; });
+    renderCleanupList_();
+  });
+  document.getElementById('cleanup-list').addEventListener('change', function(e) {
+    var cb = e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+    var id = cb.getAttribute('data-case-id');
+    if (cb.checked) cleanupSelectedIds_[id] = true; else delete cleanupSelectedIds_[id];
+    updateCleanupFooter_(cleanupStaleCandidates_().length);
+  });
+  document.getElementById('cleanup-select-all').addEventListener('click', function() {
+    cleanupStaleCandidates_().forEach(function(r) { cleanupSelectedIds_[r.caseId] = true; });
+    renderCleanupList_();
+  });
+  document.getElementById('cleanup-select-none').addEventListener('click', function() {
+    cleanupSelectedIds_ = {};
+    renderCleanupList_();
+  });
+  document.getElementById('cleanup-cancel').addEventListener('click', closeCleanupStaleModal);
+  document.getElementById('cleanup-stale-modal').addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) closeCleanupStaleModal();
+  });
+  document.getElementById('cleanup-confirm-btn').addEventListener('click', function() {
+    var ids = Object.keys(cleanupSelectedIds_);
+    if (!ids.length) return;
+    var btn = document.getElementById('cleanup-confirm-btn');
+    btn.disabled = true;
+    document.getElementById('cleanup-status').textContent = '';
+    var rows = ids.map(function(id) { return { caseId: id, status: 'Dropped' }; });
+    apiCall('bulkSaveCases', { rows: rows }).then(function(res) {
+      if (!res || !res.ok) {
+        btn.disabled = false;
+        var statusEl = document.getElementById('cleanup-status');
+        statusEl.textContent = 'Could not update those leads -- please try again.';
+        statusEl.className = 'modal-status is-error';
+        return;
+      }
+      applyDashboardData(res);
+      closeCleanupStaleModal();
+      celebrate_(ids.length + (ids.length === 1 ? ' lead moved to Dropped' : ' leads moved to Dropped'));
+    }).catch(function() {
+      btn.disabled = false;
     });
   });
 
