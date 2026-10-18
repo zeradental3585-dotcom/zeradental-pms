@@ -2930,12 +2930,43 @@
   // also re-saves the fresh token the backend returns, sliding the
   // 30-day window forward — so a device in regular use effectively
   // never gets signed out.
+  // Races a promise against a timeout that REJECTS (never resolves) so a
+  // hung /api/pms call can't leave the boot sequence waiting forever, while
+  // a call that finishes first -- even just barely -- still wins normally.
+  function withTimeout_(promise, ms) {
+    return new Promise(function(resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        reject(new Error('timeout'));
+      }, ms);
+      promise.then(function(v) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(v);
+      }, function(e) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(e);
+      });
+    });
+  }
+
+  // /api/pms is backed by Google Sheets and can genuinely take several
+  // seconds (cold start, weak mobile signal, Sheets API latency) -- this
+  // has to be generous enough that a real, successful restore is never
+  // interrupted partway through. See RESTORE_TIMEOUT_MS note below.
+  var RESTORE_TIMEOUT_MS = 9000;
+
   function restoreSavedSession() {
     var saved = null;
     try { saved = localStorage.getItem('zeraSessionToken'); } catch (e) { saved = null; }
     if (!saved) return Promise.resolve();
     zeraSessionToken = saved;
-    return apiCall('login', {}).then(function(res) {
+    return withTimeout_(apiCall('login', {}), RESTORE_TIMEOUT_MS).then(function(res) {
       if (res && res.ok && res.status === 'active') {
         if (res.sessionToken) {
           zeraSessionToken = res.sessionToken;
@@ -2947,17 +2978,23 @@
         try { localStorage.removeItem('zeraSessionToken'); } catch (e) {}
       }
     }).catch(function() {
+      // Network error or a genuine timeout -- don't wipe the saved token,
+      // it may just be one slow/dropped request. Falls through to the
+      // marketing view for this load only; the next reload tries again.
       zeraSessionToken = null;
     });
   }
 
   // Boot splash lifecycle: stays visible at least SPLASH_MIN_MS so it never
-  // flickers on a fast/cached load, always comes down within SPLASH_MAX_MS
-  // even if the network hangs, and otherwise hides right after the silent
-  // session restore settles (success -> dashboard, failure -> marketing).
+  // flickers on a fast/cached load, and otherwise hides right after the
+  // silent session restore settles (success -> dashboard, failure ->
+  // marketing) -- which, thanks to RESTORE_TIMEOUT_MS above, is now always
+  // driven by the real network outcome rather than an arbitrary UI clock.
+  // SPLASH_MAX_MS is just a last-resort circuit breaker in case the promise
+  // chain itself misbehaves; in normal operation it never fires first.
   var SPLASH_SHOWN_AT_ = Date.now();
   var SPLASH_MIN_MS = 420;
-  var SPLASH_MAX_MS = 3000;
+  var SPLASH_MAX_MS = RESTORE_TIMEOUT_MS + 2000;
   var splashHidden_ = false;
   function hideSplash_() {
     if (splashHidden_) return;
