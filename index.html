@@ -738,7 +738,15 @@
   .icon-btn{width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
   .icon-btn svg{width:17px;height:17px;}
   .more-menu{
-    display:none;position:absolute;right:0;top:calc(100% + 8px);z-index:30;min-width:170px;
+    /* position:fixed, not absolute -- and moved to a direct child of
+       <body> at setup time (see the JS below). A plain position:absolute
+       popup nested inside the dark hero card rendered with a visible
+       blur/wash-out glitch wherever it overlapped the frosted-glass stat
+       tiles: a known Chromium compositing bug where an ancestor's
+       backdrop-filter can bleed into a later, higher-z-index overlay
+       that visually sits on top of it. Moving the menu outside that
+       ancestor's subtree entirely is the robust fix, confirmed live. */
+    display:none;position:fixed;z-index:1000;min-width:170px;
     background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-md);
     box-shadow:0 14px 32px -10px rgba(15,23,32,0.22);padding:6px;flex-direction:column;gap:2px;
   }
@@ -3592,8 +3600,20 @@
   var moreMenuBtn = document.getElementById('more-menu-btn');
   var moreMenuEl = document.getElementById('more-menu');
   if (moreMenuBtn && moreMenuEl) {
+    // Moved out of .more-menu-wrap into <body> once, up front -- see the
+    // .more-menu CSS comment. position:fixed + a body-level parent escapes
+    // the dark hero card's backdrop-filter stacking context entirely,
+    // which is what the nested position:absolute version was glitching on.
+    document.body.appendChild(moreMenuEl);
+    function positionMoreMenu_() {
+      var r = moreMenuBtn.getBoundingClientRect();
+      moreMenuEl.style.top = (r.bottom + 8) + 'px';
+      moreMenuEl.style.right = (window.innerWidth - r.right) + 'px';
+    }
     moreMenuBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      var opening = !moreMenuEl.classList.contains('open');
+      if (opening) positionMoreMenu_();
       moreMenuEl.classList.toggle('open');
     });
     moreMenuEl.addEventListener('click', function(e) {
@@ -3601,8 +3621,10 @@
     });
     document.addEventListener('click', function(e) {
       if (!moreMenuEl.classList.contains('open')) return;
-      if (!e.target.closest('.more-menu-wrap')) moreMenuEl.classList.remove('open');
+      if (!e.target.closest('.more-menu-wrap') && !e.target.closest('#more-menu')) moreMenuEl.classList.remove('open');
     });
+    window.addEventListener('resize', function() { moreMenuEl.classList.remove('open'); });
+    window.addEventListener('scroll', function() { moreMenuEl.classList.remove('open'); }, true);
   }
 
   /** Keeps the little "Filtering by Dr. X" strip above the board in sync
