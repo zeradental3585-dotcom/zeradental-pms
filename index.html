@@ -677,6 +677,48 @@
   .dash-hero .attn-row{color:#fde68a;border-top-color:rgba(251,191,36,0.22);}
   .dash-hero .attn-row-num{color:#fbbf24;}
 
+  /* ===== Today's progress (light-touch gamification) =====
+     How many of the cases that were overdue at the start of the day
+     have since been cleared. Deliberately NOT badges/points/levels/
+     streaks -- just a satisfying, honest progress bar that disappears
+     on a day with nothing to clear, and a one-time celebratory state
+     + confetti burst when the dentist clears everything. */
+  .progress-wrap{
+    margin-top:10px;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.3);
+    border-radius:var(--r-md);padding:12px 14px;color:#bbf7d0;font-size:13px;font-weight:600;
+  }
+  .progress-wrap.is-complete{background:rgba(16,185,129,0.22);border-color:rgba(16,185,129,0.45);text-align:center;}
+  .progress-headline{margin-bottom:8px;}
+  .progress-wrap.is-complete .progress-headline{margin-bottom:0;}
+  .progress-bar-track{height:8px;border-radius:999px;background:rgba(255,255,255,0.14);overflow:hidden;}
+  .progress-bar-fill{
+    height:100%;border-radius:999px;background:linear-gradient(90deg,var(--green-bright),var(--green));
+    transition:width 600ms cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* ===== Success toast =====
+     A small checkmark + message pill, top-center, for every meaningful
+     save across the app -- the "feels alive" micro-interaction that
+     confirms an action landed without interrupting with an alert(). */
+  .success-toast{
+    position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-24px) scale(0.92);opacity:0;
+    background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;padding:10px 20px;
+    border-radius:999px;box-shadow:0 10px 30px rgba(5,150,105,0.35),0 2px 8px rgba(0,0,0,0.18);
+    font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;z-index:9999;
+    pointer-events:none;transition:opacity 220ms ease,transform 320ms cubic-bezier(.34,1.56,.64,1);
+    max-width:calc(100vw - 28px);text-align:left;
+  }
+  .success-toast-check{width:16px;height:16px;flex-shrink:0;}
+  .success-toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+
+  /* ===== Confetti (all-clear celebration only, fires once per session) === */
+  .confetti-burst{position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden;}
+  .confetti-piece{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:confettiFall 1.8s ease-in forwards;}
+  @keyframes confettiFall{
+    0%{transform:translateY(0) rotate(0deg);opacity:1;}
+    100%{transform:translateY(110vh) rotate(540deg);opacity:0;}
+  }
+
   /* ===== Header actions =====
      The old 4-button row (Export, Import, Log visit, Add patient) competed
      with the page title for attention even though export/import are rarely
@@ -1516,6 +1558,7 @@
       </div>
       <div id="app-stats" class="stats-row"></div>
       <div id="app-attn-wrap" class="attn-wrap" style="display:none;"></div>
+      <div id="today-progress-wrap" class="progress-wrap" style="display:none;"></div>
     </div>
     <div id="export-import-status" class="modal-status" style="margin:0 0 4px;"></div>
     <div id="import-results-list" class="detail-list" style="display:none; margin:0 0 10px; font-size:13px;"></div>
@@ -2170,6 +2213,8 @@
   });
   var currentCaseId = null; // case detail modal currently open on this CaseID
   var currentPatientId = null; // the PatientID behind that case, for delete/archive
+  var todayProgressLastCleared = null; // previous cleared-today count, to detect the moment it reaches 100%
+  var todayProgressCelebrated = false; // confetti fires once per session, not on every re-render
   // Treatment types + their stage journeys, straight from the server (see
   // Code.gs CASE_TYPES) so the dropdowns below never drift from what the
   // backend actually validates. Falls back to a bare Implant entry before
@@ -2410,6 +2455,7 @@
     renderReviews(currentReviewCandidates, currentReviewLink, currentReviewLinkShort);
     renderToday();
     renderStats();
+    renderTodayProgress_();
     renderInsights();
     setTabCount('board', currentBoard.length);
     setTabCount('patients', currentPatients.length);
@@ -2764,6 +2810,97 @@
       if (tabBtn) tabBtn.click();
     }
   });
+
+  // --- Today's progress (light-touch gamification) -------------------------
+  // Snapshots which cases were overdue at the first load of the day
+  // (per clinic, per calendar day, in localStorage) and compares that
+  // against the current overdue set every time the dashboard refreshes.
+  // A case counts as "cleared" the moment it's no longer overdue, for
+  // whatever reason (stage moved on, case closed, archived) -- same
+  // spirit as the rest of the app: honest numbers, not a shallow counter.
+  function renderTodayProgress_() {
+    var wrap = document.getElementById('today-progress-wrap');
+    if (!wrap) return;
+    var todayStr = new Date().toISOString().slice(0, 10);
+    var clinicKeyPart = (document.getElementById('app-clinic-title').textContent || 'clinic').replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+    var storageKey = 'zeraOverdueSnap_' + clinicKeyPart + '_' + todayStr;
+    var overdueIdsNow = currentBoard.filter(function(r) { return r.daysOverdue >= 0; }).map(function(r) { return r.caseId; });
+    var snapshot;
+    try {
+      var raw = localStorage.getItem(storageKey);
+      if (raw) {
+        snapshot = JSON.parse(raw);
+      } else {
+        snapshot = overdueIdsNow.slice();
+        localStorage.setItem(storageKey, JSON.stringify(snapshot));
+      }
+    } catch (e) {
+      snapshot = overdueIdsNow.slice();
+    }
+    var total = snapshot.length;
+    if (total === 0) {
+      wrap.style.display = 'none';
+      wrap.innerHTML = '';
+      todayProgressLastCleared = null;
+      return;
+    }
+    var cleared = snapshot.filter(function(id) { return overdueIdsNow.indexOf(id) === -1; }).length;
+    var pct = Math.min(100, Math.round((cleared / total) * 100));
+    var allClear = cleared >= total;
+    wrap.style.display = 'block';
+    if (allClear) {
+      wrap.className = 'progress-wrap is-complete';
+      wrap.innerHTML = '<div class="progress-headline">🎉 All caught up — every case overdue today is cleared!</div>';
+    } else {
+      wrap.className = 'progress-wrap';
+      wrap.innerHTML =
+        '<div class="progress-headline">Today’s progress — ' + cleared + ' of ' + total + ' overdue ' + (total === 1 ? 'case' : 'cases') + ' cleared</div>' +
+        '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:' + pct + '%;"></div></div>';
+    }
+    if (todayProgressLastCleared !== null && todayProgressLastCleared < total && allClear && !todayProgressCelebrated) {
+      todayProgressCelebrated = true;
+      confettiBurst_();
+    }
+    if (!allClear) todayProgressCelebrated = false;
+    todayProgressLastCleared = cleared;
+  }
+
+  function confettiBurst_() {
+    var colors = ['#10b981', '#059669', '#fbbf24', '#3b82f6', '#f472b6'];
+    var container = document.createElement('div');
+    container.className = 'confetti-burst';
+    for (var i = 0; i < 24; i++) {
+      var piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      piece.style.left = (Math.random() * 100) + '%';
+      piece.style.background = colors[i % colors.length];
+      piece.style.animationDelay = (Math.random() * 0.3) + 's';
+      piece.style.transform = 'rotate(' + Math.floor(Math.random() * 360) + 'deg)';
+      container.appendChild(piece);
+    }
+    document.body.appendChild(container);
+    setTimeout(function() { container.remove(); }, 2200);
+  }
+
+  // A small checkmark + message pill, top-center -- the shared success
+  // confirmation for every meaningful save across the app, so the
+  // dentist always gets a quick "that landed" moment without an alert().
+  function celebrate_(message) {
+    var el = document.getElementById('success-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'success-toast';
+      el.className = 'success-toast';
+      el.innerHTML = '<svg class="success-toast-check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg><span class="success-toast-msg"></span>';
+      document.body.appendChild(el);
+    }
+    el.querySelector('.success-toast-msg').textContent = message;
+    el.classList.remove('show');
+    void el.offsetWidth; // reflow, so a rapid second celebrate_() restarts the animation
+    el.classList.add('show');
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(function() { el.classList.remove('show'); }, 1700);
+  }
 
   // --- Insights tab: patients over time, broken down by doctor -------------
   // Built entirely from data already loaded for other tabs (currentPatients,
@@ -3202,6 +3339,7 @@
       }
       applyDashboardData(res);
       closeLogVisitModal();
+      celebrate_('Visit logged');
     }).catch(function() {
       submitBtn.disabled = false;
       statusEl.textContent = 'Something went wrong. Please try again.';
@@ -4285,6 +4423,7 @@
         defaultText: 'Hi ' + name + ', thank you for registering with us! We truly appreciate you choosing us for your dental care. Our team will be in touch shortly, and feel free to message us here anytime with questions.'
       });
       resetAddPatientForm();
+      celebrate_(mode === 'convert' ? 'Converted to patient' : 'Patient added');
     }).catch(function() {
       submitBtn.disabled = false;
       statusEl.textContent = 'Something went wrong. Please try again.';
@@ -4485,6 +4624,7 @@
     var prevAllCasesEntry = null, prevAllCasesIndex = -1;
     currentBoard.forEach(function(c, i) { if (c.caseId === currentCaseId) { prevBoardEntry = c; prevBoardIndex = i; } });
     currentAllCases.forEach(function(c, i) { if (c.caseId === currentCaseId) { prevAllCasesEntry = c; prevAllCasesIndex = i; } });
+    var stageChangedForCelebrate_ = !!prevBoardEntry && prevBoardEntry.stage !== payload.stage;
 
     var optimisticFields = {
       stage: payload.stage, status: payload.status, quotedAmount: payload.quotedAmount,
@@ -4549,6 +4689,7 @@
       // math, patients roster, etc.) now that it's back.
       applyDashboardData(res);
       document.getElementById('cd-name').textContent = document.getElementById('cd-name-input').value || '(unnamed)';
+      celebrate_(stageChangedForCelebrate_ ? 'Stage updated \u2192 ' + payload.stage : 'Saved');
     }).catch(function() {
       saveBtn.disabled = false;
       revertOptimisticPatch();
@@ -4579,6 +4720,7 @@
           document.getElementById('cd-appt-date').value = '';
           document.getElementById('cd-appt-time').value = '';
           document.getElementById('cd-appt-type').value = '';
+          celebrate_('Appointment added');
         }
       });
   });
@@ -4597,6 +4739,7 @@
           document.getElementById('cd-pay-amount').value = '';
           document.getElementById('cd-pay-date').value = '';
           document.getElementById('cd-pay-mode').value = '';
+          celebrate_('Payment logged');
         }
       });
   });
