@@ -2259,7 +2259,7 @@
     <p class="modal-sub">Record today's visit for an existing patient — consultation, payment, next visit, notes — in one go.</p>
 
     <div class="modal-field">
-      <label for="lv-search">Find patient (active cases) *</label>
+      <label for="lv-search">Find patient *</label>
       <input id="lv-search" type="text" placeholder="Type a name or phone number…" autocomplete="off" />
       <div id="lv-search-results" class="search-results"></div>
     </div>
@@ -4172,7 +4172,14 @@
     var el = document.getElementById('lv-search-results');
     var q = (query || '').trim().toLowerCase();
     if (!q) { el.innerHTML = ''; el.classList.remove('open'); return; }
-    var matches = currentBoard.filter(function(r) {
+    // Search every case for every non-archived patient (currentAllCases),
+    // not just currentBoard (Active-status cases only) — a returning
+    // patient whose original case has already closed (Completed, Dropped,
+    // etc.) is still a real patient you need to log a visit for, and for a
+    // dental clinic that's the normal long-term state for most patients
+    // once treatment is done. currentAllCases is already loaded on every
+    // dashboard refresh and carries the same field shape as board rows.
+    var matches = currentAllCases.filter(function(r) {
       // String()-coerce every field before lowercasing — sheet values can come
       // back as numbers (e.g. a phone number Sheets auto-converted), and
       // .toLowerCase() on a number throws, which crashes the whole filter and
@@ -4182,7 +4189,7 @@
         uhid.toLowerCase().indexOf(q) !== -1 || String(r.assignedTo || '').toLowerCase().indexOf(q) !== -1;
     }).slice(0, 6);
     if (matches.length === 0) {
-      el.innerHTML = '<div class="search-empty">No active case matches — check spelling, or open them from Patients.</div>';
+      el.innerHTML = '<div class="search-empty">No patient matches — check spelling, or open them from Patients.</div>';
     } else {
       el.innerHTML = matches.map(function(r) {
         var uhid = r.patientId || caseIdToPatientId[r.caseId];
@@ -4200,7 +4207,7 @@
   document.getElementById('lv-search-results').addEventListener('click', function(e) {
     var row = e.target.closest('.search-result');
     if (!row) return;
-    var ctx = currentBoard.filter(function(r) { return String(r.caseId) === String(row.dataset.caseId); })[0];
+    var ctx = currentAllCases.filter(function(r) { return String(r.caseId) === String(row.dataset.caseId); })[0];
     if (!ctx) return;
     document.getElementById('lv-case-id').value = ctx.caseId;
     document.getElementById('lv-search').value = '';
