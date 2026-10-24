@@ -2244,6 +2244,11 @@
       Patient has given consent to be contacted about their treatment *
     </label>
 
+    <label class="modal-checkbox">
+      <input id="ap-wa-optin" type="checkbox" />
+      Also send WhatsApp updates to this patient (registration confirmation now, appointment reminders later)
+    </label>
+
     <div id="add-patient-status" class="modal-status"></div>
 
     <div class="modal-actions">
@@ -5173,6 +5178,7 @@
     onTreatmentTypeChange();
     document.getElementById('ap-graft').checked = false;
     document.getElementById('ap-consent').checked = false;
+    document.getElementById('ap-wa-optin').checked = false;
     // First active doctor in THIS clinic's own roster — never a hardcoded
     // name, since every tenant shares this one frontend deployment.
     // Unassigned when the clinic hasn't set up a doctor yet.
@@ -5349,7 +5355,8 @@
       nextActionDue: document.getElementById('ap-no-next-date').checked ? '' : document.getElementById('ap-next-date').value,
       assignedTo: document.getElementById('ap-assigned-doctor').value,
       notes: document.getElementById('ap-notes').value,
-      consentGiven: consent
+      consentGiven: consent,
+      waOptIn: document.getElementById('ap-wa-optin').checked
     };
 
     var action = 'addCase';
